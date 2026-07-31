@@ -312,6 +312,17 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
   <span id="shift-chip" class="shift-chip"></span>
   <span id="shift-date-disp" style="font-weight:600"></span>
   <span id="shift-time-disp" style="color:var(--gray-lt);font-size:12px"></span>
+  <!-- Browse any shift directly from top bar -->
+  <div style="display:flex;align-items:center;gap:6px;margin-left:20px;border-left:1px solid rgba(255,255,255,.2);padding-left:16px;flex-wrap:wrap">
+    <span style="color:rgba(255,255,255,.6);font-size:11px;white-space:nowrap">Browse shift:</span>
+    <input type="date" id="nav-date" style="width:130px;padding:3px 6px;font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px"/>
+    <select id="nav-shift" style="width:110px;padding:3px 6px;font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px">
+      <option value="Day">☀ Day</option>
+      <option value="Night">🌙 Night</option>
+    </select>
+    <button onclick="navToShift()" style="padding:3px 10px;font-size:12px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:600">Go</button>
+    <button onclick="returnToCurrentShift()" id="nav-current-btn" style="padding:3px 10px;font-size:12px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:5px;cursor:pointer;display:none">↩ Current</button>
+  </div>
   <span id="logged-as"></span>
 </div>
 
@@ -657,7 +668,13 @@ function applyReport(data, isPast) {
     hvBanner.style.display = 'flex';
     document.getElementById('hist-viewer-label').textContent =
       `📋 Viewing: ${data.shift_type} shift — ${fmtDateOnly(data.shift_date)} (read-only)`;
-  } else { hvBanner.style.display = 'none'; }
+    const navBtn = document.getElementById('nav-current-btn');
+    if (navBtn) navBtn.style.display = '';
+  } else {
+    hvBanner.style.display = 'none';
+    const navBtn = document.getElementById('nav-current-btn');
+    if (navBtn) navBtn.style.display = 'none';
+  }
 
   document.getElementById('locked-banner').style.display = data.locked ? '' : 'none';
   applyLock();
@@ -665,13 +682,18 @@ function applyReport(data, isPast) {
 
 function applyLock() {
   const lock = isLocked;
-  document.querySelectorAll('.main input,.main select,.main textarea').forEach(el => el.disabled = lock);
+  // Lock everything EXCEPT the history tab and unlock button
+  document.querySelectorAll('.main input,.main select,.main textarea').forEach(el => {
+    if (el.closest('#tab-hist')) return; // never disable history controls
+    el.disabled = lock;
+  });
   document.querySelectorAll('.main button').forEach(b => {
-    if (b.onclick && b.onclick.toString().includes('openUnlockModal')) return; // always keep unlock btn enabled
-    if (!b.id?.includes('hist')) b.disabled = lock;
+    if (b.closest('#tab-hist')) return;            // never disable history buttons
+    if (b.onclick && b.onclick.toString().includes('openUnlockModal')) return;
+    if (b.onclick && b.onclick.toString().includes('returnToCurrentShift')) return;
+    b.disabled = lock;
   });
   document.getElementById('save-bar').style.display = lock ? 'none' : '';
-  // Always keep unlock button clickable
   document.querySelectorAll('[onclick*="openUnlockModal"]').forEach(b => b.disabled = false);
 }
 
@@ -681,8 +703,32 @@ async function returnToCurrentShift() {
   document.getElementById('r-date').value     = shiftDate;
   document.getElementById('r-shift').value    = shiftType;
   document.getElementById('r-loggedby').value = loggedBy;
+  document.getElementById('hist-viewer').style.display = 'none';
+  const navBtn = document.getElementById('nav-current-btn');
+  if (navBtn) navBtn.style.display = 'none';
+  // Reset nav to current shift
+  const navDate = document.getElementById('nav-date');
+  const navShift = document.getElementById('nav-shift');
+  if (navDate) navDate.value = shiftDate;
+  if (navShift) navShift.value = shiftType;
   await loadCurrentShift();
   switchTab('s1');
+}
+
+async function navToShift() {
+  const date  = document.getElementById('nav-date').value;
+  const shift = document.getElementById('nav-shift').value;
+  if (!date) { toast('Select a date first'); return; }
+  const isCurrent = (date === shiftDate && shift === shiftType);
+  if (isCurrent) { await returnToCurrentShift(); return; }
+  try {
+    const data = await api(`/api/reports/by-shift?date=${date}&shift=${shift}`);
+    if (!data) { toast(`No ${shift} shift report found for ${fmtDateOnly(date)}`); return; }
+    applyReport(data, true);
+    const navBtn = document.getElementById('nav-current-btn');
+    if (navBtn) navBtn.style.display = '';
+    switchTab('s1');
+  } catch(e) { toast('❌ '+e.message, 4000); }
 }
 
 // ── Combobox (supervisor name field) ──────────────────────────────────────
@@ -1134,7 +1180,12 @@ function toast(msg, d=2500) {
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtTs(iso){ if(!iso)return'—'; return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
-function fmtDateOnly(iso){ if(!iso)return'—'; return new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateOnly(iso){ 
+  if(!iso)return'—'; 
+  const s = String(iso).slice(0,10); // take only YYYY-MM-DD part
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return iso;
+  return new Date(s+'T12:00:00Z').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); 
+}
 
 
 // ── Unlock ─────────────────────────────────────────────────────────────────
