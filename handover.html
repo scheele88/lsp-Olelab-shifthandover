@@ -587,8 +587,10 @@ let troubleRows   = [];
 let pendingRows   = [];
 let schedRows     = [];
 let reqRows       = [];
-let shiftDate     = '';
-let shiftType     = '';
+let shiftDate     = '';   // clock-determined current shift date
+let shiftType     = '';   // clock-determined current shift type
+let activeDate    = '';   // currently active/editing shift date (may differ from clock)
+let activeShift   = '';   // currently active/editing shift type
 let isLocked      = false;
 
 // ── Shift logic ────────────────────────────────────────────────────────────
@@ -616,8 +618,10 @@ function enterApp() {
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   const s = calcShift();
-  shiftDate = s.date;
-  shiftType = s.type;
+  shiftDate  = s.date;
+  shiftType  = s.type;
+  activeDate = s.date;
+  activeShift= s.type;
 
   const chip = document.getElementById('shift-chip');
   chip.textContent = s.type === 'Day' ? '☀ Day (08:00–20:00)' : '🌙 Night (20:00–08:00)';
@@ -656,7 +660,7 @@ async function carryForwardPending() {
   try {
     // Find the most recent previous report
     const reports = await api('/api/reports?limit=5');
-    const prev = reports.find(r => !(r.shift_date.slice(0,10) === shiftDate && r.shift_type === shiftType));
+    const prev = reports.find(r => !(r.shift_date.slice(0,10) === (activeDate||shiftDate) && r.shift_type === (activeShift||shiftType)));
     if (!prev) return;
     const prevFull = await api(`/api/reports/${prev.id}`);
     if (!prevFull || !prevFull.pending || !prevFull.pending.length) return;
@@ -741,6 +745,9 @@ async function returnToCurrentShift() {
   const navBtn = document.getElementById('nav-current-btn');
   if (navBtn) navBtn.style.display = 'none';
 
+  // Reset active shift to clock-determined current
+  activeDate  = shiftDate;
+  activeShift = shiftType;
   // Reset nav picker to current shift
   const navDate = document.getElementById('nav-date');
   const navShift = document.getElementById('nav-shift');
@@ -762,24 +769,52 @@ async function navToShift() {
   const shift = document.getElementById('nav-shift').value;
   if (!date) { toast('Select a date first'); return; }
 
-  // If browsing to the actual current shift → reload it normally (editable)
   const isCurrent = (date === shiftDate && shift === shiftType);
-  if (isCurrent) { await returnToCurrentShift(); return; }
 
   try {
     const data = await api(`/api/reports/by-shift?date=${date}&shift=${shift}`);
-    if (!data) {
-      // No report exists for this shift yet
-      // Is it a future/incoming shift that should be editable?
-      // We treat any shift without a report as view-only placeholder
-      toast(`No report found for ${shift} shift on ${fmtDateOnly(date)}`, 3500);
-      return;
+
+    if (data) {
+      // Report exists — load it
+      // It's editable if: it's the clock-current shift OR it's a draft (not locked)
+      const isPast = !isCurrent && data.locked;
+      applyReport(data, isPast);
+      // Override active date/shift so save operations target this report
+      if (!isCurrent) {
+        activeDate  = date;
+        activeShift = shift;
+      } else {
+        activeDate  = shiftDate;
+        activeShift = shiftType;
+      }
+    } else {
+      // No report yet — create a new editable one for this date/shift
+      activeDate  = date;
+      activeShift = shift;
+      // Reset UI to blank editable state
+      currentReport = null;
+      viewingPast   = false;
+      isLocked      = false;
+      document.getElementById('r-date').value      = date;
+      document.getElementById('r-shift').value     = shift;
+      document.getElementById('r-loggedby').value  = loggedBy;
+      document.getElementById('r-cur-team').value  = 'A';
+      document.getElementById('r-cur-sup').value   = '';
+      document.getElementById('r-hov-team').value  = 'A';
+      document.getElementById('r-hov-sup').value   = '';
+      document.getElementById('r-lims').value      = '';
+      document.getElementById('r-remarks').value   = '';
+      troubleRows = []; pendingRows = []; schedRows = []; reqRows = [];
+      renderTrouble(); renderPending(); renderSched(); renderReq();
+      renderSignoffs({});
+      document.getElementById('locked-banner').style.display  = 'none';
+      document.getElementById('hist-viewer').style.display    = 'none';
+      applyLock();
+      toast(`📋 New handover started: ${shift} shift — ${fmtDateOnly(date)}`, 3500);
     }
-    // Past shift: show read-only UNLESS it's not locked (draft) and user is allowed to edit
-    const isPast = true; // browsed shifts are always read-only via nav bar
-    applyReport(data, isPast);
+
     const navBtn = document.getElementById('nav-current-btn');
-    if (navBtn) navBtn.style.display = '';
+    if (navBtn) navBtn.style.display = isCurrent ? 'none' : '';
     switchTab('s1');
   } catch(e) { toast('❌ '+e.message, 4000); }
 }
@@ -849,7 +884,7 @@ async function saveAll() {
 
 async function saveHeader() {
   const body = {
-    shift_date: shiftDate, shift_type: shiftType, logged_by: loggedBy,
+    shift_date: activeDate || shiftDate, shift_type: activeShift || shiftType, logged_by: loggedBy,
     current_shift_team:  document.getElementById('r-cur-team').value,
     current_supervisor:  document.getElementById('r-cur-sup').value.trim(),
     handover_shift_team: document.getElementById('r-hov-team').value,
