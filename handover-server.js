@@ -1,271 +1,238 @@
-/**
- * handover-server.js
- * LSP Lab Shift Handover Tool — Backend
- * Stack: Node.js + Express + PostgreSQL (Supabase via DATABASE_URL)
- * Deploy: Render (set DATABASE_URL env var in Render dashboard)
- */
-
 'use strict';
-
-const express = require('express');
-const cors    = require('cors');
+const express  = require('express');
+const cors     = require('cors');
 const { Pool } = require('pg');
-const path    = require('path');
+const path     = require('path');
 const EQUIPMENT = require('./equipment.js');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── Database ────────────────────────────────────────────────────────────────
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },  // required for Supabase / Render
+  ssl: { rejectUnauthorized: false },
 });
 
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS handover_reports (
-      id            SERIAL PRIMARY KEY,
-      shift_date    DATE        NOT NULL,
-      shift_type    VARCHAR(10) NOT NULL,  -- 'Day' | 'Night'
-      supervisor    VARCHAR(100),
-      created_at    TIMESTAMPTZ DEFAULT NOW(),
-      updated_at    TIMESTAMPTZ DEFAULT NOW(),
-      general_notes TEXT,
-      safety_notes  TEXT,
-      submitted     BOOLEAN     DEFAULT FALSE,
+      id                  SERIAL PRIMARY KEY,
+      shift_date          DATE        NOT NULL,
+      shift_type          VARCHAR(10) NOT NULL,
+      logged_by           VARCHAR(50),
+      current_shift_team  VARCHAR(5),
+      current_supervisor  VARCHAR(100),
+      handover_shift_team VARCHAR(5),
+      handover_supervisor VARCHAR(100),
+      pending_samples_note TEXT,
+      lims_issues         TEXT,
+      general_remarks     TEXT,
+      outgoing_name       VARCHAR(50),
+      outgoing_ts         TIMESTAMPTZ,
+      incoming_name       VARCHAR(50),
+      incoming_ts         TIMESTAMPTZ,
+      locked              BOOLEAN DEFAULT FALSE,
+      created_at          TIMESTAMPTZ DEFAULT NOW(),
+      updated_at          TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE (shift_date, shift_type)
     );
-
-    CREATE TABLE IF NOT EXISTS equipment_status (
-      id           SERIAL PRIMARY KEY,
-      report_id    INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
-      equip_code   VARCHAR(30)  NOT NULL,
-      equip_name   VARCHAR(200) NOT NULL,
-      owner        VARCHAR(10)  NOT NULL,
-      status       VARCHAR(20)  NOT NULL DEFAULT 'Normal',  -- Normal | Issue | OOS | Standby
-      remarks      TEXT,
-      updated_at   TIMESTAMPTZ DEFAULT NOW(),
-      UNIQUE (report_id, equip_code)
+    CREATE TABLE IF NOT EXISTS equip_trouble (
+      id             SERIAL PRIMARY KEY,
+      report_id      INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      equip_code     VARCHAR(30),
+      equip_name     VARCHAR(200),
+      owner          VARCHAR(20),
+      issue_type     VARCHAR(50),
+      issue_other    TEXT,
+      details        TEXT,
+      root_cause     TEXT,
+      action_taken   TEXT,
+      out_of_service VARCHAR(5) DEFAULT 'No',
+      status         VARCHAR(20) DEFAULT 'Investigating',
+      created_at     TIMESTAMPTZ DEFAULT NOW()
     );
-
-    CREATE TABLE IF NOT EXISTS action_items (
-      id          SERIAL PRIMARY KEY,
-      report_id   INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
-      description TEXT        NOT NULL,
-      priority    VARCHAR(10) DEFAULT 'Normal',  -- High | Normal | Low
-      assigned_to VARCHAR(100),
-      status      VARCHAR(20) DEFAULT 'Open',    -- Open | In Progress | Closed
-      created_at  TIMESTAMPTZ DEFAULT NOW()
+    CREATE TABLE IF NOT EXISTS pending_samples (
+      id            SERIAL PRIMARY KEY,
+      report_id     INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      sample_point  VARCHAR(200),
+      reason        TEXT,
+      action_needed TEXT,
+      sort_order    INTEGER DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS schedule_changes (
+      id             SERIAL PRIMARY KEY,
+      report_id      INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      plant          VARCHAR(20),
+      change_desc    TEXT,
+      effective_date DATE,
+      requested_by   VARCHAR(100),
+      sort_order     INTEGER DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS requested_samples (
+      id             SERIAL PRIMARY KEY,
+      report_id      INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      plant          VARCHAR(20),
+      product_stream VARCHAR(200),
+      test_items     TEXT,
+      requested_by   VARCHAR(100),
+      target_date    DATE,
+      priority       VARCHAR(10) DEFAULT 'Normal',
+      sort_order     INTEGER DEFAULT 0
     );
   `);
   console.log('✅  Database tables ready');
 }
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'handover.html')));
+app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'handover.html')));
 
-// ─── Routes ──────────────────────────────────────────────────────────────────
+app.get('/api/equipment', (_req, res) => res.json(EQUIPMENT));
 
-/** GET /api/equipment — full equipment master list */
-app.get('/api/equipment', (_req, res) => {
-  res.json(EQUIPMENT);
-});
+async function loadFull(reportId) {
+  const { rows:[r] } = await pool.query('SELECT * FROM handover_reports WHERE id=$1',[reportId]);
+  if (!r) return null;
+  const { rows: trouble }    = await pool.query('SELECT * FROM equip_trouble    WHERE report_id=$1 ORDER BY id',[reportId]);
+  const { rows: pending }    = await pool.query('SELECT * FROM pending_samples  WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  const { rows: schedules }  = await pool.query('SELECT * FROM schedule_changes WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  const { rows: reqsamples } = await pool.query('SELECT * FROM requested_samples WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  return { ...r, trouble, pending, schedules, reqsamples };
+}
 
-/** GET /api/reports?limit=30 — list recent reports (summary) */
 app.get('/api/reports', async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit) || 30, 100);
+    const limit = Math.min(parseInt(req.query.limit)||60,200);
     const { rows } = await pool.query(
-      `SELECT id, shift_date, shift_type, supervisor, submitted, created_at, updated_at
-       FROM handover_reports
-       ORDER BY shift_date DESC, shift_type DESC
-       LIMIT $1`,
-      [limit]
-    );
+      `SELECT id,shift_date,shift_type,logged_by,current_shift_team,current_supervisor,
+              outgoing_name,outgoing_ts,incoming_name,incoming_ts,locked,updated_at
+       FROM handover_reports ORDER BY shift_date DESC, shift_type DESC LIMIT $1`,[limit]);
     res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-/** GET /api/reports/:id — full report with equipment_status + action_items */
-app.get('/api/reports/:id', async (req, res) => {
-  try {
-    const { rows: [report] } = await pool.query(
-      'SELECT * FROM handover_reports WHERE id = $1', [req.params.id]
-    );
-    if (!report) return res.status(404).json({ error: 'Not found' });
-
-    const { rows: equip } = await pool.query(
-      'SELECT * FROM equipment_status WHERE report_id = $1 ORDER BY owner, equip_code',
-      [req.params.id]
-    );
-    const { rows: actions } = await pool.query(
-      'SELECT * FROM action_items WHERE report_id = $1 ORDER BY id',
-      [req.params.id]
-    );
-    res.json({ ...report, equipment: equip, actions });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-/** GET /api/reports/by-shift?date=YYYY-MM-DD&shift=Day|Night */
 app.get('/api/reports/by-shift', async (req, res) => {
   try {
     const { date, shift } = req.query;
-    const { rows: [report] } = await pool.query(
-      'SELECT * FROM handover_reports WHERE shift_date=$1 AND shift_type=$2',
-      [date, shift]
-    );
-    if (!report) return res.json(null);
-
-    const { rows: equip } = await pool.query(
-      'SELECT * FROM equipment_status WHERE report_id = $1 ORDER BY owner, equip_code',
-      [report.id]
-    );
-    const { rows: actions } = await pool.query(
-      'SELECT * FROM action_items WHERE report_id = $1 ORDER BY id',
-      [report.id]
-    );
-    res.json({ ...report, equipment: equip, actions });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+    const { rows:[r] } = await pool.query(
+      'SELECT * FROM handover_reports WHERE shift_date=$1 AND shift_type=$2',[date,shift]);
+    if (!r) return res.json(null);
+    res.json(await loadFull(r.id));
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-/** POST /api/reports — create or update a report (upsert by date+shift) */
+app.get('/api/reports/:id', async (req, res) => {
+  try {
+    const data = await loadFull(req.params.id);
+    if (!data) return res.status(404).json({error:'Not found'});
+    res.json(data);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
 app.post('/api/reports', async (req, res) => {
-  const { shift_date, shift_type, supervisor, general_notes, safety_notes } = req.body;
+  const { shift_date,shift_type,logged_by,current_shift_team,current_supervisor,
+          handover_shift_team,handover_supervisor,pending_samples_note,lims_issues,general_remarks } = req.body;
   try {
-    const { rows: [report] } = await pool.query(
-      `INSERT INTO handover_reports (shift_date, shift_type, supervisor, general_notes, safety_notes, updated_at)
-       VALUES ($1,$2,$3,$4,$5,NOW())
-       ON CONFLICT (shift_date, shift_type)
-       DO UPDATE SET supervisor=$3, general_notes=$4, safety_notes=$5, updated_at=NOW()
-       RETURNING *`,
-      [shift_date, shift_type, supervisor, general_notes, safety_notes]
-    );
-    res.json(report);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+    const { rows:[r] } = await pool.query(`
+      INSERT INTO handover_reports
+        (shift_date,shift_type,logged_by,current_shift_team,current_supervisor,
+         handover_shift_team,handover_supervisor,pending_samples_note,lims_issues,general_remarks,updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW())
+      ON CONFLICT (shift_date,shift_type) DO UPDATE SET
+        logged_by=$3,current_shift_team=$4,current_supervisor=$5,
+        handover_shift_team=$6,handover_supervisor=$7,
+        pending_samples_note=$8,lims_issues=$9,general_remarks=$10,updated_at=NOW()
+      RETURNING *`,
+      [shift_date,shift_type,logged_by,current_shift_team,current_supervisor,
+       handover_shift_team,handover_supervisor,pending_samples_note||'',lims_issues||'',general_remarks||'']);
+    res.json(r);
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-/** PATCH /api/reports/:id/submit — mark report as submitted */
-app.patch('/api/reports/:id/submit', async (req, res) => {
+app.patch('/api/reports/:id/signoff', async (req, res) => {
+  const { role, name } = req.body;
   try {
-    const { rows: [report] } = await pool.query(
-      `UPDATE handover_reports SET submitted=TRUE, updated_at=NOW()
-       WHERE id=$1 RETURNING *`,
-      [req.params.id]
-    );
-    if (!report) return res.status(404).json({ error: 'Not found' });
-    res.json(report);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-/** PUT /api/reports/:id/equipment — bulk upsert equipment status rows */
-app.put('/api/reports/:id/equipment', async (req, res) => {
-  // body: [ { equip_code, equip_name, owner, status, remarks }, ... ]
-  const reportId = req.params.id;
-  const items = req.body;
-  try {
-    for (const item of items) {
-      await pool.query(
-        `INSERT INTO equipment_status (report_id, equip_code, equip_name, owner, status, remarks, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,NOW())
-         ON CONFLICT (report_id, equip_code)
-         DO UPDATE SET status=$5, remarks=$6, updated_at=NOW()`,
-        [reportId, item.equip_code, item.equip_name, item.owner, item.status, item.remarks || '']
-      );
+    let q, params;
+    if (role === 'outgoing') {
+      q = `UPDATE handover_reports SET outgoing_name=$1,outgoing_ts=NOW(),updated_at=NOW() WHERE id=$2 AND locked=FALSE RETURNING *`;
+      params = [name, req.params.id];
+    } else {
+      q = `UPDATE handover_reports SET incoming_name=$1,incoming_ts=NOW(),locked=TRUE,updated_at=NOW() WHERE id=$2 RETURNING *`;
+      params = [name, req.params.id];
     }
-    const { rows } = await pool.query(
-      'SELECT * FROM equipment_status WHERE report_id=$1 ORDER BY owner, equip_code',
-      [reportId]
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+    const { rows:[r] } = await pool.query(q, params);
+    if (!r) return res.status(404).json({error:'Not found or already locked'});
+    res.json(r);
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-/** POST /api/reports/:id/actions — add action item */
-app.post('/api/reports/:id/actions', async (req, res) => {
-  const { description, priority, assigned_to } = req.body;
+app.post('/api/reports/:id/trouble', async (req, res) => {
+  const { equip_code,equip_name,owner,issue_type,issue_other,details,root_cause,action_taken,out_of_service,status } = req.body;
   try {
-    const { rows: [action] } = await pool.query(
-      `INSERT INTO action_items (report_id, description, priority, assigned_to)
-       VALUES ($1,$2,$3,$4) RETURNING *`,
-      [req.params.id, description, priority || 'Normal', assigned_to || '']
-    );
-    res.json(action);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+    const { rows:[r] } = await pool.query(`
+      INSERT INTO equip_trouble (report_id,equip_code,equip_name,owner,issue_type,issue_other,details,root_cause,action_taken,out_of_service,status)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [req.params.id,equip_code,equip_name,owner,issue_type,issue_other||'',details||'',root_cause||'',action_taken||'',out_of_service||'No',status||'Investigating']);
+    res.json(r);
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-/** PATCH /api/actions/:id — update action item status/fields */
-app.patch('/api/actions/:id', async (req, res) => {
-  const { status, description, priority, assigned_to } = req.body;
+app.patch('/api/trouble/:id', async (req, res) => {
+  const f = ['equip_code','equip_name','owner','issue_type','issue_other','details','root_cause','action_taken','out_of_service','status'];
   try {
-    const { rows: [action] } = await pool.query(
-      `UPDATE action_items
-       SET status=COALESCE($1,status),
-           description=COALESCE($2,description),
-           priority=COALESCE($3,priority),
-           assigned_to=COALESCE($4,assigned_to)
-       WHERE id=$5 RETURNING *`,
-      [status, description, priority, assigned_to, req.params.id]
-    );
-    if (!action) return res.status(404).json({ error: 'Not found' });
-    res.json(action);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+    const { rows:[r] } = await pool.query(
+      `UPDATE equip_trouble SET ${f.map((x,i)=>`${x}=$${i+1}`).join(',')} WHERE id=$${f.length+1} RETURNING *`,
+      [...f.map(x=>req.body[x]??null), req.params.id]);
+    res.json(r);
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-/** DELETE /api/actions/:id */
-app.delete('/api/actions/:id', async (req, res) => {
+app.delete('/api/trouble/:id', async (req, res) => {
+  try { await pool.query('DELETE FROM equip_trouble WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.put('/api/reports/:id/pending', async (req, res) => {
+  const rows = req.body;
   try {
-    await pool.query('DELETE FROM action_items WHERE id=$1', [req.params.id]);
-    res.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
+    await pool.query('DELETE FROM pending_samples WHERE report_id=$1',[req.params.id]);
+    for (let i=0;i<rows.length;i++)
+      await pool.query(`INSERT INTO pending_samples (report_id,sample_point,reason,action_needed,sort_order) VALUES ($1,$2,$3,$4,$5)`,
+        [req.params.id,rows[i].sample_point||'',rows[i].reason||'',rows[i].action_needed||'',i]);
+    const { rows:saved } = await pool.query('SELECT * FROM pending_samples WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-/** GET /api/health */
-app.get('/api/health', async (_req, res) => {
+app.put('/api/reports/:id/schedules', async (req, res) => {
+  const rows = req.body;
   try {
-    await pool.query('SELECT 1');
-    res.json({ status: 'ok', ts: new Date().toISOString() });
-  } catch (err) {
-    res.status(500).json({ status: 'db error', error: err.message });
-  }
+    await pool.query('DELETE FROM schedule_changes WHERE report_id=$1',[req.params.id]);
+    for (let i=0;i<rows.length;i++)
+      await pool.query(`INSERT INTO schedule_changes (report_id,plant,change_desc,effective_date,requested_by,sort_order) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [req.params.id,rows[i].plant||'',rows[i].change_desc||'',rows[i].effective_date||null,rows[i].requested_by||'',i]);
+    const { rows:saved } = await pool.query('SELECT * FROM schedule_changes WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-initDB()
-  .then(() => {
-    app.listen(PORT, () => console.log(`🚀  Handover server running on port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('❌  DB init failed:', err.message);
-    process.exit(1);
-  });
+app.put('/api/reports/:id/reqsamples', async (req, res) => {
+  const rows = req.body;
+  try {
+    await pool.query('DELETE FROM requested_samples WHERE report_id=$1',[req.params.id]);
+    for (let i=0;i<rows.length;i++)
+      await pool.query(`INSERT INTO requested_samples (report_id,plant,product_stream,test_items,requested_by,target_date,priority,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [req.params.id,rows[i].plant||'',rows[i].product_stream||'',rows[i].test_items||'',rows[i].requested_by||'',rows[i].target_date||null,rows[i].priority||'Normal',i]);
+    const { rows:saved } = await pool.query('SELECT * FROM requested_samples WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.get('/api/health', async (_,res) => {
+  try { await pool.query('SELECT 1'); res.json({status:'ok'}); }
+  catch(e){ res.status(500).json({status:'error',error:e.message}); }
+});
+
+initDB().then(() => {
+  app.listen(PORT, () => console.log(`🚀  Handover server running on port ${PORT}`));
+}).catch(e => { console.error('❌  DB init failed:', e.message); process.exit(1); });
