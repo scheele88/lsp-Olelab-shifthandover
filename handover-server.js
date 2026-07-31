@@ -260,6 +260,26 @@ app.put('/api/reports/:id/reqsamples', async (req, res) => {
   } catch(e){ res.status(500).json({error:e.message}); }
 });
 
+
+app.patch('/api/reports/:id/unlock', async (req, res) => {
+  const { password } = req.body;
+  const UNLOCK_PASSWORD = process.env.UNLOCK_PASSWORD || 'lsp123';
+  if (password !== UNLOCK_PASSWORD) {
+    return res.status(403).json({ error: 'Incorrect password' });
+  }
+  try {
+    const { rows:[r] } = await pool.query(
+      `UPDATE handover_reports
+       SET locked=FALSE, incoming_name=NULL, incoming_ts=NULL,
+           outgoing_name=NULL, outgoing_ts=NULL, updated_at=NOW()
+       WHERE id=$1 RETURNING *`,
+      [req.params.id]
+    );
+    if (!r) return res.status(404).json({ error: 'Not found' });
+    res.json(r);
+  } catch(e){ res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/health', async (_,res) => {
   try { await pool.query('SELECT 1'); res.json({status:'ok'}); }
   catch(e){ res.status(500).json({status:'error',error:e.message}); }
