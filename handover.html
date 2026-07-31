@@ -525,8 +525,13 @@ function applyReport(data, isPast) {
 function applyLock() {
   const lock = isLocked;
   document.querySelectorAll('.main input,.main select,.main textarea').forEach(el => el.disabled = lock);
-  document.querySelectorAll('.main button').forEach(b => { if (!b.id?.includes('hist')) b.disabled = lock; });
+  document.querySelectorAll('.main button').forEach(b => {
+    if (b.onclick && b.onclick.toString().includes('openUnlockModal')) return; // always keep unlock btn enabled
+    if (!b.id?.includes('hist')) b.disabled = lock;
+  });
   document.getElementById('save-bar').style.display = lock ? 'none' : '';
+  // Always keep unlock button clickable
+  document.querySelectorAll('[onclick*="openUnlockModal"]').forEach(b => b.disabled = false);
 }
 
 async function returnToCurrentShift() {
