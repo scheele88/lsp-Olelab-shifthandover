@@ -658,24 +658,63 @@ async function loadCurrentShift() {
 
 async function carryForwardPending() {
   try {
-    // Find the most recent previous report
     const reports = await api('/api/reports?limit=5');
     const prev = reports.find(r => !(r.shift_date.slice(0,10) === (activeDate||shiftDate) && r.shift_type === (activeShift||shiftType)));
     if (!prev) return;
     const prevFull = await api(`/api/reports/${prev.id}`);
-    if (!prevFull || !prevFull.pending || !prevFull.pending.length) return;
-    // Filter: only carry forward rows that are NOT Done
-    const carry = prevFull.pending.filter(p => p.status !== 'Done').map(p => ({
-      sample_point: p.sample_point,
-      reason:       p.reason,
-      action_needed:p.action_needed,
-      status:       p.status || 'In-progress'
-    }));
-    if (!carry.length) return;
-    pendingRows = carry;
-    renderPending();
-    await savePending();
-    toast(`📋 ${carry.length} pending sample(s) carried over from previous shift`, 4000);
+    if (!prevFull) return;
+
+    let carried = [];
+
+    // 1. Pending samples — carry non-Done
+    if (prevFull.pending && prevFull.pending.length) {
+      const cp = prevFull.pending.filter(p => p.status !== 'Done').map(p => ({
+        sample_point: p.sample_point, reason: p.reason,
+        action_needed: p.action_needed, status: p.status || 'In-progress'
+      }));
+      if (cp.length) { pendingRows = cp; renderPending(); await savePending(); carried.push(`${cp.length} pending sample(s)`); }
+    }
+
+    // 2. Equipment trouble — carry non-Done rows (as new rows in this shift)
+    if (prevFull.trouble && prevFull.trouble.length) {
+      const notDone = prevFull.trouble.filter(t => t.status !== 'Done');
+      for (const t of notDone) {
+        const r = await api(`/api/reports/${currentReport.id}/trouble`, 'POST', {
+          equip_code: t.equip_code, equip_name: t.equip_name, owner: t.owner,
+          issue_type: t.issue_type, issue_other: t.issue_other || '',
+          details: t.details || '', root_cause: t.root_cause || '',
+          action_taken: t.action_taken || '', out_of_service: t.out_of_service || 'No',
+          status: t.status || 'Investigating'
+        });
+        troubleRows.push(r);
+      }
+      if (notDone.length) { renderTrouble(); carried.push(`${notDone.length} equipment issue(s)`); }
+    }
+
+    // 3. Schedule changes — carry all (still relevant until acted on)
+    if (prevFull.schedules && prevFull.schedules.length) {
+      schedRows = prevFull.schedules.map(s => ({
+        plant: s.plant, change_desc: s.change_desc,
+        effective_date: s.effective_date, requested_by: s.requested_by
+      }));
+      renderSched();
+      await saveSchedules();
+      carried.push(`${schedRows.length} schedule change(s)`);
+    }
+
+    // 4. Requested samples — carry non-done (no status field, carry all)
+    if (prevFull.reqsamples && prevFull.reqsamples.length) {
+      reqRows = prevFull.reqsamples.map(r => ({
+        plant: r.plant, product_stream: r.product_stream,
+        test_items: r.test_items, requested_by: r.requested_by,
+        target_date: r.target_date, priority: r.priority || 'Normal'
+      }));
+      renderReq();
+      await saveReqSamples();
+      carried.push(`${reqRows.length} requested sample(s)`);
+    }
+
+    if (carried.length) toast(`📋 Carried forward: ${carried.join(', ')}`, 5000);
   } catch(e) { console.error('carryForward error:', e); }
 }
 
