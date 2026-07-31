@@ -21,45 +21,43 @@ button{cursor:pointer;font-family:inherit;font-size:13px;border:none;border-radi
 button:hover{opacity:.85} button:disabled{opacity:.4;cursor:not-allowed}
 input,select,textarea{font-family:inherit;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);padding:5px 8px;outline:none;width:100%;background:#fff;transition:border .15s}
 input:focus,select:focus,textarea:focus{border-color:var(--blue2)}
-textarea{resize:vertical;min-height:64px}
+textarea{resize:vertical;min-height:60px}
 label{font-size:11px;color:var(--gray-lt);font-weight:700;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
-a{color:var(--blue)}
 
-/* Layout */
-header{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-header h1{font-size:16px;font-weight:700}
-header .sub{font-size:11px;opacity:.7}
-
-/* Sign-on gate */
-#gate{position:fixed;inset:0;background:rgba(13,71,161,.95);z-index:1000;display:flex;align-items:center;justify-content:center}
+/* Gate */
+#gate{position:fixed;inset:0;background:rgba(13,71,161,.96);z-index:1000;display:flex;align-items:center;justify-content:center}
 #gate-box{background:#fff;border-radius:10px;padding:36px 40px;text-align:center;min-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
 #gate-box h2{color:var(--blue);margin-bottom:6px;font-size:20px}
 #gate-box p{color:var(--gray-lt);font-size:13px;margin-bottom:20px}
 #gate-box select{margin-bottom:14px;font-size:15px;padding:8px}
 #gate-btn{width:100%;padding:10px;font-size:15px;background:var(--blue);color:#fff;border-radius:var(--radius);border:none;cursor:pointer}
 
+/* Header */
+header{background:var(--blue);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+header h1{font-size:16px;font-weight:700}
+header .sub{font-size:11px;opacity:.7}
+
 /* Shift bar */
 #shift-bar{background:var(--card);border-bottom:2px solid var(--blue);padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px}
-.shift-chip{background:var(--blue);color:#fff;padding:4px 14px;border-radius:20px;font-weight:700;font-size:13px}
+.shift-chip{background:var(--blue);color:#fff;padding:4px 14px;border-radius:20px;font-weight:700;font-size:13px;white-space:nowrap}
 .shift-chip.night{background:#283593}
 #logged-as{margin-left:auto;color:var(--gray-lt);font-size:12px}
 
 /* Tabs */
-.tabs{display:flex;gap:0;background:var(--card);border-bottom:2px solid var(--border);padding:0 16px;overflow-x:auto}
-.tab-btn{padding:10px 16px;font-size:13px;font-weight:600;color:var(--gray-lt);background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;border-radius:0}
+.tabs{display:flex;background:var(--card);border-bottom:2px solid var(--border);padding:0 16px;overflow-x:auto}
+.tab-btn{padding:10px 15px;font-size:13px;font-weight:600;color:var(--gray-lt);background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;border-radius:0}
 .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
 .tab-btn:hover{background:var(--blue-bg);color:var(--blue)}
 
 /* Main */
-.main{max-width:1280px;margin:0 auto;padding:16px 14px 80px}
+.main{max-width:1300px;margin:0 auto;padding:16px 14px 80px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px}
-.card-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fafbfc;border-radius:var(--radius) var(--radius) 0 0}
+.card-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fafbfc;border-radius:var(--radius) var(--radius) 0 0;flex-wrap:wrap;gap:8px}
 .card-hdr h2{font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px}
 .card-body{padding:14px}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.col{flex:1;min-width:140px}
+.col{flex:1;min-width:130px}
 .col2{flex:2;min-width:200px}
-.col3{flex:3;min-width:240px}
 
 /* Buttons */
 .btn-blue{background:var(--blue);color:#fff}
@@ -78,52 +76,67 @@ header .sub{font-size:11px;opacity:.7}
 .b-blue{background:var(--blue-bg);color:var(--blue)}
 .b-gray{background:#eceff1;color:#546e7a}
 
-/* Locked overlay */
+/* Locked */
 .locked-banner{background:var(--green-bg);border:1px solid var(--green);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;color:var(--green);font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
 
-/* Equipment trouble table */
+/* Equipment table */
 .etable{width:100%;border-collapse:collapse;font-size:12px}
-.etable th{background:var(--blue);color:#fff;padding:6px 8px;text-align:left;white-space:nowrap}
-.etable td{padding:5px 7px;border-bottom:1px solid var(--border);vertical-align:top}
+.etable th{background:var(--blue);color:#fff;padding:6px 8px;text-align:left;white-space:nowrap;position:sticky;top:0}
+.etable td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top}
 .etable tr:hover td{background:var(--blue-bg)}
-.etable select,.etable input{font-size:12px;padding:3px 5px}
-.etable textarea{font-size:12px;padding:3px 5px;min-height:36px}
-.done-row td{opacity:.45;background:#f5f5f5!important;text-decoration:line-through}
+.etable select,.etable input[type=text],.etable input:not([type]){font-size:12px;padding:3px 5px}
+.etable textarea{font-size:12px;padding:3px 5px;min-height:34px}
+.done-row{opacity:.5;background:#f9f9f9!important}
+.done-row td{text-decoration:line-through;color:var(--gray-lt)}
 
-/* Autocomplete */
+/* Combobox */
+.combo-wrap{position:relative}
+.combo-wrap input{width:100%}
+.combo-drop{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--blue2);border-top:none;border-radius:0 0 var(--radius) var(--radius);z-index:400;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none}
+.combo-drop div{padding:6px 10px;cursor:pointer;font-size:13px}
+.combo-drop div:hover{background:var(--blue-bg)}
+
+/* Autocomplete for equipment */
 .ac-wrap{position:relative}
-.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);max-height:200px;overflow-y:auto;z-index:300;box-shadow:0 4px 12px rgba(0,0,0,.15)}
-.ac-item{padding:6px 10px;cursor:pointer;font-size:12px}
-.ac-item:hover,.ac-item.sel{background:var(--blue-bg)}
-.ac-code{font-family:monospace;color:var(--gray-lt);font-size:11px;margin-right:6px}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--blue2);border-top:none;border-radius:0 0 var(--radius) var(--radius);max-height:200px;overflow-y:auto;z-index:400;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none}
+.ac-item{padding:6px 10px;cursor:pointer;font-size:12px;line-height:1.4}
+.ac-item:hover{background:var(--blue-bg)}
+.ac-code{font-family:monospace;color:var(--gray-lt);font-size:11px}
 
-/* Signoff */
-.signoff-box{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-top:12px}
-.signoff-box h3{font-size:12px;font-weight:700;color:var(--gray-lt);text-transform:uppercase;margin-bottom:10px}
-.sig-done{color:var(--green);font-weight:700;font-size:13px}
-
-/* History table */
+/* History */
 .htable{width:100%;border-collapse:collapse;font-size:13px}
-.htable th{background:var(--blue);color:#fff;padding:7px 10px;text-align:left}
+.htable th{background:var(--blue);color:#fff;padding:7px 10px;text-align:left;white-space:nowrap}
 .htable td{padding:6px 10px;border-bottom:1px solid var(--border)}
-.htable tr:hover td{background:var(--blue-bg);cursor:pointer}
+.htable tbody tr:hover td{background:var(--blue-bg);cursor:pointer}
+
+/* Sign-off */
+.signoff-box{border:1px solid var(--border);border-radius:var(--radius);padding:14px;background:#fafbfc}
+.signoff-box h3{font-size:11px;font-weight:700;color:var(--gray-lt);text-transform:uppercase;margin-bottom:10px;letter-spacing:.4px}
+.sig-done{color:var(--green);font-weight:700;font-size:13px;padding:6px 0}
+
+/* Hist viewer */
+#hist-viewer{background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;display:none;align-items:center;gap:10px;flex-wrap:wrap}
+#hist-viewer span{font-weight:700;color:var(--amber);font-size:13px}
+
+/* Save bar */
+#save-bar{position:fixed;bottom:0;left:0;right:0;background:var(--blue);padding:9px 20px;display:flex;gap:10px;justify-content:flex-end;z-index:150;box-shadow:0 -2px 8px rgba(0,0,0,.2);align-items:center}
+#save-status{color:rgba(255,255,255,.75);font-size:12px;margin-right:auto}
 
 /* Toast */
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:9px 20px;border-radius:24px;font-size:13px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#323232;color:#fff;padding:9px 20px;border-radius:24px;font-size:13px;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
 
-/* Print */
 @media print{
   header,#gate,#shift-bar,.tabs,.btn-blue,.btn-green,.btn-ghost,.btn-red,.btn-amber,
-  #add-trouble-btn,.del-btn,#save-bar{display:none!important}
+  .del-btn,#save-bar,#add-trouble-btn,#hist-viewer{display:none!important}
   .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid}
 }
-@media(max-width:640px){.row{flex-direction:column}.main{padding:10px 8px 80px}}
+@media(max-width:680px){.row{flex-direction:column}.main{padding:10px 8px 80px}}
 </style>
 </head>
 <body>
 
-<!-- Sign-on gate -->
+<!-- Gate -->
 <div id="gate">
   <div id="gate-box">
     <h2>⚗️ LSP Lab Shift Handover</h2>
@@ -140,14 +153,10 @@ header .sub{font-size:11px;opacity:.7}
 </div>
 
 <header>
-  <div>
-    <div class="sub">Long Son Petrochemicals — Laboratory</div>
-    <h1>⚗️ Shift Handover Tool</h1>
-  </div>
+  <div><div class="sub">Long Son Petrochemicals — Laboratory</div><h1>⚗️ Shift Handover Tool</h1></div>
   <button class="btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.5)" onclick="window.print()">🖨 Print</button>
 </header>
 
-<!-- Shift info bar -->
 <div id="shift-bar">
   <span id="shift-chip" class="shift-chip"></span>
   <span id="shift-date-disp" style="font-weight:600"></span>
@@ -155,7 +164,6 @@ header .sub{font-size:11px;opacity:.7}
   <span id="logged-as"></span>
 </div>
 
-<!-- Tabs -->
 <div class="tabs">
   <button class="tab-btn active" data-tab="s1" onclick="switchTab('s1')">§1 General</button>
   <button class="tab-btn" data-tab="s2" onclick="switchTab('s2')">§2 Equipment Trouble</button>
@@ -166,12 +174,19 @@ header .sub{font-size:11px;opacity:.7}
 </div>
 
 <div class="main">
-<div id="locked-banner" class="locked-banner" style="display:none">🔒 This handover is locked — signed off by both supervisors. View only.</div>
 
-<!-- ── S1 General ──────────────────────────────────────────────────────────── -->
+<!-- History viewer banner (shown when viewing a past shift) -->
+<div id="hist-viewer">
+  <span id="hist-viewer-label">Viewing past shift</span>
+  <button class="btn-amber btn-sm" onclick="returnToCurrentShift()">↩ Return to Current Shift</button>
+</div>
+<div id="locked-banner" class="locked-banner" style="display:none">🔒 This handover is locked — signed off by both supervisors. Read-only.</div>
+
+<!-- §1 General -->
 <div id="tab-s1">
   <div class="card">
-    <div class="card-hdr"><h2>§1 — General Information</h2>
+    <div class="card-hdr">
+      <h2>§1 — General Information</h2>
       <button class="btn-blue btn-sm" onclick="saveAll()">💾 Save Draft</button>
     </div>
     <div class="card-body">
@@ -186,81 +201,95 @@ header .sub{font-size:11px;opacity:.7}
           <select id="r-cur-team"><option>A</option><option>B</option><option>C</option><option>D</option></select>
         </div>
         <div class="col2">
-          <label>Current Shift Supervisor Name</label>
-          <input id="r-cur-sup" placeholder="Full name" maxlength="100"/>
+          <label>Current Shift Supervisor</label>
+          <div class="combo-wrap">
+            <input id="r-cur-sup" placeholder="Select or type name..." autocomplete="off"
+              oninput="comboFilter('r-cur-sup','combo-cur')" onfocus="comboOpen('combo-cur')" onblur="comboBlur('combo-cur')"/>
+            <div class="combo-drop" id="combo-cur"></div>
+          </div>
         </div>
         <div class="col">
           <label>Handover to Team</label>
           <select id="r-hov-team"><option>A</option><option>B</option><option>C</option><option>D</option></select>
         </div>
         <div class="col2">
-          <label>Handover Supervisor Name</label>
-          <input id="r-hov-sup" placeholder="Full name" maxlength="100"/>
+          <label>Handover Supervisor</label>
+          <div class="combo-wrap">
+            <input id="r-hov-sup" placeholder="Select or type name..." autocomplete="off"
+              oninput="comboFilter('r-hov-sup','combo-hov')" onfocus="comboOpen('combo-hov')" onblur="comboBlur('combo-hov')"/>
+            <div class="combo-drop" id="combo-hov"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ── S2 Equipment Trouble ───────────────────────────────────────────────── -->
+<!-- §2 Equipment Trouble -->
 <div id="tab-s2" style="display:none">
   <div class="card">
     <div class="card-hdr">
       <h2>§2 — Equipment Trouble Log</h2>
-      <div style="display:flex;gap:6px;align-items:center">
-        <label style="margin:0;color:var(--gray-lt);font-size:11px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="margin:0;display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--gray-lt);cursor:pointer">
           <input type="checkbox" id="show-done" onchange="renderTrouble()"> Show Done rows
         </label>
         <button class="btn-blue btn-sm" id="add-trouble-btn" onclick="addTroubleRow()">➕ Add Row</button>
       </div>
     </div>
-    <div class="card-body" style="padding:10px;overflow-x:auto">
-      <table class="etable" id="trouble-table">
+    <div class="card-body" style="padding:8px;overflow-x:auto">
+      <table class="etable">
         <thead><tr>
-          <th>#</th><th style="min-width:180px">Equipment Name</th><th style="min-width:90px">ID</th>
-          <th style="min-width:70px">Lab</th><th style="min-width:140px">Issue</th>
-          <th style="min-width:160px">Details</th><th style="min-width:140px">Root Cause</th>
-          <th style="min-width:160px">Action Taken</th><th>OOS?</th>
-          <th style="min-width:110px">Status</th><th></th>
+          <th>#</th>
+          <th style="min-width:190px">Equipment Name</th>
+          <th style="min-width:95px">ID</th>
+          <th style="min-width:75px">Lab</th>
+          <th style="min-width:150px">Issue</th>
+          <th style="min-width:170px">Details</th>
+          <th style="min-width:150px">Root Cause</th>
+          <th style="min-width:170px">Action Taken</th>
+          <th style="min-width:55px">OOS?</th>
+          <th style="min-width:115px">Status</th>
+          <th></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
       </table>
-      <p id="no-trouble" style="text-align:center;padding:20px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
+      <p id="no-trouble" style="text-align:center;padding:24px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
     </div>
   </div>
 </div>
 
-<!-- ── S3 Pending Samples ─────────────────────────────────────────────────── -->
+<!-- §3 Pending Samples -->
 <div id="tab-s3" style="display:none">
   <div class="card">
     <div class="card-hdr">
       <h2>§3 — Pending / Carry-over Samples</h2>
       <button class="btn-blue btn-sm" onclick="addPendingRow()">➕ Add Row</button>
     </div>
-    <div class="card-body">
-      <p style="color:var(--gray-lt);font-size:12px;margin-bottom:10px">Samples received this shift but not yet completed. These will be carried over to the next shift.</p>
-      <table class="etable" id="pending-table">
-        <thead><tr><th>#</th><th style="min-width:180px">Sample Point / Description</th><th style="min-width:180px">Reason for Pending</th><th style="min-width:180px">Action Needed</th><th></th></tr></thead>
+    <div class="card-body" style="padding:8px;overflow-x:auto">
+      <p style="color:var(--gray-lt);font-size:12px;padding:6px 6px 10px">Samples received this shift but not yet completed — carry over to next shift.</p>
+      <table class="etable">
+        <thead><tr><th>#</th><th style="min-width:200px">Sample Point / Description</th><th style="min-width:200px">Reason for Pending</th><th style="min-width:200px">Action Needed</th><th></th></tr></thead>
         <tbody id="pending-tbody"></tbody>
       </table>
-      <p id="no-pending" style="text-align:center;padding:14px;color:var(--gray-lt)">No pending samples.</p>
+      <p id="no-pending" style="text-align:center;padding:20px;color:var(--gray-lt)">No pending samples.</p>
     </div>
   </div>
 </div>
 
-<!-- ── S4 Plant Samples ───────────────────────────────────────────────────── -->
+<!-- §4 Plant Samples -->
 <div id="tab-s4" style="display:none">
   <div class="card" style="margin-bottom:12px">
     <div class="card-hdr">
       <h2>§4a — Schedule Changes from Plants</h2>
       <button class="btn-blue btn-sm" onclick="addScheduleRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:10px;overflow-x:auto">
-      <table class="etable" id="sched-table">
-        <thead><tr><th>#</th><th style="min-width:90px">Plant</th><th style="min-width:240px">Change Description</th><th style="min-width:110px">Effective Date</th><th style="min-width:130px">Requested By</th><th></th></tr></thead>
+    <div class="card-body" style="padding:8px;overflow-x:auto">
+      <table class="etable">
+        <thead><tr><th>#</th><th style="min-width:90px">Plant</th><th style="min-width:260px">Change Description</th><th style="min-width:115px">Effective Date</th><th style="min-width:140px">Requested By</th><th></th></tr></thead>
         <tbody id="sched-tbody"></tbody>
       </table>
-      <p id="no-sched" style="text-align:center;padding:14px;color:var(--gray-lt)">No schedule changes.</p>
+      <p id="no-sched" style="text-align:center;padding:20px;color:var(--gray-lt)">No schedule changes.</p>
     </div>
   </div>
   <div class="card">
@@ -268,46 +297,37 @@ header .sub{font-size:11px;opacity:.7}
       <h2>§4b — Requested Samples for Upcoming Period</h2>
       <button class="btn-blue btn-sm" onclick="addReqRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:10px;overflow-x:auto">
-      <table class="etable" id="req-table">
-        <thead><tr><th>#</th><th style="min-width:90px">Plant</th><th style="min-width:160px">Product/Stream</th><th style="min-width:180px">Test Items</th><th style="min-width:120px">Requested By</th><th style="min-width:110px">Target Date</th><th style="min-width:90px">Priority</th><th></th></tr></thead>
+    <div class="card-body" style="padding:8px;overflow-x:auto">
+      <table class="etable">
+        <thead><tr><th>#</th><th style="min-width:90px">Plant</th><th style="min-width:160px">Product / Stream</th><th style="min-width:190px">Test Items</th><th style="min-width:130px">Requested By</th><th style="min-width:115px">Target Date</th><th style="min-width:85px">Priority</th><th></th></tr></thead>
         <tbody id="req-tbody"></tbody>
       </table>
-      <p id="no-req" style="text-align:center;padding:14px;color:var(--gray-lt)">No requested samples.</p>
+      <p id="no-req" style="text-align:center;padding:20px;color:var(--gray-lt)">No requested samples.</p>
     </div>
   </div>
 </div>
 
-<!-- ── S5 Others & Sign-off ───────────────────────────────────────────────── -->
+<!-- §5 Others & Sign-off -->
 <div id="tab-s5" style="display:none">
   <div class="card" style="margin-bottom:12px">
     <div class="card-hdr"><h2>§5 — Others</h2></div>
     <div class="card-body">
       <div class="row">
-        <div class="col2">
-          <label>LIMS Issues</label>
-          <textarea id="r-lims" rows="4" placeholder="Describe any LIMS system problems, downtime, workarounds..."></textarea>
-        </div>
-        <div class="col2">
-          <label>General Remarks</label>
-          <textarea id="r-remarks" rows="4" placeholder="Any other information the incoming supervisor needs to know..."></textarea>
-        </div>
+        <div class="col2"><label>LIMS Issues</label><textarea id="r-lims" rows="4" placeholder="Describe any LIMS system problems, downtime, workarounds..."></textarea></div>
+        <div class="col2"><label>General Remarks</label><textarea id="r-remarks" rows="4" placeholder="Any other information the incoming supervisor needs to know..."></textarea></div>
       </div>
     </div>
   </div>
-
   <div class="card">
     <div class="card-hdr"><h2>Handover Sign-off</h2></div>
     <div class="card-body">
       <div class="row">
-        <!-- Outgoing -->
         <div class="col2">
           <div class="signoff-box">
             <h3>Outgoing Supervisor — Confirms Handover</h3>
             <div id="out-signed" style="display:none" class="sig-done"></div>
             <div id="out-form">
-              <div style="margin-bottom:8px">
-                <label>Select Name</label>
+              <div style="margin-bottom:8px"><label>Select Name</label>
                 <select id="out-name"><option value="">— Select —</option>
                   <option>daipc</option><option>hientx</option><option>tuanpv</option>
                   <option>huyvq</option><option>khuelv</option><option>vupt</option>
@@ -318,14 +338,12 @@ header .sub{font-size:11px;opacity:.7}
             </div>
           </div>
         </div>
-        <!-- Incoming -->
         <div class="col2">
           <div class="signoff-box">
             <h3>Incoming Supervisor — Acknowledges Receipt</h3>
             <div id="in-signed" style="display:none" class="sig-done"></div>
             <div id="in-form">
-              <div style="margin-bottom:8px">
-                <label>Select Name</label>
+              <div style="margin-bottom:8px"><label>Select Name</label>
                 <select id="in-name"><option value="">— Select —</option>
                   <option>daipc</option><option>hientx</option><option>tuanpv</option>
                   <option>huyvq</option><option>khuelv</option><option>vupt</option>
@@ -341,16 +359,35 @@ header .sub{font-size:11px;opacity:.7}
   </div>
 </div>
 
-<!-- ── History ────────────────────────────────────────────────────────────── -->
+<!-- History -->
 <div id="tab-hist" style="display:none">
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-hdr">
+      <h2>Browse Past Shifts</h2>
+    </div>
+    <div class="card-body">
+      <div class="row" style="align-items:flex-end">
+        <div class="col"><label>Date</label><input type="date" id="hist-date-pick"/></div>
+        <div class="col"><label>Shift</label>
+          <select id="hist-shift-pick">
+            <option value="Day">Day (08:00–20:00)</option>
+            <option value="Night">Night (20:00–08:00)</option>
+          </select>
+        </div>
+        <div class="col" style="min-width:unset">
+          <button class="btn-blue btn-sm" style="margin-top:18px" onclick="viewSelectedShift()">📋 View This Shift</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="card">
     <div class="card-hdr">
-      <h2>Past Handover Reports</h2>
+      <h2>Recent Reports</h2>
       <button class="btn-ghost btn-sm" onclick="loadHistory()">🔄 Refresh</button>
     </div>
     <div class="card-body" style="padding:0;overflow-x:auto">
       <table class="htable">
-        <thead><tr><th>Date</th><th>Shift</th><th>Team</th><th>Logged by</th><th>Outgoing Sign</th><th>Incoming Sign</th><th>Status</th><th>Updated</th></tr></thead>
+        <thead><tr><th>Date</th><th>Shift</th><th>Team</th><th>Logged By</th><th>Current Supervisor</th><th>Handover Supervisor</th><th>Outgoing Sign</th><th>Incoming Sign</th><th>Status</th></tr></thead>
         <tbody id="hist-tbody"></tbody>
       </table>
     </div>
@@ -360,23 +397,25 @@ header .sub{font-size:11px;opacity:.7}
 </div><!-- /main -->
 
 <!-- Floating save bar -->
-<div id="save-bar" style="position:fixed;bottom:0;left:0;right:0;background:var(--blue);padding:10px 20px;display:flex;gap:10px;justify-content:flex-end;z-index:150;box-shadow:0 -2px 8px rgba(0,0,0,.2)">
-  <span id="save-status" style="color:rgba(255,255,255,.7);font-size:12px;align-self:center;margin-right:auto"></span>
+<div id="save-bar">
+  <span id="save-status"></span>
   <button class="btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.5)" onclick="saveAll()">💾 Save All Sections</button>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────────
-const USERS = ['daipc','hientx','tuanpv','huyvq','khuelv','vupt','truocnt','huongbtm'];
+// ── Constants ──────────────────────────────────────────────────────────────
+const USERS  = ['daipc','hientx','tuanpv','huyvq','khuelv','vupt','truocnt','huongbtm'];
 const PLANTS = ['Hot','Cold','BDU','CTU','TF','Other'];
-const OWNER_LABEL = {Gas:'Gas Lab', Oil:'Oil Lab', Uti:'Utility Lab'};
+const OWN    = {Gas:'Gas Lab', Oil:'Oil Lab', Uti:'Utility Lab'};
 
-let loggedBy   = '';
+// ── State ──────────────────────────────────────────────────────────────────
+let loggedBy      = '';
 let currentReport = null;
+let viewingPast   = false;
 let equipMaster   = [];
-let troubleRows   = [];  // local working copy
+let troubleRows   = [];
 let pendingRows   = [];
 let schedRows     = [];
 let reqRows       = [];
@@ -384,33 +423,24 @@ let shiftDate     = '';
 let shiftType     = '';
 let isLocked      = false;
 
-// ── Shift calculation ──────────────────────────────────────────────────────
+// ── Shift logic ────────────────────────────────────────────────────────────
 function calcShift() {
-  const now  = new Date();
-  const h    = now.getHours();
-  let date   = new Date(now);
+  const now = new Date();
+  const h   = now.getHours();
+  let date  = new Date(now);
   let type;
-  if (h >= 8 && h < 20) {
-    type = 'Day';
-  } else {
-    type = 'Night';
-    if (h >= 0 && h < 8) date.setDate(date.getDate() - 1); // still yesterday's night shift
-  }
-  return {
-    date: date.toISOString().slice(0,10),
-    type,
-    label: type === 'Day' ? '☀ Day (08:00–20:00)' : '🌙 Night (20:00–08:00)'
-  };
+  if (h >= 8 && h < 20) { type = 'Day'; }
+  else { type = 'Night'; if (h < 8) date.setDate(date.getDate()-1); }
+  return { date: date.toISOString().slice(0,10), type };
 }
 
 // ── Gate ───────────────────────────────────────────────────────────────────
 function enterApp() {
-  const sel = document.getElementById('gate-sel').value;
-  if (!sel) { alert('Please select your name.'); return; }
-  loggedBy = sel;
+  const v = document.getElementById('gate-sel').value;
+  if (!v) { alert('Please select your name.'); return; }
+  loggedBy = v;
   document.getElementById('gate').style.display = 'none';
   document.getElementById('logged-as').textContent = '👤 ' + loggedBy;
-  document.getElementById('r-loggedby').value = loggedBy;
   init();
 }
 
@@ -421,21 +451,21 @@ async function init() {
   shiftType = s.type;
 
   const chip = document.getElementById('shift-chip');
-  chip.textContent = s.label;
+  chip.textContent = s.type === 'Day' ? '☀ Day (08:00–20:00)' : '🌙 Night (20:00–08:00)';
   chip.className   = 'shift-chip' + (s.type === 'Night' ? ' night' : '');
   document.getElementById('shift-date-disp').textContent = fmtDateOnly(s.date);
   document.getElementById('r-date').value  = s.date;
   document.getElementById('r-shift').value = s.type;
+  document.getElementById('r-loggedby').value = loggedBy;
 
-  // Live clock
-  setInterval(() => {
-    document.getElementById('shift-time-disp').textContent = new Date().toLocaleTimeString('en-GB');
-  }, 1000);
+  // Set history date picker default to today
+  document.getElementById('hist-date-pick').value = s.date;
+  document.getElementById('hist-shift-pick').value = s.type === 'Day' ? 'Night' : 'Day';
 
-  // Load equipment
-  try { equipMaster = await api('/api/equipment'); } catch(e) {}
+  setInterval(() => { document.getElementById('shift-time-disp').textContent = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
-  // Load or create today's report
+  try { equipMaster = await api('/api/equipment'); } catch(e) { console.error(e); }
+
   await loadCurrentShift();
   await loadHistory();
 }
@@ -443,56 +473,87 @@ async function init() {
 async function loadCurrentShift() {
   try {
     const data = await api(`/api/reports/by-shift?date=${shiftDate}&shift=${shiftType}`);
-    if (data) {
-      applyReport(data);
-    } else {
-      // New shift — auto-save header immediately
-      await saveHeader();
-    }
-  } catch(e) { toast('⚠ Could not load shift: ' + e.message, 4000); }
+    if (data) { applyReport(data, false); }
+    else { await saveHeader(); }
+  } catch(e) { toast('⚠ ' + e.message, 4000); }
 }
 
-function applyReport(data) {
+function applyReport(data, isPast) {
   currentReport = data;
-  isLocked = data.locked;
+  viewingPast   = isPast;
+  isLocked      = data.locked || isPast;
 
+  document.getElementById('r-date').value      = data.shift_date ? data.shift_date.slice(0,10) : '';
+  document.getElementById('r-shift').value     = data.shift_type || '';
+  document.getElementById('r-loggedby').value  = isPast ? (data.logged_by||'') : loggedBy;
   document.getElementById('r-cur-team').value  = data.current_shift_team  || 'A';
   document.getElementById('r-cur-sup').value   = data.current_supervisor  || '';
   document.getElementById('r-hov-team').value  = data.handover_shift_team || 'A';
   document.getElementById('r-hov-sup').value   = data.handover_supervisor || '';
-  document.getElementById('r-lims').value      = data.lims_issues         || '';
-  document.getElementById('r-remarks').value   = data.general_remarks     || '';
+  document.getElementById('r-lims').value      = data.lims_issues    || '';
+  document.getElementById('r-remarks').value   = data.general_remarks || '';
 
   troubleRows = data.trouble    || [];
   pendingRows = data.pending    || [];
   schedRows   = data.schedules  || [];
   reqRows     = data.reqsamples || [];
 
-  renderTrouble();
-  renderPending();
-  renderSched();
-  renderReq();
-  renderSignoffs(data);
+  renderTrouble(); renderPending(); renderSched(); renderReq(); renderSignoffs(data);
+
+  // Past viewer banner
+  const hvBanner = document.getElementById('hist-viewer');
+  if (isPast) {
+    hvBanner.style.display = 'flex';
+    document.getElementById('hist-viewer-label').textContent =
+      `📋 Viewing: ${data.shift_type} shift — ${fmtDateOnly(data.shift_date)} (read-only)`;
+  } else { hvBanner.style.display = 'none'; }
+
+  document.getElementById('locked-banner').style.display = data.locked ? '' : 'none';
   applyLock();
 }
 
 function applyLock() {
-  const banner = document.getElementById('locked-banner');
-  banner.style.display = isLocked ? '' : 'none';
-  document.querySelectorAll('input,select,textarea').forEach(el => {
-    if (!el.closest('#gate') && !el.closest('#hist-tbody'))
-      el.disabled = isLocked;
-  });
-  document.querySelectorAll('button').forEach(b => {
-    if (!b.closest('#gate') && !b.closest('#shift-bar') && b.id !== 'gate-btn')
-      if (isLocked) b.disabled = true;
-  });
-  document.getElementById('save-bar').style.display = isLocked ? 'none' : '';
+  const lock = isLocked;
+  document.querySelectorAll('.main input,.main select,.main textarea').forEach(el => el.disabled = lock);
+  document.querySelectorAll('.main button').forEach(b => { if (!b.id?.includes('hist')) b.disabled = lock; });
+  document.getElementById('save-bar').style.display = lock ? 'none' : '';
 }
 
-// ── Save all ───────────────────────────────────────────────────────────────
+async function returnToCurrentShift() {
+  viewingPast = false;
+  isLocked    = false;
+  document.getElementById('r-date').value     = shiftDate;
+  document.getElementById('r-shift').value    = shiftType;
+  document.getElementById('r-loggedby').value = loggedBy;
+  await loadCurrentShift();
+  switchTab('s1');
+}
+
+// ── Combobox (supervisor name field) ──────────────────────────────────────
+function comboOpen(dropId) {
+  const drop = document.getElementById(dropId);
+  drop.innerHTML = USERS.map(u => `<div onmousedown="comboPick('${dropId}',this,'${u}')">${u}</div>`).join('');
+  drop.style.display = 'block';
+}
+function comboFilter(inputId, dropId) {
+  const q    = document.getElementById(inputId).value.toLowerCase();
+  const drop = document.getElementById(dropId);
+  const items = USERS.filter(u => u.toLowerCase().includes(q));
+  drop.innerHTML = items.map(u => `<div onmousedown="comboPick('${dropId}',this,'${u}')">${u}</div>`).join('');
+  drop.style.display = items.length ? 'block' : 'none';
+}
+function comboPick(dropId, el, val) {
+  const inputId = dropId === 'combo-cur' ? 'r-cur-sup' : 'r-hov-sup';
+  document.getElementById(inputId).value = val;
+  document.getElementById(dropId).style.display = 'none';
+}
+function comboBlur(dropId) {
+  setTimeout(() => { document.getElementById(dropId).style.display = 'none'; }, 150);
+}
+
+// ── Save ───────────────────────────────────────────────────────────────────
 async function saveAll() {
-  if (isLocked) { toast('🔒 Locked'); return; }
+  if (isLocked) { toast('🔒 Locked — read-only'); return; }
   setSaveStatus('Saving…');
   try {
     await saveHeader();
@@ -500,7 +561,7 @@ async function saveAll() {
     await saveSchedules();
     await saveReqSamples();
     setSaveStatus('✅ Saved ' + new Date().toLocaleTimeString('en-GB'));
-    toast('✅ All sections saved');
+    toast('✅ Saved');
   } catch(e) { toast('❌ ' + e.message, 4000); setSaveStatus('❌ Save failed'); }
 }
 
@@ -515,22 +576,19 @@ async function saveHeader() {
     lims_issues:    document.getElementById('r-lims').value.trim(),
     general_remarks:document.getElementById('r-remarks').value.trim(),
   };
-  const r = await api('/api/reports','POST',body);
+  const r = await api('/api/reports','POST', body);
   if (!currentReport) currentReport = r;
   else Object.assign(currentReport, r);
 }
-
-function setSaveStatus(msg) { document.getElementById('save-status').textContent = msg; }
+function setSaveStatus(m){ document.getElementById('save-status').textContent = m; }
 
 // ── Sign-off ───────────────────────────────────────────────────────────────
 async function signOff(role) {
-  if (!currentReport) { toast('Save the report first'); return; }
+  if (!currentReport) { toast('Save first'); return; }
   const selId = role === 'outgoing' ? 'out-name' : 'in-name';
   const name  = document.getElementById(selId).value;
   if (!name) { toast('Select a name first'); return; }
-  if (role === 'incoming' && !currentReport.outgoing_name) {
-    toast('⚠ Outgoing supervisor must sign first'); return;
-  }
+  if (role === 'incoming' && !currentReport.outgoing_name) { toast('⚠ Outgoing must sign first'); return; }
   if (!confirm(`Sign as ${role} supervisor (${name})?`)) return;
   try {
     const r = await api(`/api/reports/${currentReport.id}/signoff`, 'PATCH', { role, name });
@@ -538,28 +596,21 @@ async function signOff(role) {
     isLocked = r.locked;
     renderSignoffs(r);
     applyLock();
-    toast(role === 'outgoing' ? '✍ Outgoing signed' : '✅ Handover locked & complete!', 4000);
-    await loadHistory();
-  } catch(e) { toast('❌ ' + e.message, 4000); }
+    toast(role==='outgoing' ? '✍ Outgoing signed' : '✅ Handover complete & locked!', 4000);
+    loadHistory();
+  } catch(e) { toast('❌ '+e.message, 4000); }
 }
-
 function renderSignoffs(r) {
   if (r.outgoing_name) {
     document.getElementById('out-signed').style.display = '';
-    document.getElementById('out-signed').textContent = `✅ Signed by ${r.outgoing_name} at ${fmtTs(r.outgoing_ts)}`;
+    document.getElementById('out-signed').textContent = `✅ Signed: ${r.outgoing_name} — ${fmtTs(r.outgoing_ts)}`;
     document.getElementById('out-form').style.display = 'none';
-  } else {
-    document.getElementById('out-signed').style.display = 'none';
-    document.getElementById('out-form').style.display = '';
-  }
+  } else { document.getElementById('out-signed').style.display='none'; document.getElementById('out-form').style.display=''; }
   if (r.incoming_name) {
     document.getElementById('in-signed').style.display = '';
-    document.getElementById('in-signed').textContent = `✅ Acknowledged by ${r.incoming_name} at ${fmtTs(r.incoming_ts)}`;
+    document.getElementById('in-signed').textContent = `✅ Acknowledged: ${r.incoming_name} — ${fmtTs(r.incoming_ts)}`;
     document.getElementById('in-form').style.display = 'none';
-  } else {
-    document.getElementById('in-signed').style.display = 'none';
-    document.getElementById('in-form').style.display = '';
-  }
+  } else { document.getElementById('in-signed').style.display='none'; document.getElementById('in-form').style.display=''; }
 }
 
 // ── Equipment Trouble ──────────────────────────────────────────────────────
@@ -570,131 +621,128 @@ function renderTrouble() {
   document.getElementById('no-trouble').style.display = troubleRows.length ? 'none' : '';
   tbody.innerHTML = '';
   visible.forEach((row, idx) => {
-    const tr = document.createElement('tr');
+    const rid = row.id;
+    const tr  = document.createElement('tr');
     if (row.status === 'Done') tr.className = 'done-row';
     tr.innerHTML = `
-      <td style="color:var(--gray-lt);font-size:11px">${idx+1}</td>
+      <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${idx+1}</td>
       <td>
         <div class="ac-wrap">
-          <input class="equip-search" data-rid="${row.id}" value="${esc(row.equip_name||'')}"
-            oninput="acSearch(this)" onfocus="acSearch(this)" placeholder="Type to search..." autocomplete="off"/>
-          <div class="ac-list" id="ac-${row.id}" style="display:none"></div>
+          <input class="eqsearch" data-rid="${rid}" value="${esc(row.equip_name||'')}"
+            placeholder="Type to search…" autocomplete="off"
+            oninput="acSearch(this)" onfocus="acSearch(this)"/>
+          <div class="ac-list" id="acl-${rid}"></div>
         </div>
       </td>
-      <td><input readonly value="${esc(row.equip_code||'')}" id="code-${row.id}" style="background:#f5f5f5;min-width:80px"/></td>
-      <td><input readonly value="${esc(ownerLabel(row.owner)||'')}" id="own-${row.id}" style="background:#f5f5f5;min-width:60px"/></td>
+      <td><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="background:#f5f5f5;min-width:80px"/></td>
+      <td><input readonly id="eqown-${rid}"  value="${esc(OWN[row.owner]||row.owner||'')}" style="background:#f5f5f5;min-width:60px"/></td>
       <td>
-        <select id="iss-${row.id}" onchange="updateIssue(${row.id},this.value)">
+        <select id="eqiss-${rid}" onchange="trField(${rid},'issue_type',this.value)">
           <option ${row.issue_type==='Failed SQC'?'selected':''}>Failed SQC</option>
           <option ${row.issue_type==='Out-of-calibration'?'selected':''}>Out-of-calibration</option>
           <option ${row.issue_type==='Others'?'selected':''}>Others</option>
         </select>
-        <input id="iss-other-${row.id}" placeholder="Specify..." value="${esc(row.issue_other||'')}"
-          style="margin-top:3px;display:${row.issue_type==='Others'?'block':'none'}"
-          oninput="troubleField(${row.id},'issue_other',this.value)"/>
+        <input id="eqiss-oth-${rid}" placeholder="Specify…" value="${esc(row.issue_other||'')}"
+          style="margin-top:3px;display:${row.issue_type==='Others'?'':'none'}"
+          oninput="trField(${rid},'issue_other',this.value)"/>
       </td>
-      <td><textarea oninput="troubleField(${row.id},'details',this.value)">${esc(row.details||'')}</textarea></td>
-      <td><textarea oninput="troubleField(${row.id},'root_cause',this.value)">${esc(row.root_cause||'')}</textarea></td>
-      <td><textarea oninput="troubleField(${row.id},'action_taken',this.value)">${esc(row.action_taken||'')}</textarea></td>
+      <td><textarea onchange="trField(${rid},'details',this.value)">${esc(row.details||'')}</textarea></td>
+      <td><textarea onchange="trField(${rid},'root_cause',this.value)">${esc(row.root_cause||'')}</textarea></td>
+      <td><textarea onchange="trField(${rid},'action_taken',this.value)">${esc(row.action_taken||'')}</textarea></td>
       <td>
-        <select onchange="troubleField(${row.id},'out_of_service',this.value)">
-          <option ${row.out_of_service==='No'?'selected':''}>No</option>
+        <select onchange="trField(${rid},'out_of_service',this.value)">
+          <option ${(row.out_of_service||'No')==='No'?'selected':''}>No</option>
           <option ${row.out_of_service==='Yes'?'selected':''}>Yes</option>
         </select>
       </td>
       <td>
-        <select onchange="troubleField(${row.id},'status',this.value)">
-          <option ${row.status==='Investigating'?'selected':''}>Investigating</option>
+        <select onchange="trField(${rid},'status',this.value)">
+          <option ${(row.status||'Investigating')==='Investigating'?'selected':''}>Investigating</option>
           <option ${row.status==='In-progress'?'selected':''}>In-progress</option>
           <option ${row.status==='Done'?'selected':''}>Done</option>
         </select>
       </td>
-      <td><button class="btn-red btn-xs del-btn" onclick="deleteTrouble(${row.id})">🗑</button></td>
+      <td><button class="btn-red btn-xs del-btn" onclick="delTrouble(${rid})">🗑</button></td>
     `;
     tbody.appendChild(tr);
   });
+  // Attach issue-toggle after render
+  visible.forEach(row => {
+    const sel = document.getElementById(`eqiss-${row.id}`);
+    if (sel) sel.addEventListener('change', function() {
+      const oth = document.getElementById(`eqiss-oth-${row.id}`);
+      if (oth) oth.style.display = this.value === 'Others' ? '' : 'none';
+    });
+  });
 }
 
-function troubleField(id, field, value) {
+function trField(id, field, value) {
   const row = troubleRows.find(r => r.id === id);
-  if (row) row[field] = value;
+  if (row) { row[field] = value; }
   if (field === 'status') renderTrouble();
-  debounceSaveTrouble(id);
-}
-
-function updateIssue(id, val) {
-  const row = troubleRows.find(r => r.id === id);
-  if (row) row.issue_type = val;
-  document.getElementById(`iss-other-${id}`).style.display = val === 'Others' ? 'block' : 'none';
-  debounceSaveTrouble(id);
-}
-
-let troubleTimers = {};
-function debounceSaveTrouble(id) {
-  clearTimeout(troubleTimers[id]);
-  troubleTimers[id] = setTimeout(() => saveTroubleRow(id), 800);
+  clearTimeout(trField._t); trField._t = setTimeout(() => saveTroubleRow(id), 700);
 }
 
 async function saveTroubleRow(id) {
   if (!currentReport || isLocked) return;
   const row = troubleRows.find(r => r.id === id);
   if (!row) return;
-  try {
-    await api(`/api/trouble/${id}`, 'PATCH', row);
-  } catch(e) { console.error(e); }
+  try { await api(`/api/trouble/${id}`, 'PATCH', row); } catch(e) { console.error('patch trouble:', e); }
 }
 
 async function addTroubleRow() {
   if (!currentReport) { await saveAll(); }
-  if (!currentReport) return;
+  if (!currentReport) { toast('Could not create report'); return; }
   try {
     const r = await api(`/api/reports/${currentReport.id}/trouble`, 'POST', {
-      equip_code:'', equip_name:'', owner:'', issue_type:'Failed SQC',
-      issue_other:'', details:'', root_cause:'', action_taken:'', out_of_service:'No', status:'Investigating'
+      equip_code:'', equip_name:'', owner:'',
+      issue_type:'Failed SQC', issue_other:'',
+      details:'', root_cause:'', action_taken:'',
+      out_of_service:'No', status:'Investigating'
     });
     troubleRows.push(r);
     renderTrouble();
-  } catch(e) { toast('❌ ' + e.message, 4000); }
+    toast('Row added');
+  } catch(e) { toast('❌ '+e.message, 4000); }
 }
 
-async function deleteTrouble(id) {
+async function delTrouble(id) {
   if (!confirm('Delete this row?')) return;
   try {
     await api(`/api/trouble/${id}`, 'DELETE');
     troubleRows = troubleRows.filter(r => r.id !== id);
     renderTrouble();
     toast('🗑 Deleted');
-  } catch(e) { toast('❌ ' + e.message, 4000); }
+  } catch(e) { toast('❌ '+e.message, 4000); }
 }
 
 // Autocomplete
 function acSearch(input) {
   const rid  = input.dataset.rid;
-  const q    = input.value.toLowerCase();
-  const list = document.getElementById('ac-' + rid);
-  const matches = q.length < 1 ? [] : equipMaster.filter(e =>
-    e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)).slice(0,12);
-  if (!matches.length) { list.style.display='none'; return; }
-  list.innerHTML = matches.map(e =>
-    `<div class="ac-item" onclick="acSelect(${e.no},'${esc(e.code)}','${esc(e.name)}','${e.owner}','${rid}')">
-       <span class="ac-code">${esc(e.code)}</span>${esc(e.name)} <span class="badge b-gray" style="float:right">${ownerLabel(e.owner)}</span>
+  const q    = input.value.trim().toLowerCase();
+  const list = document.getElementById('acl-'+rid);
+  const hits = q.length === 0 ? [] :
+    equipMaster.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)).slice(0,14);
+  if (!hits.length) { list.style.display='none'; return; }
+  list.innerHTML = hits.map(e =>
+    `<div class="ac-item" onmousedown="acPick(event,'${rid}','${esc(e.code)}','${esc(e.name)}','${e.owner}')">
+       <span class="ac-code">${esc(e.code)}</span> ${esc(e.name)}
+       <span class="badge b-gray" style="float:right;font-size:10px">${OWN[e.owner]||e.owner}</span>
      </div>`).join('');
-  list.style.display='';
+  list.style.display='block';
 }
-
-function acSelect(no, code, name, owner, rid) {
-  const input = document.querySelector(`.equip-search[data-rid="${rid}"]`);
-  input.value = name;
-  document.getElementById('ac-'+rid).style.display='none';
-  document.getElementById('code-'+rid).value = code;
-  document.getElementById('own-'+rid).value  = ownerLabel(owner);
-  const row = troubleRows.find(r => String(r.id) === String(rid));
+function acPick(evt, rid, code, name, owner) {
+  evt.preventDefault();
+  document.querySelector(`.eqsearch[data-rid="${rid}"]`).value = name;
+  document.getElementById('acl-'+rid).style.display = 'none';
+  document.getElementById('eqcode-'+rid).value = code;
+  document.getElementById('eqown-'+rid).value  = OWN[owner]||owner;
+  const row = troubleRows.find(r => String(r.id)===String(rid));
   if (row) { row.equip_code=code; row.equip_name=name; row.owner=owner; }
-  debounceSaveTrouble(parseInt(rid));
+  clearTimeout(trField._t); trField._t = setTimeout(() => saveTroubleRow(parseInt(rid)), 700);
 }
-
 document.addEventListener('click', e => {
-  if (!e.target.classList.contains('equip-search') && !e.target.classList.contains('ac-item'))
+  if (!e.target.classList.contains('eqsearch'))
     document.querySelectorAll('.ac-list').forEach(l => l.style.display='none');
 });
 
@@ -707,24 +755,18 @@ function renderPending() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
-      <td><input value="${esc(row.sample_point||'')}" oninput="pendingRows[${i}].sample_point=this.value" placeholder="e.g. SPC-001 Ethylene"/></td>
+      <td><input value="${esc(row.sample_point||'')}" oninput="pendingRows[${i}].sample_point=this.value" placeholder="e.g. SPC-001 Ethylene product"/></td>
       <td><textarea oninput="pendingRows[${i}].reason=this.value">${esc(row.reason||'')}</textarea></td>
       <td><textarea oninput="pendingRows[${i}].action_needed=this.value">${esc(row.action_needed||'')}</textarea></td>
-      <td><button class="btn-red btn-xs del-btn" onclick="pendingRows.splice(${i},1);renderPending()">🗑</button></td>
-    `;
+      <td><button class="btn-red btn-xs del-btn" onclick="pendingRows.splice(${i},1);renderPending()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
-function addPendingRow() { pendingRows.push({sample_point:'',reason:'',action_needed:''}); renderPending(); }
-async function savePending() {
-  if (!currentReport) return;
-  await api(`/api/reports/${currentReport.id}/pending`, 'PUT', pendingRows);
-}
+function addPendingRow(){ pendingRows.push({sample_point:'',reason:'',action_needed:''}); renderPending(); }
+async function savePending(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows); }
 
 // ── Schedule changes ───────────────────────────────────────────────────────
-function plantOpts(sel) {
-  return PLANTS.map(p=>`<option ${sel===p?'selected':''}>${p}</option>`).join('');
-}
+function plantSel(v){ return PLANTS.map(p=>`<option ${v===p?'selected':''}>${p}</option>`).join(''); }
 function renderSched() {
   const tbody = document.getElementById('sched-tbody');
   document.getElementById('no-sched').style.display = schedRows.length ? 'none' : '';
@@ -733,20 +775,16 @@ function renderSched() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
-      <td><select onchange="schedRows[${i}].plant=this.value">${plantOpts(row.plant)}</select></td>
+      <td><select onchange="schedRows[${i}].plant=this.value">${plantSel(row.plant)}</select></td>
       <td><textarea oninput="schedRows[${i}].change_desc=this.value">${esc(row.change_desc||'')}</textarea></td>
       <td><input type="date" value="${row.effective_date?row.effective_date.slice(0,10):''}" onchange="schedRows[${i}].effective_date=this.value"/></td>
       <td><input value="${esc(row.requested_by||'')}" oninput="schedRows[${i}].requested_by=this.value" placeholder="Name"/></td>
-      <td><button class="btn-red btn-xs del-btn" onclick="schedRows.splice(${i},1);renderSched()">🗑</button></td>
-    `;
+      <td><button class="btn-red btn-xs del-btn" onclick="schedRows.splice(${i},1);renderSched()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
-function addScheduleRow() { schedRows.push({plant:'Hot',change_desc:'',effective_date:'',requested_by:''}); renderSched(); }
-async function saveSchedules() {
-  if (!currentReport) return;
-  await api(`/api/reports/${currentReport.id}/schedules`, 'PUT', schedRows);
-}
+function addScheduleRow(){ schedRows.push({plant:'Hot',change_desc:'',effective_date:'',requested_by:''}); renderSched(); }
+async function saveSchedules(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/schedules`,'PUT',schedRows); }
 
 // ── Requested samples ──────────────────────────────────────────────────────
 function renderReq() {
@@ -757,27 +795,21 @@ function renderReq() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
-      <td><select onchange="reqRows[${i}].plant=this.value">${plantOpts(row.plant)}</select></td>
-      <td><input value="${esc(row.product_stream||'')}" oninput="reqRows[${i}].product_stream=this.value" placeholder="e.g. Ethylene product"/></td>
+      <td><select onchange="reqRows[${i}].plant=this.value">${plantSel(row.plant)}</select></td>
+      <td><input value="${esc(row.product_stream||'')}" oninput="reqRows[${i}].product_stream=this.value" placeholder="e.g. Ethylene"/></td>
       <td><textarea oninput="reqRows[${i}].test_items=this.value">${esc(row.test_items||'')}</textarea></td>
       <td><input value="${esc(row.requested_by||'')}" oninput="reqRows[${i}].requested_by=this.value" placeholder="Name"/></td>
       <td><input type="date" value="${row.target_date?row.target_date.slice(0,10):''}" onchange="reqRows[${i}].target_date=this.value"/></td>
-      <td>
-        <select onchange="reqRows[${i}].priority=this.value">
-          <option ${row.priority==='Normal'?'selected':''}>Normal</option>
-          <option ${row.priority==='High'?'selected':''}>High</option>
-        </select>
-      </td>
-      <td><button class="btn-red btn-xs del-btn" onclick="reqRows.splice(${i},1);renderReq()">🗑</button></td>
-    `;
+      <td><select onchange="reqRows[${i}].priority=this.value">
+        <option ${(row.priority||'Normal')==='Normal'?'selected':''}>Normal</option>
+        <option ${row.priority==='High'?'selected':''}>High</option>
+      </select></td>
+      <td><button class="btn-red btn-xs del-btn" onclick="reqRows.splice(${i},1);renderReq()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
-function addReqRow() { reqRows.push({plant:'Hot',product_stream:'',test_items:'',requested_by:'',target_date:'',priority:'Normal'}); renderReq(); }
-async function saveReqSamples() {
-  if (!currentReport) return;
-  await api(`/api/reports/${currentReport.id}/reqsamples`, 'PUT', reqRows);
-}
+function addReqRow(){ reqRows.push({plant:'Hot',product_stream:'',test_items:'',requested_by:'',target_date:'',priority:'Normal'}); renderReq(); }
+async function saveReqSamples(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/reqsamples`,'PUT',reqRows); }
 
 // ── History ────────────────────────────────────────────────────────────────
 async function loadHistory() {
@@ -785,36 +817,39 @@ async function loadHistory() {
     const reports = await api('/api/reports?limit=60');
     const tbody = document.getElementById('hist-tbody');
     if (!reports.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--gray-lt)">No reports yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--gray-lt)">No reports yet.</td></tr>';
       return;
     }
     tbody.innerHTML = reports.map(r => `
-      <tr onclick="viewHistReport('${r.shift_date.slice(0,10)}','${r.shift_type}')" title="Click to view">
+      <tr onclick="jumpToReport('${r.shift_date.slice(0,10)}','${r.shift_type}')" title="Click to view">
         <td>${fmtDateOnly(r.shift_date)}</td>
         <td>${r.shift_type==='Day'?'☀ Day':'🌙 Night'}</td>
         <td>${esc(r.current_shift_team||'—')}</td>
         <td>${esc(r.logged_by||'—')}</td>
-        <td style="font-size:12px">${r.outgoing_name ? '✅ '+esc(r.outgoing_name) : '<span style="color:var(--gray-lt)">—</span>'}</td>
-        <td style="font-size:12px">${r.incoming_name ? '✅ '+esc(r.incoming_name) : '<span style="color:var(--gray-lt)">—</span>'}</td>
+        <td>${esc(r.current_supervisor||'—')}</td>
+        <td>${esc(r.handover_supervisor||'—')}</td>
+        <td style="font-size:12px">${r.outgoing_name?'✅ '+esc(r.outgoing_name):'<span style="color:var(--gray-lt)">—</span>'}</td>
+        <td style="font-size:12px">${r.incoming_name?'✅ '+esc(r.incoming_name):'<span style="color:var(--gray-lt)">—</span>'}</td>
         <td><span class="badge ${r.locked?'b-green':'b-amber'}">${r.locked?'Locked':'Draft'}</span></td>
-        <td style="font-size:11px;color:var(--gray-lt)">${fmtTs(r.updated_at)}</td>
       </tr>`).join('');
   } catch(e) { console.error(e); }
 }
 
-async function viewHistReport(date, shift) {
-  // If viewing current shift, just switch to it
-  if (date === shiftDate && shift === shiftType) { switchTab('s1'); return; }
+async function viewSelectedShift() {
+  const date  = document.getElementById('hist-date-pick').value;
+  const shift = document.getElementById('hist-shift-pick').value;
+  if (!date) { toast('Select a date first'); return; }
+  await jumpToReport(date, shift);
+}
+
+async function jumpToReport(date, shift) {
+  const isPast = !(date === shiftDate && shift === shiftType);
   try {
     const data = await api(`/api/reports/by-shift?date=${date}&shift=${shift}`);
-    if (!data) { toast('No report found'); return; }
-    // Show in a simple read-only modal (open in new window-like approach: switch tabs and populate read-only)
-    applyReport(data);
-    isLocked = true; // force read-only for historical view
-    applyLock();
+    if (!data) { toast(`No ${shift} shift report found for ${fmtDateOnly(date)}`); return; }
+    applyReport(data, isPast);
     switchTab('s1');
-    toast(`📋 Viewing ${shift} shift — ${fmtDateOnly(date)} (read-only)`);
-  } catch(e) { toast('❌ ' + e.message, 4000); }
+  } catch(e) { toast('❌ '+e.message, 4000); }
 }
 
 // ── Tab switching ──────────────────────────────────────────────────────────
@@ -823,36 +858,34 @@ function switchTab(tab) {
     document.getElementById('tab-'+t).style.display = t===tab ? '' : 'none';
     document.querySelector(`.tab-btn[data-tab="${t}"]`).classList.toggle('active', t===tab);
   });
-  if (tab === 'hist') loadHistory();
+  if (tab==='hist') loadHistory();
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── API ────────────────────────────────────────────────────────────────────
 async function api(url, method='GET', body=null) {
   const opts = { method, headers:{'Content-Type':'application/json'} };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(url, opts);
   if (!res.ok) {
     let msg = res.statusText;
-    try { const j = await res.json(); msg = j.error||msg; } catch(_){}
+    try { const j=await res.json(); msg=j.error||msg; } catch(_){}
     throw new Error(msg);
   }
   return res.status===204 ? null : res.json();
 }
 
-let toastT;
+let _toastT;
 function toast(msg, d=2500) {
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),d);
+  clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove('show'),d);
 }
-
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function ownerLabel(o){ return OWNER_LABEL[o]||o||''; }
 function fmtTs(iso){ if(!iso)return'—'; return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
-function fmtDateOnly(iso){ if(!iso)return'—'; const d=new Date(iso+'T12:00:00'); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtDateOnly(iso){ if(!iso)return'—'; return new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
 
-// Auto-save every 2 minutes
-setInterval(() => { if(currentReport && !isLocked) saveAll(); }, 120000);
+// Auto-save every 2 min
+setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
 </script>
 </body>
 </html>
