@@ -553,6 +553,19 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 </div>
 
 <div id="toast"></div>
+  <div id="session-check-modal" style="display:none;position:fixed;inset:0;background:rgba(15,41,66,.55);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);">
+    <h3 style="margin-bottom:10px;color:var(--navy,#122c4a);font-size:16px;font-weight:800;">Still there?</h3>
+    <p style="color:#718096;font-size:13px;margin-bottom:20px;">
+      You've been signed in as <strong id="session-check-user"></strong> for a while.
+      Stay signed in, or log out?
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn-ghost btn-sm" onclick="signOutSession()">Log out</button>
+      <button class="btn-green btn-sm" onclick="keepSignedIn()">Stay signed in</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -572,6 +585,10 @@ let reqRows       = [];
 let shiftDate     = '';
 let shiftType     = '';
 let isLocked      = false;
+  const SESSION_KEY        = 'lsp_user';
+const SESSION_TS_KEY     = 'lsp_login_ts';
+const RECHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+let sessionTimer = null;
 
 // ── Shift logic ────────────────────────────────────────────────────────────
 function calcShift() {
@@ -589,8 +606,11 @@ function enterApp() {
   const v = document.getElementById('gate-sel').value;
   if (!v) { alert('Please select your name.'); return; }
   loggedBy = v;
+  localStorage.setItem(SESSION_KEY, loggedBy);
+  localStorage.setItem(SESSION_TS_KEY, Date.now().toString());
   document.getElementById('gate').style.display = 'none';
   document.getElementById('logged-as').textContent = '👤 ' + loggedBy;
+  startSessionTimer();
   init();
 }
 
@@ -1168,7 +1188,49 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Auto-save every 2 min
+// ── Persistent session ───────────────────────────────────────────────────
+function trySilentLogin() {
+  const savedUser = localStorage.getItem(SESSION_KEY);
+  const savedTs   = parseInt(localStorage.getItem(SESSION_TS_KEY), 10);
+  if (!savedUser || !savedTs || isNaN(savedTs)) return false;
+
+  loggedBy = savedUser;
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('logged-as').textContent = '👤 ' + loggedBy;
+  init();
+
+  if (Date.now() - savedTs >= RECHECK_INTERVAL_MS) {
+    showSessionCheckPanel();
+  }
+  startSessionTimer();
+  return true;
+}
+
+function startSessionTimer() {
+  clearInterval(sessionTimer);
+  sessionTimer = setInterval(showSessionCheckPanel, RECHECK_INTERVAL_MS);
+}
+
+function showSessionCheckPanel() {
+  document.getElementById('session-check-user').textContent = loggedBy;
+  document.getElementById('session-check-modal').style.display = 'flex';
+}
+
+function keepSignedIn() {
+  localStorage.setItem(SESSION_TS_KEY, Date.now().toString());
+  document.getElementById('session-check-modal').style.display = 'none';
+}
+
+function signOutSession() {
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_TS_KEY);
+  clearInterval(sessionTimer);
+  location.reload();
+}
+
+document.addEventListener('DOMContentLoaded', trySilentLogin);
+
+  // Auto-save every 2 min
 setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
 </script>
 
