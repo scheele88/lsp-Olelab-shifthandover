@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LSP Lab — Shift Handover</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue:    #0d47a1;
+  --blue-lt: #1565c0;
+  --blue-bg: #e3f0ff;
+  --green:   #2e7d32;
+  --green-bg:#e8f5e9;
+  --amber:   #e65100;
+  --amber-bg:#fff3e0;
+  --red:     #b71c1c;
+  --red-bg:  #ffebee;
+  --gray:    #37474f;
+  --gray-lt: #78909c;
+  --bg:      #f4f6f8;
+  --card:    #ffffff;
+  --border:  #cfd8dc;
+  --radius:  6px;
+  --shadow:  0 1px 4px rgba(0,0,0,.12);
+  --font:    'Segoe UI', Arial, sans-serif;
+}
+body { font-family: var(--font); background: var(--bg); color: var(--gray); font-size:14px; min-height:100vh; }
+a { color: var(--blue); text-decoration:none; }
+button { cursor:pointer; font-family:inherit; font-size:13px; border:none; border-radius:var(--radius); padding:6px 14px; transition:opacity .15s; }
+button:hover { opacity:.87; }
+button:disabled { opacity:.4; cursor:not-allowed; }
+input, select, textarea { font-family:inherit; font-size:13px; border:1px solid var(--border); border-radius:var(--radius); padding:6px 9px; outline:none; transition:border .15s; width:100%; background:#fff; }
+input:focus, select:focus, textarea:focus { border-color: var(--blue-lt); }
+textarea { resize:vertical; min-height:70px; }
+label { font-size:12px; color:var(--gray-lt); font-weight:600; display:block; margin-bottom:3px; text-transform:uppercase; letter-spacing:.4px; }
+
+/* ── Layout ───────────────────────────────────────────────────────────── */
+header {
+  background: var(--blue);
+  color: #fff;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 54px;
+  position: sticky; top:0; z-index:100;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+header h1 { font-size:17px; font-weight:700; letter-spacing:.3px; }
+header .subtitle { font-size:11px; opacity:.75; }
+nav-bar { display:flex; gap:4px; }
+
+.tabs { display:flex; gap:2px; background:var(--bg); border-bottom:2px solid var(--border); padding:0 16px; }
+.tab-btn {
+  padding:10px 18px; font-size:13px; font-weight:600; color:var(--gray-lt);
+  background:none; border:none; border-bottom:3px solid transparent;
+  cursor:pointer; transition:all .15s; border-radius:0;
+}
+.tab-btn.active { color:var(--blue); border-bottom-color:var(--blue); }
+.tab-btn:hover { color:var(--blue); background:var(--blue-bg); }
+
+.main { max-width:1200px; margin:0 auto; padding:18px 16px 60px; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); margin-bottom:16px; }
+.card-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:#fafbfc; border-radius:var(--radius) var(--radius) 0 0; }
+.card-header h2 { font-size:14px; font-weight:700; color:var(--blue); }
+.card-body { padding:16px; }
+
+.row { display:flex; gap:12px; flex-wrap:wrap; }
+.col { flex:1; min-width:160px; }
+.col-2 { flex:2; min-width:240px; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+.btn-primary   { background:var(--blue);  color:#fff; }
+.btn-success   { background:var(--green); color:#fff; }
+.btn-warning   { background:var(--amber); color:#fff; }
+.btn-danger    { background:var(--red);   color:#fff; }
+.btn-ghost     { background:transparent; color:var(--blue); border:1px solid var(--blue); }
+.btn-sm        { padding:4px 10px; font-size:12px; }
+.btn-icon      { padding:4px 8px; font-size:13px; }
+
+/* ── Status badges ────────────────────────────────────────────────────── */
+.badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; }
+.badge-normal  { background:var(--green-bg); color:var(--green); }
+.badge-issue   { background:var(--amber-bg); color:var(--amber); }
+.badge-oos     { background:var(--red-bg);   color:var(--red);   }
+.badge-standby { background:#e8eaf6;          color:#3949ab;      }
+.badge-open      { background:var(--amber-bg); color:var(--amber); }
+.badge-progress  { background:var(--blue-bg);  color:var(--blue);  }
+.badge-closed    { background:var(--green-bg); color:var(--green); }
+.badge-high    { background:var(--red-bg);   color:var(--red);   }
+
+/* ── Shift selector ───────────────────────────────────────────────────── */
+#shift-bar {
+  background:var(--card); border-bottom:1px solid var(--border);
+  padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+#shift-bar label { margin:0; font-size:12px; white-space:nowrap; }
+#shift-bar select, #shift-bar input[type=date] { width:auto; }
+.shift-indicator {
+  margin-left:auto;
+  font-weight:700; font-size:13px; padding:4px 12px;
+  border-radius:20px; background:var(--blue-bg); color:var(--blue);
+}
+.shift-indicator.submitted { background:var(--green-bg); color:var(--green); }
+
+/* ── Equipment table ──────────────────────────────────────────────────── */
+.equip-filter-bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+.equip-filter-bar input[type=search] { max-width:260px; }
+#equip-table-wrap { overflow-x:auto; }
+table.equip-table { width:100%; border-collapse:collapse; font-size:13px; }
+table.equip-table th { background:var(--blue); color:#fff; padding:7px 10px; text-align:left; font-weight:600; white-space:nowrap; position:sticky; top:0; }
+table.equip-table td { padding:6px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+table.equip-table tr:hover td { background:var(--blue-bg); }
+table.equip-table .owner-gas { border-left:3px solid #0097a7; }
+table.equip-table .owner-oil { border-left:3px solid #7b1fa2; }
+table.equip-table .owner-uti { border-left:3px solid #388e3c; }
+table.equip-table select { width:auto; padding:3px 6px; font-size:12px; }
+table.equip-table input[type=text] { font-size:12px; padding:3px 6px; }
+.changed-row td { background: #fffde7 !important; }
+
+/* ── Action items ────────────────────────────────────────────────────── */
+.action-item { border:1px solid var(--border); border-radius:var(--radius); padding:10px 12px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start; }
+.action-item.priority-High   { border-left:4px solid var(--red); }
+.action-item.priority-Normal { border-left:4px solid var(--amber); }
+.action-item.priority-Low    { border-left:4px solid var(--gray-lt); }
+.action-item .ai-body { flex:1; }
+.action-item .ai-desc { font-weight:600; margin-bottom:4px; }
+.action-item .ai-meta { font-size:12px; color:var(--gray-lt); display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ── History table ────────────────────────────────────────────────────── */
+table.hist-table { width:100%; border-collapse:collapse; font-size:13px; }
+table.hist-table th { background:var(--blue); color:#fff; padding:7px 10px; text-align:left; }
+table.hist-table td { padding:7px 10px; border-bottom:1px solid var(--border); }
+table.hist-table tr:hover td { background:var(--blue-bg); cursor:pointer; }
+table.hist-table .day-shift { color:#e65100; font-weight:700; }
+table.hist-table .night-shift { color:#1565c0; font-weight:700; }
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
+#toast {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:#323232; color:#fff; padding:10px 20px; border-radius:24px;
+  font-size:13px; z-index:9999; opacity:0; transition:opacity .25s;
+  pointer-events:none;
+}
+#toast.show { opacity:1; }
+
+/* ── Spinner ──────────────────────────────────────────────────────────── */
+.spinner { display:inline-block; width:16px; height:16px; border:2px solid #ccc; border-top-color:var(--blue); border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:6px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── Modal ────────────────────────────────────────────────────────────── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:500; display:flex; align-items:center; justify-content:center; }
+.modal-box { background:#fff; border-radius:8px; padding:24px; max-width:520px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,.2); }
+.modal-box h3 { margin-bottom:16px; color:var(--blue); }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+
+/* ── Print ────────────────────────────────────────────────────────────── */
+@media print {
+  header, #shift-bar, .tabs, .equip-filter-bar, .btn-primary, .btn-success, .btn-warning, .btn-ghost, .btn-danger, #add-action-btn, .ai-actions { display:none !important; }
+  body { background:#fff; }
+  .card { box-shadow:none; border:1px solid #ccc; page-break-inside:avoid; }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width:600px) {
+  .main { padding:10px 8px 60px; }
+  .row { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="subtitle">Long Son Petrochemicals — Laboratory</div>
+    <h1>⚗️ Shift Handover Tool</h1>
+  </div>
+  <button class="btn-ghost btn-sm" style="color:#fff;border-color:#fff" onclick="window.print()">🖨 Print</button>
+</header>
+
+<!-- Shift selector bar -->
+<div id="shift-bar">
+  <label>Date</label>
+  <input type="date" id="sel-date" />
+  <label>Shift</label>
+  <select id="sel-shift">
+    <option value="Day">Day (07:00–19:00)</option>
+    <option value="Night">Night (19:00–07:00)</option>
+  </select>
+  <button class="btn-primary btn-sm" onclick="loadShift()">Load</button>
+  <span id="shift-indicator" class="shift-indicator" style="display:none"></span>
+</div>
+
+<!-- Main tabs -->
+<div class="tabs">
+  <button class="tab-btn active" data-tab="report"   onclick="switchTab('report')">📋 Handover Report</button>
+  <button class="tab-btn"        data-tab="equipment" onclick="switchTab('equipment')">🔬 Equipment Status</button>
+  <button class="tab-btn"        data-tab="actions"   onclick="switchTab('actions')">✅ Action Items</button>
+  <button class="tab-btn"        data-tab="history"   onclick="switchTab('history')">🗂 History</button>
+</div>
+
+<div class="main">
+
+  <!-- ── TAB: REPORT ─────────────────────────────────────────────────────── -->
+  <div id="tab-report">
+    <div class="card">
+      <div class="card-header">
+        <h2>Shift Information</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-primary btn-sm" onclick="saveReport()">💾 Save Draft</button>
+          <button class="btn-success btn-sm" id="submit-btn" onclick="submitReport()">✔ Submit Handover</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row" style="margin-bottom:14px;">
+          <div class="col">
+            <label>Shift Date</label>
+            <input type="date" id="r-date" readonly style="background:#f5f5f5;"/>
+          </div>
+          <div class="col">
+            <label>Shift</label>
+            <input type="text" id="r-shift" readonly style="background:#f5f5f5;"/>
+          </div>
+          <div class="col-2">
+            <label>Shift Supervisor Name</label>
+            <input type="text" id="r-supervisor" placeholder="e.g. Nguyen Van A" maxlength="100"/>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-2">
+            <label>General Shift Notes</label>
+            <textarea id="r-general" rows="4" placeholder="Summarise key activities, samples analysed, decisions made during this shift..."></textarea>
+          </div>
+          <div class="col">
+            <label>Safety / HSE Notes</label>
+            <textarea id="r-safety" rows="4" placeholder="Near-misses, spills, hazards, PPE incidents, permits, safety observations..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick stats -->
+    <div class="row" id="quick-stats" style="margin-bottom:0;"></div>
+
+    <p id="no-report-msg" style="text-align:center;color:var(--gray-lt);padding:30px;display:none;">
+      👆 Select a date and shift then click <strong>Load</strong> to begin or view a handover report.
+    </p>
+  </div>
+
+  <!-- ── TAB: EQUIPMENT ──────────────────────────────────────────────────── -->
+  <div id="tab-equipment" style="display:none;">
+    <div class="card">
+      <div class="card-header">
+        <h2>Equipment Status</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span id="equip-save-indicator" style="font-size:12px;color:var(--gray-lt);"></span>
+          <button class="btn-success btn-sm" onclick="saveEquipment()">💾 Save Equipment Status</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="equip-filter-bar">
+          <input type="search" id="equip-search" placeholder="🔍 Search code or name..." oninput="filterEquip()"/>
+          <select id="equip-owner-filter" onchange="filterEquip()">
+            <option value="">All Labs</option>
+            <option value="Gas">Gas Lab</option>
+            <option value="Oil">Oil Lab</option>
+            <option value="Uti">Utility/Chem Lab</option>
+          </select>
+          <select id="equip-status-filter" onchange="filterEquip()">
+            <option value="">All Statuses</option>
+            <option value="Normal">Normal</option>
+            <option value="Issue">Issue</option>
+            <option value="OOS">Out of Service</option>
+            <option value="Standby">Standby</option>
+          </select>
+          <button class="btn-ghost btn-sm" onclick="markAllNormal()">✓ All Normal</button>
+          <span id="equip-count" style="font-size:12px;color:var(--gray-lt);margin-left:auto;"></span>
+        </div>
+        <div id="equip-table-wrap">
+          <table class="equip-table" id="equip-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Code</th>
+                <th>Equipment Name</th>
+                <th>Lab</th>
+                <th>Status</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="equip-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: ACTIONS ────────────────────────────────────────────────────── -->
+  <div id="tab-actions" style="display:none;">
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-header">
+        <h2>Add Action Item</h2>
+      </div>
+      <div class="card-body">
+        <div class="row" style="margin-bottom:10px;">
+          <div class="col-2">
+            <label>Description *</label>
+            <input type="text" id="ai-desc" placeholder="Describe the action required..." maxlength="500"/>
+          </div>
+          <div class="col">
+            <label>Priority</label>
+            <select id="ai-priority">
+              <option value="Normal">Normal</option>
+              <option value="High">High</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="col">
+            <label>Assigned To</label>
+            <input type="text" id="ai-assignee" placeholder="Name / Team" maxlength="100"/>
+          </div>
+        </div>
+        <button class="btn-primary btn-sm" id="add-action-btn" onclick="addAction()">➕ Add Action Item</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Action Items</h2>
+        <div style="display:flex;gap:6px;">
+          <select id="action-filter" onchange="renderActions()" style="width:auto;font-size:12px;">
+            <option value="">All</option>
+            <option value="Open">Open</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-body" id="actions-list">
+        <p style="color:var(--gray-lt);text-align:center;">No action items yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB: HISTORY ────────────────────────────────────────────────────── -->
+  <div id="tab-history" style="display:none;">
+    <div class="card">
+      <div class="card-header">
+        <h2>Recent Handover Reports</h2>
+        <button class="btn-ghost btn-sm" onclick="loadHistory()">🔄 Refresh</button>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div id="history-wrap" style="overflow-x:auto;">
+          <table class="hist-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Supervisor</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Modal for action edit -->
+<div id="modal-overlay" class="modal-overlay" style="display:none;" onclick="closeModal(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <h3>Edit Action Item</h3>
+    <div style="margin-bottom:10px;">
+      <label>Description</label>
+      <input type="text" id="m-desc" maxlength="500"/>
+    </div>
+    <div class="row" style="margin-bottom:10px;">
+      <div class="col">
+        <label>Priority</label>
+        <select id="m-priority">
+          <option>Normal</option>
+          <option>High</option>
+          <option>Low</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Status</label>
+        <select id="m-status">
+          <option>Open</option>
+          <option>In Progress</option>
+          <option>Closed</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Assigned To</label>
+        <input type="text" id="m-assignee" maxlength="100"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost btn-sm" onclick="document.getElementById('modal-overlay').style.display='none'">Cancel</button>
+      <button class="btn-primary btn-sm" onclick="saveActionEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+const API = '';  // same origin; update to full URL if frontend is separate
+
+// ── State ───────────────────────────────────────────────────────────────────
+let currentReport  = null;   // full report object from DB
+let equipmentMaster = [];    // from /api/equipment
+let equipMap       = {};     // equip_code → { status, remarks } for current report
+let pendingEquip   = {};     // changes not yet saved
+let actionsList    = [];
+let editingActionId = null;
+
+// ── Init ────────────────────────────────────────────────────────────────────
+(async () => {
+  // Set today's date and detect shift
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  document.getElementById('sel-date').value = todayStr;
+  document.getElementById('sel-shift').value = now.getHours() >= 7 && now.getHours() < 19 ? 'Day' : 'Night';
+
+  // Load equipment master
+  try {
+    equipmentMaster = await apiFetch('/api/equipment');
+  } catch(e) { showToast('⚠ Could not load equipment list', 3000); }
+
+  await loadShift();
+  await loadHistory();
+})();
+
+// ── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(tab) {
+  ['report','equipment','actions','history'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
+    document.querySelector(`.tab-btn[data-tab="${t}"]`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'history') loadHistory();
+}
+
+// ── Shift load/create ───────────────────────────────────────────────────────
+async function loadShift() {
+  const date  = document.getElementById('sel-date').value;
+  const shift = document.getElementById('sel-shift').value;
+  if (!date) return;
+
+  showSpinner(true);
+  try {
+    const data = await apiFetch(`/api/reports/by-shift?date=${date}&shift=${shift}`);
+    if (data) {
+      currentReport = data;
+      populateReportForm(data);
+      buildEquipTable(data.equipment || []);
+      actionsList = data.actions || [];
+      renderActions();
+      updateShiftIndicator();
+      document.getElementById('no-report-msg').style.display = 'none';
+    } else {
+      // No existing report — blank slate
+      currentReport = null;
+      document.getElementById('r-date').value  = date;
+      document.getElementById('r-shift').value = shift;
+      document.getElementById('r-supervisor').value = '';
+      document.getElementById('r-general').value = '';
+      document.getElementById('r-safety').value  = '';
+      buildEquipTable([]);
+      actionsList = [];
+      renderActions();
+      updateShiftIndicator();
+      document.getElementById('no-report-msg').style.display = 'none';
+      renderQuickStats();
+    }
+  } catch(e) {
+    showToast('❌ Error loading shift: ' + e.message, 4000);
+  } finally {
+    showSpinner(false);
+  }
+}
+
+function populateReportForm(report) {
+  document.getElementById('r-date').value       = report.shift_date ? report.shift_date.slice(0,10) : '';
+  document.getElementById('r-shift').value      = report.shift_type;
+  document.getElementById('r-supervisor').value = report.supervisor || '';
+  document.getElementById('r-general').value    = report.general_notes || '';
+  document.getElementById('r-safety').value     = report.safety_notes || '';
+  renderQuickStats();
+}
+
+function updateShiftIndicator() {
+  const ind = document.getElementById('shift-indicator');
+  ind.style.display = '';
+  const date  = document.getElementById('sel-date').value;
+  const shift = document.getElementById('sel-shift').value;
+  const icon  = shift === 'Day' ? '☀' : '🌙';
+  if (currentReport) {
+    ind.textContent = currentReport.submitted
+      ? `${icon} ${shift} ${date} — ✔ SUBMITTED`
+      : `${icon} ${shift} ${date} — Draft`;
+    ind.className = 'shift-indicator' + (currentReport.submitted ? ' submitted' : '');
+    document.getElementById('submit-btn').disabled = currentReport.submitted;
+  } else {
+    ind.textContent = `${icon} ${shift} ${date} — New`;
+    ind.className = 'shift-indicator';
+    document.getElementById('submit-btn').disabled = false;
+  }
+}
+
+// ── Save report ─────────────────────────────────────────────────────────────
+async function saveReport() {
+  const date  = document.getElementById('sel-date').value;
+  const shift = document.getElementById('sel-shift').value;
+  if (!date) { showToast('Select a date first'); return; }
+
+  const body = {
+    shift_date:    date,
+    shift_type:    shift,
+    supervisor:    document.getElementById('r-supervisor').value.trim(),
+    general_notes: document.getElementById('r-general').value.trim(),
+    safety_notes:  document.getElementById('r-safety').value.trim(),
+  };
+  try {
+    const saved = await apiFetch('/api/reports', 'POST', body);
+    currentReport = { ...saved, equipment: currentReport?.equipment || [], actions: actionsList };
+    showToast('✅ Report saved');
+    updateShiftIndicator();
+    renderQuickStats();
+  } catch(e) {
+    showToast('❌ Save failed: ' + e.message, 4000);
+  }
+}
+
+async function submitReport() {
+  if (!currentReport) { await saveReport(); if (!currentReport) return; }
+  if (!confirm('Submit this handover report? It will be locked for editing.')) return;
+  try {
+    const updated = await apiFetch(`/api/reports/${currentReport.id}/submit`, 'PATCH', {});
+    currentReport = { ...currentReport, ...updated };
+    showToast('✔ Handover submitted!', 4000);
+    updateShiftIndicator();
+  } catch(e) {
+    showToast('❌ Submit failed: ' + e.message, 4000);
+  }
+}
+
+// ── Quick stats ─────────────────────────────────────────────────────────────
+function renderQuickStats() {
+  const vals = Object.values(equipMap);
+  const total = equipmentMaster.length;
+  const issues  = vals.filter(v => v.status === 'Issue').length;
+  const oos     = vals.filter(v => v.status === 'OOS').length;
+  const standby = vals.filter(v => v.status === 'Standby').length;
+  const openA   = actionsList.filter(a => a.status === 'Open').length;
+
+  const mkCard = (icon, val, label, color) =>
+    `<div class="card" style="flex:1;min-width:120px;text-align:center;padding:14px 8px;border-top:4px solid ${color};">
+       <div style="font-size:24px;">${icon}</div>
+       <div style="font-size:22px;font-weight:700;color:${color};">${val}</div>
+       <div style="font-size:11px;color:var(--gray-lt);">${label}</div>
+     </div>`;
+
+  document.getElementById('quick-stats').innerHTML =
+    mkCard('🔬', total,   'Total Equipment',    '#0d47a1') +
+    mkCard('⚠',  issues,  'With Issues',        '#e65100') +
+    mkCard('🔴', oos,     'Out of Service',      '#b71c1c') +
+    mkCard('🟡', standby, 'Standby',             '#f9a825') +
+    mkCard('📋', openA,   'Open Actions',        '#00796b');
+}
+
+// ── Equipment table ─────────────────────────────────────────────────────────
+function buildEquipTable(savedEquip) {
+  // Build equipMap from saved DB data
+  equipMap = {};
+  savedEquip.forEach(e => {
+    equipMap[e.equip_code] = { status: e.status, remarks: e.remarks || '' };
+  });
+  pendingEquip = {};
+  renderEquipTable();
+}
+
+function renderEquipTable() {
+  const search  = (document.getElementById('equip-search')?.value || '').toLowerCase();
+  const ownerF  = document.getElementById('equip-owner-filter')?.value || '';
+  const statusF = document.getElementById('equip-status-filter')?.value || '';
+
+  const filtered = equipmentMaster.filter(e => {
+    if (ownerF  && e.owner  !== ownerF)  return false;
+    if (statusF) {
+      const st = (equipMap[e.code] || pendingEquip[e.code] || {}).status || 'Normal';
+      if (st !== statusF) return false;
+    }
+    if (search) {
+      return e.code.toLowerCase().includes(search) || e.name.toLowerCase().includes(search);
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('equip-tbody');
+  tbody.innerHTML = '';
+
+  filtered.forEach(e => {
+    const saved   = equipMap[e.code] || {};
+    const pending = pendingEquip[e.code] || {};
+    const status  = pending.status  ?? saved.status  ?? 'Normal';
+    const remarks = pending.remarks ?? saved.remarks ?? '';
+    const changed = !!pendingEquip[e.code];
+    const ownerClass = { Gas:'owner-gas', Oil:'owner-oil', Uti:'owner-uti' }[e.owner] || '';
+
+    const tr = document.createElement('tr');
+    if (changed) tr.classList.add('changed-row');
+    tr.innerHTML = `
+      <td class="${ownerClass}" style="font-size:11px;color:var(--gray-lt);">${e.no}</td>
+      <td style="font-family:monospace;font-size:12px;white-space:nowrap;">${e.code}</td>
+      <td>${e.name}</td>
+      <td><span class="badge ${ownerBadgeClass(e.owner)}">${ownerLabel(e.owner)}</span></td>
+      <td>
+        <select data-code="${e.code}" class="equip-status-sel" onchange="onEquipChange('${e.code}','status',this.value)">
+          <option value="Normal"  ${status==='Normal'  ?'selected':''}>Normal</option>
+          <option value="Issue"   ${status==='Issue'   ?'selected':''}>Issue</option>
+          <option value="OOS"     ${status==='OOS'     ?'selected':''}>Out of Service</option>
+          <option value="Standby" ${status==='Standby' ?'selected':''}>Standby</option>
+        </select>
+      </td>
+      <td><input type="text" value="${escHtml(remarks)}" placeholder="Remarks..."
+          oninput="onEquipChange('${e.code}','remarks',this.value)" style="min-width:200px;"/></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('equip-count').textContent = `Showing ${filtered.length} of ${equipmentMaster.length}`;
+}
+
+function onEquipChange(code, field, value) {
+  if (!pendingEquip[code]) {
+    const saved = equipMap[code] || { status: 'Normal', remarks: '' };
+    pendingEquip[code] = { ...saved };
+  }
+  pendingEquip[code][field] = value;
+
+  // Find the equipment master entry for display name
+  const eq = equipmentMaster.find(e => e.code === code);
+  if (eq) {
+    pendingEquip[code].equip_name = eq.name;
+    pendingEquip[code].owner = eq.owner;
+  }
+
+  // Update row highlight
+  const sel = document.querySelector(`select.equip-status-sel[data-code="${code}"]`);
+  if (sel) {
+    const tr = sel.closest('tr');
+    if (tr) tr.classList.add('changed-row');
+  }
+  document.getElementById('equip-save-indicator').textContent = `${Object.keys(pendingEquip).length} unsaved change(s)`;
+}
+
+function filterEquip() { renderEquipTable(); }
+
+function markAllNormal() {
+  equipmentMaster.forEach(e => {
+    if ((equipMap[e.code]?.status || 'Normal') !== 'Normal') {
+      pendingEquip[e.code] = { status:'Normal', remarks:'', equip_name:e.name, owner:e.owner };
+    }
+  });
+  renderEquipTable();
+  document.getElementById('equip-save-indicator').textContent = `${Object.keys(pendingEquip).length} unsaved change(s)`;
+}
+
+async function saveEquipment() {
+  if (!currentReport) {
+    await saveReport();
+    if (!currentReport) { showToast('⚠ Save report first'); return; }
+  }
+
+  // Merge pending into equipMap, then send all non-Normal OR all to DB
+  Object.assign(equipMap, pendingEquip);
+  pendingEquip = {};
+
+  // Build payload: send every equipment item that has a non-default status OR a remark
+  const payload = equipmentMaster.map(e => ({
+    equip_code: e.code,
+    equip_name: e.name,
+    owner:      e.owner,
+    status:     equipMap[e.code]?.status  || 'Normal',
+    remarks:    equipMap[e.code]?.remarks || '',
+  }));
+
+  try {
+    await apiFetch(`/api/reports/${currentReport.id}/equipment`, 'PUT', payload);
+    showToast('✅ Equipment status saved');
+    document.getElementById('equip-save-indicator').textContent = '';
+    renderEquipTable();
+    renderQuickStats();
+  } catch(e) {
+    showToast('❌ Save failed: ' + e.message, 4000);
+  }
+}
+
+// ── Actions ─────────────────────────────────────────────────────────────────
+async function addAction() {
+  const desc = document.getElementById('ai-desc').value.trim();
+  if (!desc) { showToast('Enter a description'); return; }
+
+  if (!currentReport) {
+    await saveReport();
+    if (!currentReport) { showToast('⚠ Save report first'); return; }
+  }
+
+  try {
+    const action = await apiFetch(`/api/reports/${currentReport.id}/actions`, 'POST', {
+      description:  desc,
+      priority:     document.getElementById('ai-priority').value,
+      assigned_to:  document.getElementById('ai-assignee').value.trim(),
+    });
+    actionsList.push(action);
+    document.getElementById('ai-desc').value     = '';
+    document.getElementById('ai-assignee').value = '';
+    renderActions();
+    renderQuickStats();
+    showToast('✅ Action item added');
+  } catch(e) {
+    showToast('❌ Error: ' + e.message, 4000);
+  }
+}
+
+function renderActions() {
+  const filterVal = document.getElementById('action-filter')?.value || '';
+  const filtered  = filterVal ? actionsList.filter(a => a.status === filterVal) : actionsList;
+  const container = document.getElementById('actions-list');
+
+  if (!filtered.length) {
+    container.innerHTML = '<p style="color:var(--gray-lt);text-align:center;padding:20px;">No action items.</p>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(a => `
+    <div class="action-item priority-${a.priority}">
+      <div class="ai-body">
+        <div class="ai-desc">${escHtml(a.description)}</div>
+        <div class="ai-meta">
+          <span><span class="badge badge-${a.priority==='High'?'high':a.priority.toLowerCase()}">${a.priority}</span></span>
+          <span class="badge ${statusBadgeClass(a.status)}">${a.status}</span>
+          ${a.assigned_to ? `<span>👤 ${escHtml(a.assigned_to)}</span>` : ''}
+          <span>🕐 ${fmtDate(a.created_at)}</span>
+        </div>
+      </div>
+      <div class="ai-actions" style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="btn-ghost btn-sm btn-icon" onclick="openEditModal(${a.id})" title="Edit">✏</button>
+        <button class="btn-danger btn-sm btn-icon" onclick="deleteAction(${a.id})" title="Delete">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openEditModal(id) {
+  const action = actionsList.find(a => a.id === id);
+  if (!action) return;
+  editingActionId = id;
+  document.getElementById('m-desc').value     = action.description;
+  document.getElementById('m-priority').value = action.priority;
+  document.getElementById('m-status').value   = action.status;
+  document.getElementById('m-assignee').value = action.assigned_to || '';
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+async function saveActionEdit() {
+  const id = editingActionId;
+  const body = {
+    description:  document.getElementById('m-desc').value.trim(),
+    priority:     document.getElementById('m-priority').value,
+    status:       document.getElementById('m-status').value,
+    assigned_to:  document.getElementById('m-assignee').value.trim(),
+  };
+  try {
+    const updated = await apiFetch(`/api/actions/${id}`, 'PATCH', body);
+    const idx = actionsList.findIndex(a => a.id === id);
+    if (idx >= 0) actionsList[idx] = updated;
+    document.getElementById('modal-overlay').style.display = 'none';
+    renderActions();
+    renderQuickStats();
+    showToast('✅ Action updated');
+  } catch(e) {
+    showToast('❌ Error: ' + e.message, 4000);
+  }
+}
+
+async function deleteAction(id) {
+  if (!confirm('Delete this action item?')) return;
+  try {
+    await apiFetch(`/api/actions/${id}`, 'DELETE');
+    actionsList = actionsList.filter(a => a.id !== id);
+    renderActions();
+    renderQuickStats();
+    showToast('🗑 Deleted');
+  } catch(e) {
+    showToast('❌ Error: ' + e.message, 4000);
+  }
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay'))
+    document.getElementById('modal-overlay').style.display = 'none';
+}
+
+// ── History ─────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const reports = await apiFetch('/api/reports?limit=60');
+    const tbody = document.getElementById('history-tbody');
+    if (!reports.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray-lt);padding:20px;">No reports yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = reports.map(r => `
+      <tr onclick="jumpToReport('${r.shift_date.slice(0,10)}','${r.shift_type}')" title="Click to load">
+        <td>${fmtDateOnly(r.shift_date)}</td>
+        <td class="${r.shift_type==='Day'?'day-shift':'night-shift'}">${r.shift_type==='Day'?'☀ Day':'🌙 Night'}</td>
+        <td>${escHtml(r.supervisor || '—')}</td>
+        <td><span class="badge ${r.submitted?'badge-closed':'badge-open'}">${r.submitted?'Submitted':'Draft'}</span></td>
+        <td style="font-size:12px;color:var(--gray-lt);">${fmtDate(r.updated_at)}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function jumpToReport(date, shift) {
+  document.getElementById('sel-date').value  = date;
+  document.getElementById('sel-shift').value = shift;
+  loadShift();
+  switchTab('report');
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+async function apiFetch(url, method='GET', body=null) {
+  const opts = { method, headers:{'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + url, opts);
+  if (!res.ok) {
+    let msg = res.statusText;
+    try { const j = await res.json(); msg = j.error || msg; } catch(_){}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+let toastTimer;
+function showToast(msg, duration=2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+let spinnerEl;
+function showSpinner(on) {
+  const btns = document.querySelectorAll('button');
+  btns.forEach(b => b.disabled = on);
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function fmtDateOnly(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+}
+
+function ownerLabel(o) { return {Gas:'Gas',Oil:'Oil',Uti:'Util'}[o]||o; }
+function ownerBadgeClass(o) { return {Gas:'badge-standby',Oil:'badge-issue',Uti:'badge-normal'}[o]||''; }
+function statusBadgeClass(s) {
+  return { Open:'badge-open', 'In Progress':'badge-progress', Closed:'badge-closed' }[s] || '';
+}
+</script>
+</body>
+</html>
