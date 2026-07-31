@@ -354,7 +354,7 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
           <label>Current Shift Supervisor</label>
           <div class="combo-wrap">
             <input id="r-cur-sup" placeholder="Select or type name..." autocomplete="off"
-              oninput="comboFilter('r-cur-sup','combo-cur')" onfocus="comboOpen('combo-cur')" onblur="comboBlur('combo-cur')"/>
+              oninput="comboFilter('r-cur-sup','combo-cur');syncSignoffNames()" onfocus="comboOpen('combo-cur')" onblur="comboBlur('combo-cur')"/>
             <div class="combo-drop" id="combo-cur"></div>
           </div>
         </div>
@@ -366,7 +366,7 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
           <label>Handover Supervisor</label>
           <div class="combo-wrap">
             <input id="r-hov-sup" placeholder="Select or type name..." autocomplete="off"
-              oninput="comboFilter('r-hov-sup','combo-hov')" onfocus="comboOpen('combo-hov')" onblur="comboBlur('combo-hov')"/>
+              oninput="comboFilter('r-hov-sup','combo-hov');syncSignoffNames()" onfocus="comboOpen('combo-hov')" onblur="comboBlur('combo-hov')"/>
             <div class="combo-drop" id="combo-hov"></div>
           </div>
         </div>
@@ -728,9 +728,9 @@ function syncSignoffNames() {
   const hovSup = (document.getElementById('r-hov-sup')?.value||'').trim();
   const outSel = document.getElementById('out-name');
   const inSel  = document.getElementById('in-name');
-  // Only pre-select if user hasn't already picked a name and the field matches a known user
-  if (outSel && !outSel.value && USERS.includes(curSup)) outSel.value = curSup;
-  if (inSel  && !inSel.value  && USERS.includes(hovSup)) inSel.value  = hovSup;
+  // Always sync — §5 sign-off follows §1 supervisor names
+  if (outSel && USERS.includes(curSup)) outSel.value = curSup;
+  if (inSel  && USERS.includes(hovSup)) inSel.value  = hovSup;
 }
 
 // ── Save ───────────────────────────────────────────────────────────────────
