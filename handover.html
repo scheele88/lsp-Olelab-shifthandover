@@ -97,11 +97,12 @@ header .sub{font-size:11px;opacity:.7}
 .combo-drop div:hover{background:var(--blue-bg)}
 
 /* Autocomplete for equipment */
-.ac-wrap{position:relative}
-.ac-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--blue2);border-top:none;border-radius:0 0 var(--radius) var(--radius);max-height:200px;overflow-y:auto;z-index:400;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none}
-.ac-item{padding:6px 10px;cursor:pointer;font-size:12px;line-height:1.4}
-.ac-item:hover{background:var(--blue-bg)}
-.ac-code{font-family:monospace;color:var(--gray-lt);font-size:11px}
+.eq-drop-wrap{position:relative}
+.eq-drop-wrap input,.eq-drop-wrap select{width:100%}
+.eq-drop{position:absolute;top:100%;left:0;min-width:300px;background:#fff;border:1px solid var(--blue2);border-top:none;border-radius:0 0 var(--radius) var(--radius);max-height:220px;overflow-y:auto;z-index:500;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.eq-drop-item{padding:7px 10px;cursor:pointer;font-size:12px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #f0f0f0}
+.eq-drop-item:hover{background:var(--blue-bg)}
+.eq-drop-code{font-family:monospace;color:var(--gray-lt);font-size:11px;white-space:nowrap}
 
 /* History */
 .htable{width:100%;border-collapse:collapse;font-size:13px}
@@ -241,9 +242,9 @@ header .sub{font-size:11px;opacity:.7}
       <table class="etable">
         <thead><tr>
           <th>#</th>
-          <th style="min-width:190px">Equipment Name</th>
-          <th style="min-width:95px">ID</th>
-          <th style="min-width:75px">Lab</th>
+          <th style="min-width:100px">Lab</th>
+          <th style="min-width:200px">Equipment Name</th>
+          <th style="min-width:95px">ID (auto)</th>
           <th style="min-width:150px">Issue</th>
           <th style="min-width:170px">Details</th>
           <th style="min-width:150px">Root Cause</th>
@@ -622,23 +623,36 @@ function renderTrouble() {
   tbody.innerHTML = '';
   visible.forEach((row, idx) => {
     const rid = row.id;
+    const isOther = row.owner === 'Other' || (!row.owner && !row.equip_code);
     const tr  = document.createElement('tr');
     if (row.status === 'Done') tr.className = 'done-row';
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${idx+1}</td>
       <td>
-        <div class="ac-wrap">
-          <input class="eqsearch" data-rid="${rid}" value="${esc(row.equip_name||'')}"
-            placeholder="Type to search…" autocomplete="off"
-            oninput="acSearch(this)" onfocus="acSearch(this)"/>
-          <div class="ac-list" id="acl-${rid}"></div>
+        <select id="eqlab-${rid}" onchange="eqLabChange(${rid},this.value)">
+          <option value="">— Select —</option>
+          <option value="Gas" ${row.owner==='Gas'?'selected':''}>Gas Lab</option>
+          <option value="Oil" ${row.owner==='Oil'?'selected':''}>Oil Lab</option>
+          <option value="Uti" ${row.owner==='Uti'?'selected':''}>Utility Lab</option>
+          <option value="Other" ${row.owner==='Other'?'selected':''}>Others</option>
+        </select>
+      </td>
+      <td>
+        <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
+          <input id="eqname-${rid}" value="${esc(row.equip_name||'')}"
+            placeholder="${isOther ? 'Type name...' : 'Select lab first…'}"
+            autocomplete="off"
+            ${!isOther && !row.owner ? 'readonly' : ''}
+            oninput="eqNameInput(${rid},this.value)"
+            onfocus="eqNameFocus(${rid})"
+            onblur="setTimeout(()=>eqDropClose(${rid}),180)"/>
+          <div class="eq-drop" id="eq-drop-${rid}"></div>
         </div>
       </td>
-      <td><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="background:#f5f5f5;min-width:80px"/></td>
-      <td><input readonly id="eqown-${rid}"  value="${esc(OWN[row.owner]||row.owner||'')}" style="background:#f5f5f5;min-width:60px"/></td>
+      <td><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="background:#f5f5f5;font-family:monospace;font-size:12px"/></td>
       <td>
-        <select id="eqiss-${rid}" onchange="trField(${rid},'issue_type',this.value)">
-          <option ${row.issue_type==='Failed SQC'?'selected':''}>Failed SQC</option>
+        <select id="eqiss-${rid}" onchange="eqIssChange(${rid},this.value)">
+          <option ${(row.issue_type||'Failed SQC')==='Failed SQC'?'selected':''}>Failed SQC</option>
           <option ${row.issue_type==='Out-of-calibration'?'selected':''}>Out-of-calibration</option>
           <option ${row.issue_type==='Others'?'selected':''}>Others</option>
         </select>
@@ -665,14 +679,6 @@ function renderTrouble() {
       <td><button class="btn-red btn-xs del-btn" onclick="delTrouble(${rid})">🗑</button></td>
     `;
     tbody.appendChild(tr);
-  });
-  // Attach issue-toggle after render
-  visible.forEach(row => {
-    const sel = document.getElementById(`eqiss-${row.id}`);
-    if (sel) sel.addEventListener('change', function() {
-      const oth = document.getElementById(`eqiss-oth-${row.id}`);
-      if (oth) oth.style.display = this.value === 'Others' ? '' : 'none';
-    });
   });
 }
 
@@ -717,34 +723,78 @@ async function delTrouble(id) {
 }
 
 // Autocomplete
-function acSearch(input) {
-  const rid  = input.dataset.rid;
-  const q    = input.value.trim().toLowerCase();
-  const list = document.getElementById('acl-'+rid);
-  const hits = q.length === 0 ? [] :
-    equipMaster.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)).slice(0,14);
-  if (!hits.length) { list.style.display='none'; return; }
-  list.innerHTML = hits.map(e =>
-    `<div class="ac-item" onmousedown="acPick(event,'${rid}','${esc(e.code)}','${esc(e.name)}','${e.owner}')">
-       <span class="ac-code">${esc(e.code)}</span> ${esc(e.name)}
-       <span class="badge b-gray" style="float:right;font-size:10px">${OWN[e.owner]||e.owner}</span>
+// ── Equipment Lab / Name / ID selection ──────────────────────────────────
+function eqLabChange(rid, labVal) {
+  const row = troubleRows.find(r => r.id === rid);
+  if (row) { row.owner = labVal; row.equip_name = ''; row.equip_code = ''; }
+  // Reset name and code fields
+  const nameInput = document.getElementById('eqname-'+rid);
+  const codeInput = document.getElementById('eqcode-'+rid);
+  if (nameInput) { nameInput.value = ''; nameInput.readOnly = (labVal !== 'Other' && labVal !== ''); nameInput.placeholder = labVal === 'Other' ? 'Type name manually…' : labVal ? 'Click to select…' : 'Select lab first…'; }
+  if (codeInput) codeInput.value = '';
+  eqDropClose(rid);
+  debounceTrouble(rid);
+}
+
+function eqNameFocus(rid) {
+  const row = troubleRows.find(r => r.id === rid);
+  if (!row || !row.owner || row.owner === 'Other') return;
+  eqDropOpen(rid, '');
+}
+
+function eqNameInput(rid, val) {
+  const row = troubleRows.find(r => r.id === rid);
+  if (!row) return;
+  if (row.owner === 'Other') {
+    row.equip_name = val; row.equip_code = '';
+    document.getElementById('eqcode-'+rid).value = '';
+    debounceTrouble(rid); return;
+  }
+  eqDropOpen(rid, val);
+}
+
+function eqDropOpen(rid, query) {
+  const row  = troubleRows.find(r => r.id === rid);
+  if (!row || !row.owner) return;
+  const q    = (query||'').toLowerCase();
+  const pool = equipMaster.filter(e => e.owner === row.owner);
+  const hits = q ? pool.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)) : pool;
+  const drop = document.getElementById('eq-drop-'+rid);
+  if (!hits.length) { drop.style.display='none'; return; }
+  drop.innerHTML = hits.slice(0,20).map(e =>
+    `<div class="eq-drop-item" onmousedown="eqPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}','${e.owner}')">
+       <span>${esc(e.name)}</span>
+       <span class="eq-drop-code">${esc(e.code)}</span>
      </div>`).join('');
-  list.style.display='block';
+  drop.style.display = 'block';
 }
-function acPick(evt, rid, code, name, owner) {
+
+function eqDropClose(rid) {
+  const drop = document.getElementById('eq-drop-'+rid);
+  if (drop) drop.style.display = 'none';
+}
+
+function eqPick(evt, rid, code, name, owner) {
   evt.preventDefault();
-  document.querySelector(`.eqsearch[data-rid="${rid}"]`).value = name;
-  document.getElementById('acl-'+rid).style.display = 'none';
-  document.getElementById('eqcode-'+rid).value = code;
-  document.getElementById('eqown-'+rid).value  = OWN[owner]||owner;
-  const row = troubleRows.find(r => String(r.id)===String(rid));
-  if (row) { row.equip_code=code; row.equip_name=name; row.owner=owner; }
-  clearTimeout(trField._t); trField._t = setTimeout(() => saveTroubleRow(parseInt(rid)), 700);
+  const nameInput = document.getElementById('eqname-'+rid);
+  const codeInput = document.getElementById('eqcode-'+rid);
+  if (nameInput) nameInput.value = name;
+  if (codeInput) codeInput.value = code;
+  eqDropClose(rid);
+  const row = troubleRows.find(r => r.id === rid);
+  if (row) { row.equip_name = name; row.equip_code = code; row.owner = owner; }
+  debounceTrouble(rid);
 }
-document.addEventListener('click', e => {
-  if (!e.target.classList.contains('eqsearch'))
-    document.querySelectorAll('.ac-list').forEach(l => l.style.display='none');
-});
+
+function eqIssChange(rid, val) {
+  trField(rid, 'issue_type', val);
+  const oth = document.getElementById('eqiss-oth-'+rid);
+  if (oth) oth.style.display = val === 'Others' ? '' : 'none';
+}
+
+function debounceTrouble(rid) {
+  clearTimeout(trField._t); trField._t = setTimeout(() => saveTroubleRow(rid), 700);
+}
 
 // ── Pending samples ────────────────────────────────────────────────────────
 function renderPending() {
