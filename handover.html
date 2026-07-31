@@ -323,7 +323,10 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
     <button onclick="navToShift()" style="padding:3px 10px;font-size:12px;background:var(--green);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:600">Go</button>
     <button onclick="returnToCurrentShift()" id="nav-current-btn" style="padding:3px 10px;font-size:12px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:5px;cursor:pointer;display:none">↩ Current</button>
   </div>
-  <span id="logged-as"></span>
+  <span id="logged-as" style="display:flex;align-items:center;gap:8px;margin-left:auto">
+    <span id="logged-as-name" style="color:rgba(255,255,255,.8);font-size:12px"></span>
+    <button onclick="signOut()" title="Sign out" style="padding:2px 9px;font-size:11px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.2);border-radius:4px;cursor:pointer">↩ Sign out</button>
+  </span>
 </div>
 
 <div class="tabs">
@@ -601,8 +604,9 @@ function enterApp() {
   const v = document.getElementById('gate-sel').value;
   if (!v) { alert('Please select your name.'); return; }
   loggedBy = v;
+  localStorage.setItem('lsp_handover_user', loggedBy);
   document.getElementById('gate').style.display = 'none';
-  document.getElementById('logged-as').textContent = '👤 ' + loggedBy;
+  document.getElementById('logged-as-name').textContent = '👤 ' + loggedBy;
   init();
 }
 
@@ -1261,11 +1265,28 @@ async function doUnlock() {
 document.addEventListener('DOMContentLoaded', () => {
   const pw = document.getElementById('unlock-pw');
   if (pw) pw.addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock(); });
-  // Close modal on backdrop click
   document.getElementById('unlock-modal').addEventListener('click', function(e) {
     if (e.target === this) closeUnlockModal();
   });
+
+  // ── Silent login from localStorage ──────────────────────────────────────
+  const saved = localStorage.getItem('lsp_handover_user');
+  if (saved && ['daipc','hientx','tuanpv','huyvq','khuelv','vupt','truocnt','huongbtm'].includes(saved)) {
+    loggedBy = saved;
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('logged-as-name').textContent = '👤 ' + loggedBy;
+    // Pre-select in gate dropdown in case user opens it manually
+    document.getElementById('gate-sel').value = saved;
+    init();
+  }
 });
+
+// ── Sign out ──────────────────────────────────────────────────────────────
+function signOut() {
+  if (!confirm('Sign out? You will need to select your name again.')) return;
+  localStorage.removeItem('lsp_handover_user');
+  location.reload();
+}
 
 // Auto-save every 2 min
 setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
