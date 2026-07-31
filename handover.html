@@ -42,6 +42,7 @@ button:active{transform:translateY(0)}
 button:disabled{opacity:.38;cursor:not-allowed;filter:none;transform:none;box-shadow:none}
 input,select,textarea{font-family:var(--font);font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;outline:none;width:100%;background:#fff;transition:border .15s,box-shadow .15s;color:var(--gray)}
 input:focus,select:focus,textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px rgba(37,160,94,.12)}
+.etable input:focus,.etable select:focus,.etable textarea:focus{box-shadow:none;border-color:var(--green2)}
 input[readonly]{background:#f7f9fc;color:var(--gray-lt)}
 textarea{resize:vertical;min-height:60px;line-height:1.5}
 label{font-size:11px;color:var(--gray-lt);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
@@ -180,8 +181,8 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 /* ── Combobox ─────────────────────────────────────────────────────────────── */
 .combo-wrap{position:relative}
 .combo-wrap input{width:100%}
-.combo-drop{position:absolute;top:calc(100% + 2px);left:0;right:0;background:#fff;border:1.5px solid var(--green2);border-radius:var(--radius);z-index:400;max-height:180px;overflow-y:auto;box-shadow:var(--shadow-md);display:none}
-.combo-drop div{padding:8px 12px;cursor:pointer;font-size:13px;font-weight:500;transition:background .12s}
+.combo-drop{position:fixed;min-width:200px;background:#fff;border:1.5px solid var(--green2);border-radius:var(--radius);z-index:9000;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none}
+.combo-drop div{padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;transition:background .12s;border-bottom:1px solid #f0f4f8}
 .combo-drop div:hover{background:var(--green-bg);color:var(--green)}
 
 /* ── Equipment dropdown ───────────────────────────────────────────────────── */
@@ -684,25 +685,52 @@ async function returnToCurrentShift() {
 }
 
 // ── Combobox (supervisor name field) ──────────────────────────────────────
-function comboOpen(dropId) {
+function comboPositionAndShow(dropId, inputId) {
+  const inp  = document.getElementById(inputId);
   const drop = document.getElementById(dropId);
-  drop.innerHTML = USERS.map(u => `<div onmousedown="comboPick('${dropId}',this,'${u}')">${u}</div>`).join('');
+  if (!inp || !drop) return;
+  const rect = inp.getBoundingClientRect();
+  drop.style.top   = (rect.bottom + 2) + 'px';
+  drop.style.left  = rect.left + 'px';
+  drop.style.width = rect.width + 'px';
   drop.style.display = 'block';
 }
-function comboFilter(inputId, dropId) {
-  const q    = document.getElementById(inputId).value.toLowerCase();
+function comboOpen(dropId) {
+  const inputId = dropId === 'combo-cur' ? 'r-cur-sup' : 'r-hov-sup';
   const drop = document.getElementById(dropId);
-  const items = USERS.filter(u => u.toLowerCase().includes(q));
-  drop.innerHTML = items.map(u => `<div onmousedown="comboPick('${dropId}',this,'${u}')">${u}</div>`).join('');
-  drop.style.display = items.length ? 'block' : 'none';
+  drop.innerHTML = USERS.map(u => `<div onmousedown="comboPick('${dropId}','${u}')">${u}</div>`).join('');
+  comboPositionAndShow(dropId, inputId);
 }
-function comboPick(dropId, el, val) {
+function comboFilter(inputId, dropId) {
+  const q     = document.getElementById(inputId).value.toLowerCase();
+  const drop  = document.getElementById(dropId);
+  const items = USERS.filter(u => u.toLowerCase().includes(q));
+  drop.innerHTML = items.map(u => `<div onmousedown="comboPick('${dropId}','${u}')">${u}</div>`).join('');
+  if (items.length) comboPositionAndShow(dropId, inputId);
+  else drop.style.display = 'none';
+}
+function comboPick(dropId, val) {
   const inputId = dropId === 'combo-cur' ? 'r-cur-sup' : 'r-hov-sup';
   document.getElementById(inputId).value = val;
   document.getElementById(dropId).style.display = 'none';
+  // FIX 4: sync sign-off dropdowns when supervisor name picked
+  syncSignoffNames();
 }
 function comboBlur(dropId) {
-  setTimeout(() => { document.getElementById(dropId).style.display = 'none'; }, 150);
+  setTimeout(() => { document.getElementById(dropId).style.display = 'none'; }, 180);
+  // FIX 4: sync on blur too (manual typing)
+  setTimeout(syncSignoffNames, 200);
+}
+
+// ── Sync sign-off names from §1 supervisors ────────────────────────────────
+function syncSignoffNames() {
+  const curSup = (document.getElementById('r-cur-sup')?.value||'').trim();
+  const hovSup = (document.getElementById('r-hov-sup')?.value||'').trim();
+  const outSel = document.getElementById('out-name');
+  const inSel  = document.getElementById('in-name');
+  // Only pre-select if user hasn't already picked a name and the field matches a known user
+  if (outSel && !outSel.value && USERS.includes(curSup)) outSel.value = curSup;
+  if (inSel  && !inSel.value  && USERS.includes(hovSup)) inSel.value  = hovSup;
 }
 
 // ── Save ───────────────────────────────────────────────────────────────────
@@ -793,12 +821,12 @@ function renderTrouble() {
       <td>
         <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
           <input id="eqname-${rid}" value="${esc(row.equip_name||'')}"
-            placeholder="${isOther ? 'Type name...' : 'Select lab first…'}"
+            placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
             autocomplete="off"
-            ${!isOther && !row.owner ? 'readonly' : ''}
+            ${!row.owner && !isOther ? 'readonly' : ''}
             oninput="eqNameInput(${rid},this.value)"
             onfocus="eqNameFocus(${rid})"
-            onblur="setTimeout(()=>eqDropClose(${rid}),180)"/>
+            onblur="setTimeout(()=>eqDropClose(${rid}),200)"/>
           <div class="eq-drop" id="eq-drop-${rid}"></div>
         </div>
       </td>
@@ -910,24 +938,25 @@ function eqNameInput(rid, val) {
 
 function eqDropOpen(rid, query) {
   const row  = troubleRows.find(r => r.id === rid);
-  if (!row || !row.owner) return;
-  const q    = (query||'').toLowerCase();
+  if (!row || !row.owner || row.owner === 'Other') return;
+  const q    = (query||'').toLowerCase().trim();
   const pool = equipMaster.filter(e => e.owner === row.owner);
   const hits = q ? pool.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)) : pool;
   const drop = document.getElementById('eq-drop-'+rid);
-  if (!hits.length) { drop.style.display='none'; return; }
-  drop.innerHTML = hits.slice(0,50).map(e =>
-    `<div class="eq-drop-item" onmousedown="eqPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}','${e.owner}')">
-       <span>${esc(e.name)}</span>
-       <span class="eq-drop-code">${esc(e.code)}</span>
-     </div>`).join('');
-  // Position using fixed coords so it escapes table overflow clipping
+  if (!hits.length) { drop.innerHTML='<div style="padding:10px 14px;color:var(--gray-lt);font-size:12px">No matches found</div>'; }
+  else {
+    drop.innerHTML = hits.slice(0,60).map(e =>
+      `<div class="eq-drop-item" onmousedown="eqPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}','${e.owner}')">
+         <span>${esc(e.name)}</span>
+         <span class="eq-drop-code">${esc(e.code)}</span>
+       </div>`).join('');
+  }
   const inp = document.getElementById('eqname-'+rid);
   if (inp) {
     const rect = inp.getBoundingClientRect();
     drop.style.top   = (rect.bottom + 2) + 'px';
     drop.style.left  = rect.left + 'px';
-    drop.style.width = Math.max(rect.width, 320) + 'px';
+    drop.style.width = Math.max(rect.width, 340) + 'px';
   }
   drop.style.display = 'block';
 }
@@ -1072,6 +1101,7 @@ function switchTab(tab) {
     document.querySelector(`.tab-btn[data-tab="${t}"]`).classList.toggle('active', t===tab);
   });
   if (tab==='hist') loadHistory();
+  if (tab==='s5') syncSignoffNames();
 }
 
 // ── API ────────────────────────────────────────────────────────────────────
