@@ -65,7 +65,8 @@ async function initDB() {
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));  // serve handover.html
+app.use(express.static(__dirname));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'handover.html')));
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
