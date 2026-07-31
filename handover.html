@@ -1093,7 +1093,7 @@ function eqLabChange(rid, labVal) {
   // Reset name and code fields
   const nameInput = document.getElementById('eqname-'+rid);
   const codeInput = document.getElementById('eqcode-'+rid);
-  if (nameInput) { nameInput.value = ''; nameInput.readOnly = (labVal !== 'Other' && labVal !== ''); nameInput.placeholder = labVal === 'Other' ? 'Type name manually…' : labVal ? 'Click to select…' : 'Select lab first…'; }
+  if (nameInput) { nameInput.value = ''; nameInput.readOnly = (!labVal); nameInput.placeholder = labVal === 'Other' ? 'Type name manually…' : labVal ? 'Click or type to search…' : 'Select lab first…'; }
   if (codeInput) codeInput.value = '';
   eqDropClose(rid);
   debounceTrouble(rid);
