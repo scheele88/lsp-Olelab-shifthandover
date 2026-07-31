@@ -42,7 +42,7 @@ button:active{transform:translateY(0)}
 button:disabled{opacity:.38;cursor:not-allowed;filter:none;transform:none;box-shadow:none}
 input,select,textarea{font-family:var(--font);font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;outline:none;width:100%;background:#fff;transition:border .15s,box-shadow .15s;color:var(--gray)}
 input:focus,select:focus,textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px rgba(37,160,94,.12)}
-.etable input:focus,.etable select:focus,.etable textarea:focus{box-shadow:none;border-color:var(--green2)}
+.etable input:focus,.etable select:focus,.etable textarea:focus{box-shadow:none!important;border-color:var(--border)!important;outline:none}
 input[readonly]{background:#f7f9fc;color:var(--gray-lt)}
 textarea{resize:vertical;min-height:60px;line-height:1.5}
 label{font-size:11px;color:var(--gray-lt);font-weight:600;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
@@ -186,6 +186,7 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 .combo-drop div:hover{background:var(--green-bg);color:var(--green)}
 
 /* ── Equipment dropdown ───────────────────────────────────────────────────── */
+.eq-drop-wrap input:focus{box-shadow:none!important;border-color:var(--border)!important}
 .eq-drop-wrap{position:relative}
 .eq-drop-wrap input,.eq-drop-wrap select{width:100%}
 .eq-drop{
@@ -798,6 +799,9 @@ function renderSignoffs(r) {
     document.getElementById('in-signed').textContent = `✅ Acknowledged: ${r.incoming_name} — ${fmtTs(r.incoming_ts)}`;
     document.getElementById('in-form').style.display = 'none';
   } else { document.getElementById('in-signed').style.display='none'; document.getElementById('in-form').style.display=''; }
+  // Update locked banner whenever signoff state changes
+  const banner = document.getElementById('locked-banner');
+  if (banner) banner.style.display = r.locked ? '' : 'none';
 }
 
 // ── Equipment Trouble ──────────────────────────────────────────────────────
