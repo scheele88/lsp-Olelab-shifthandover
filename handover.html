@@ -99,10 +99,10 @@ header .sub{font-size:11px;opacity:.7}
 /* Autocomplete for equipment */
 .eq-drop-wrap{position:relative}
 .eq-drop-wrap input,.eq-drop-wrap select{width:100%}
-.eq-drop{position:absolute;top:100%;left:0;min-width:300px;background:#fff;border:1px solid var(--blue2);border-top:none;border-radius:0 0 var(--radius) var(--radius);max-height:220px;overflow-y:auto;z-index:500;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.eq-drop{position:fixed;min-width:320px;background:#fff;border:1px solid var(--blue2);border-radius:var(--radius);max-height:260px;overflow-y:auto;z-index:9000;box-shadow:0 6px 20px rgba(0,0,0,.25)}
 .eq-drop-item{padding:7px 10px;cursor:pointer;font-size:12px;line-height:1.4;display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #f0f0f0}
 .eq-drop-item:hover{background:var(--blue-bg)}
-.eq-drop-code{font-family:monospace;color:var(--gray-lt);font-size:11px;white-space:nowrap}
+.eq-drop-code{font-family:monospace;color:var(--gray-lt);font-size:11px;white-space:nowrap;flex-shrink:0}
 
 /* History */
 .htable{width:100%;border-collapse:collapse;font-size:13px}
@@ -739,6 +739,8 @@ function eqLabChange(rid, labVal) {
 function eqNameFocus(rid) {
   const row = troubleRows.find(r => r.id === rid);
   if (!row || !row.owner || row.owner === 'Other') return;
+  // Close any other open drops first
+  document.querySelectorAll('.eq-drop').forEach(d => d.style.display='none');
   eqDropOpen(rid, '');
 }
 
@@ -761,11 +763,19 @@ function eqDropOpen(rid, query) {
   const hits = q ? pool.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)) : pool;
   const drop = document.getElementById('eq-drop-'+rid);
   if (!hits.length) { drop.style.display='none'; return; }
-  drop.innerHTML = hits.slice(0,20).map(e =>
+  drop.innerHTML = hits.slice(0,50).map(e =>
     `<div class="eq-drop-item" onmousedown="eqPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}','${e.owner}')">
        <span>${esc(e.name)}</span>
        <span class="eq-drop-code">${esc(e.code)}</span>
      </div>`).join('');
+  // Position using fixed coords so it escapes table overflow clipping
+  const inp = document.getElementById('eqname-'+rid);
+  if (inp) {
+    const rect = inp.getBoundingClientRect();
+    drop.style.top   = (rect.bottom + 2) + 'px';
+    drop.style.left  = rect.left + 'px';
+    drop.style.width = Math.max(rect.width, 320) + 'px';
+  }
   drop.style.display = 'block';
 }
 
