@@ -318,8 +318,8 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
   <!-- Browse any shift directly from top bar -->
   <div style="display:flex;align-items:center;gap:6px;margin-left:20px;border-left:1px solid rgba(255,255,255,.2);padding-left:16px;flex-wrap:wrap">
     <span style="color:rgba(255,255,255,.6);font-size:11px;white-space:nowrap">Browse shift:</span>
-    <input type="date" id="nav-date" style="width:130px;padding:3px 6px;font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px"/>
-    <select id="nav-shift" style="width:110px;padding:3px 6px;font-size:12px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px">
+    <input type="date" id="nav-date" style="width:130px;padding:3px 6px;font-size:12px;background:#243256;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:5px;color-scheme:dark"/>
+    <select id="nav-shift" style="width:110px;padding:3px 6px;font-size:12px;background:#243256;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:5px">
       <option value="Day">☀ Day</option>
       <option value="Night">🌙 Night</option>
     </select>
@@ -733,19 +733,26 @@ function applyLock() {
 }
 
 async function returnToCurrentShift() {
-  viewingPast = false;
-  isLocked    = false;
-  document.getElementById('r-date').value     = shiftDate;
-  document.getElementById('r-shift').value    = shiftType;
-  document.getElementById('r-loggedby').value = loggedBy;
+  viewingPast   = false;
+  isLocked      = false;
+  currentReport = null; // force fresh load
+
   document.getElementById('hist-viewer').style.display = 'none';
   const navBtn = document.getElementById('nav-current-btn');
   if (navBtn) navBtn.style.display = 'none';
-  // Reset nav to current shift
+
+  // Reset nav picker to current shift
   const navDate = document.getElementById('nav-date');
   const navShift = document.getElementById('nav-shift');
   if (navDate) navDate.value = shiftDate;
   if (navShift) navShift.value = shiftType;
+
+  // Re-enable all controls before loading
+  document.querySelectorAll('.main input,.main select,.main textarea').forEach(el => el.disabled = false);
+  document.querySelectorAll('.main button').forEach(b => b.disabled = false);
+  document.getElementById('save-bar').style.display = '';
+  document.getElementById('locked-banner').style.display = 'none';
+
   await loadCurrentShift();
   switchTab('s1');
 }
@@ -754,12 +761,23 @@ async function navToShift() {
   const date  = document.getElementById('nav-date').value;
   const shift = document.getElementById('nav-shift').value;
   if (!date) { toast('Select a date first'); return; }
+
+  // If browsing to the actual current shift → reload it normally (editable)
   const isCurrent = (date === shiftDate && shift === shiftType);
   if (isCurrent) { await returnToCurrentShift(); return; }
+
   try {
     const data = await api(`/api/reports/by-shift?date=${date}&shift=${shift}`);
-    if (!data) { toast(`No ${shift} shift report found for ${fmtDateOnly(date)}`); return; }
-    applyReport(data, true);
+    if (!data) {
+      // No report exists for this shift yet
+      // Is it a future/incoming shift that should be editable?
+      // We treat any shift without a report as view-only placeholder
+      toast(`No report found for ${shift} shift on ${fmtDateOnly(date)}`, 3500);
+      return;
+    }
+    // Past shift: show read-only UNLESS it's not locked (draft) and user is allowed to edit
+    const isPast = true; // browsed shifts are always read-only via nav bar
+    applyReport(data, isPast);
     const navBtn = document.getElementById('nav-current-btn');
     if (navBtn) navBtn.style.display = '';
     switchTab('s1');
