@@ -84,6 +84,7 @@ async function initDB() {
 
   // Migration: add missing columns to existing handover_reports table (safe — IF NOT EXISTS)
   const migrations = [
+    `ALTER TABLE pending_samples ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'In-progress'`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS logged_by VARCHAR(50)`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS current_shift_team VARCHAR(5)`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS current_supervisor VARCHAR(100)`,
@@ -228,8 +229,8 @@ app.put('/api/reports/:id/pending', async (req, res) => {
   try {
     await pool.query('DELETE FROM pending_samples WHERE report_id=$1',[req.params.id]);
     for (let i=0;i<rows.length;i++)
-      await pool.query(`INSERT INTO pending_samples (report_id,sample_point,reason,action_needed,sort_order) VALUES ($1,$2,$3,$4,$5)`,
-        [req.params.id,rows[i].sample_point||'',rows[i].reason||'',rows[i].action_needed||'',i]);
+      await pool.query(`INSERT INTO pending_samples (report_id,sample_point,reason,action_needed,status,sort_order) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [req.params.id,rows[i].sample_point||'',rows[i].reason||'',rows[i].action_needed||'',rows[i].status||'In-progress',i]);
     const { rows:saved } = await pool.query('SELECT * FROM pending_samples WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
     res.json(saved);
   } catch(e){ res.status(500).json({error:e.message}); }

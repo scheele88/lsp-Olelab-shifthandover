@@ -431,7 +431,7 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
     <div class="card-body" style="padding:8px;overflow-x:auto">
       <p style="color:var(--gray-lt);font-size:12px;padding:6px 6px 10px">Samples received this shift but not yet completed — carry over to next shift.</p>
       <table class="etable">
-        <thead><tr><th>#</th><th style="min-width:200px">Sample Point / Description</th><th style="min-width:200px">Reason for Pending</th><th style="min-width:200px">Action Needed</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th style="min-width:200px">Sample Point / Description</th><th style="min-width:200px">Reason for Pending</th><th style="min-width:200px">Action Needed</th><th style="min-width:120px">Status</th><th></th></tr></thead>
         <tbody id="pending-tbody"></tbody>
       </table>
       <p id="no-pending" style="text-align:center;padding:20px;color:var(--gray-lt)">No pending samples.</p>
@@ -635,9 +635,37 @@ async function init() {
 async function loadCurrentShift() {
   try {
     const data = await api(`/api/reports/by-shift?date=${shiftDate}&shift=${shiftType}`);
-    if (data) { applyReport(data, false); }
-    else { await saveHeader(); }
+    if (data) {
+      applyReport(data, false);
+    } else {
+      // New shift — carry forward non-Done pending samples from previous shift
+      await saveHeader();
+      await carryForwardPending();
+    }
   } catch(e) { toast('⚠ ' + e.message, 4000); }
+}
+
+async function carryForwardPending() {
+  try {
+    // Find the most recent previous report
+    const reports = await api('/api/reports?limit=5');
+    const prev = reports.find(r => !(r.shift_date.slice(0,10) === shiftDate && r.shift_type === shiftType));
+    if (!prev) return;
+    const prevFull = await api(`/api/reports/${prev.id}`);
+    if (!prevFull || !prevFull.pending || !prevFull.pending.length) return;
+    // Filter: only carry forward rows that are NOT Done
+    const carry = prevFull.pending.filter(p => p.status !== 'Done').map(p => ({
+      sample_point: p.sample_point,
+      reason:       p.reason,
+      action_needed:p.action_needed,
+      status:       p.status || 'In-progress'
+    }));
+    if (!carry.length) return;
+    pendingRows = carry;
+    renderPending();
+    await savePending();
+    toast(`📋 ${carry.length} pending sample(s) carried over from previous shift`, 4000);
+  } catch(e) { console.error('carryForward error:', e); }
 }
 
 function applyReport(data, isPast) {
@@ -1049,17 +1077,28 @@ function renderPending() {
   document.getElementById('no-pending').style.display = pendingRows.length ? 'none' : '';
   tbody.innerHTML = '';
   pendingRows.forEach((row, i) => {
+    const status = row.status || 'In-progress';
+    const isDone = status === 'Done';
     const tr = document.createElement('tr');
+    if (isDone) tr.style.cssText = 'opacity:.45;text-decoration:line-through;background:#f9f9f9';
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
       <td><input value="${esc(row.sample_point||'')}" oninput="pendingRows[${i}].sample_point=this.value" placeholder="e.g. SPC-001 Ethylene product"/></td>
       <td><textarea oninput="pendingRows[${i}].reason=this.value">${esc(row.reason||'')}</textarea></td>
       <td><textarea oninput="pendingRows[${i}].action_needed=this.value">${esc(row.action_needed||'')}</textarea></td>
+      <td>
+        <select onchange="pendingRows[${i}].status=this.value;renderPending()">
+          <option ${status==='Sent'?'selected':''}>Sent</option>
+          <option ${status==='Received'?'selected':''}>Received</option>
+          <option ${status==='In-progress'?'selected':''}>In-progress</option>
+          <option ${status==='Done'?'selected':''}>Done</option>
+        </select>
+      </td>
       <td><button class="btn-red btn-xs del-btn" onclick="pendingRows.splice(${i},1);renderPending()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
-function addPendingRow(){ pendingRows.push({sample_point:'',reason:'',action_needed:''}); renderPending(); }
+function addPendingRow(){ pendingRows.push({sample_point:'',reason:'',action_needed:'',status:'In-progress'}); renderPending(); }
 async function savePending(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows); }
 
 // ── Schedule changes ───────────────────────────────────────────────────────
