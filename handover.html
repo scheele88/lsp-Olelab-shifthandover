@@ -1109,7 +1109,8 @@ async function pushToNextShift() {
     const nextFull = nextReport.trouble !== undefined ? nextReport :
                      await api(`/api/reports/${nextReport.id}`);
     const nextEmpty = !nextFull.trouble?.length && !nextFull.pending?.length &&
-                      !nextFull.schedules?.length && !nextFull.reqsamples?.length;
+                      !nextFull.schedules?.length && !nextFull.reqsamples?.length &&
+                      !nextFull.limsRows?.length && !nextFull.remarksRows?.length;
     if (!nextEmpty) {
       toast('ℹ Next shift already has data — carry-forward skipped', 3000);
       return;
@@ -1167,6 +1168,20 @@ async function pushToNextShift() {
       }));
       await api(`/api/reports/${nextReport.id}/reqsamples`, 'PUT', rows);
       carried.push(`${rows.length} requested sample(s)`);
+    }
+
+    // 5. LIMS Issues — all (incoming shift decides what to keep)
+    if (src.limsRows?.length) {
+      const rows = src.limsRows.map(r => ({ description: r.description }));
+      await api(`/api/reports/${nextReport.id}/lims`, 'PUT', rows);
+      carried.push(`${rows.length} LIMS issue(s)`);
+    }
+
+    // 6. General Remarks — all (incoming shift decides what to keep)
+    if (src.remarksRows?.length) {
+      const rows = src.remarksRows.map(r => ({ description: r.description }));
+      await api(`/api/reports/${nextReport.id}/remarks`, 'PUT', rows);
+      carried.push(`${rows.length} remark(s)`);
     }
 
     if (carried.length) {
