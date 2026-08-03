@@ -1229,8 +1229,8 @@ async function pushToNextShift() {
 
     } // end !hasStructuralData
 
-    // 5. Import/Export — push non-Complete rows
-    if (!hasStructuralData && src.impexpRows?.length) {
+    // 5. Import/Export — always push non-Complete rows (like §5A/§5B)
+    if (src.impexpRows?.length) {
       const notDone = src.impexpRows.filter(r => r.status !== 'Complete');
       if (notDone.length) {
         const payload = notDone.map(r => ({
