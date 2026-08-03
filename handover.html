@@ -1106,20 +1106,22 @@ async function pushToNextShift() {
     if (!nextReport || !nextReport.id) return;
 
     // Only push if next shift is still empty (don't overwrite if already filled)
-    const nextFull = nextReport.trouble !== undefined ? nextReport :
-                     await api(`/api/reports/${nextReport.id}`);
-    const nextEmpty = !nextFull.trouble?.length && !nextFull.pending?.length &&
-                      !nextFull.schedules?.length && !nextFull.reqsamples?.length &&
-                      !nextFull.limsRows?.length && !nextFull.remarksRows?.length;
-    if (!nextEmpty) {
-      toast('ℹ Next shift already has data — carry-forward skipped', 3000);
-      return;
+    // Always fetch full next shift report to check all sections
+    const nextFull = await api(`/api/reports/${nextReport.id}`);
+    // Only skip if structural sections already have data (§2/§3/§4)
+    // §5A/§5B always get pushed regardless
+    const hasStructuralData = !!(nextFull.trouble?.length || nextFull.pending?.length ||
+                                 nextFull.schedules?.length || nextFull.reqsamples?.length);
+    if (hasStructuralData) {
+      // Structural data exists — skip §2/§3/§4 but still push §5
+      console.log('Next shift has structural data — only pushing §5A/§5B');
     }
 
     // Load current shift's full data fresh
     const src = await api(`/api/reports/${currentReport.id}`);
     let carried = [];
 
+    if (!hasStructuralData) {
     // 1. Equipment trouble — non-Done
     if (src.trouble?.length) {
       const notDone = src.trouble.filter(t => t.status !== 'Done');
@@ -1170,7 +1172,9 @@ async function pushToNextShift() {
       carried.push(`${rows.length} requested sample(s)`);
     }
 
-    // 5. LIMS Issues — all (incoming shift decides what to keep)
+    } // end !hasStructuralData
+
+    // 5. LIMS Issues — always push (incoming shift decides what to keep)
     if (src.limsRows?.length) {
       const rows = src.limsRows.map(r => ({ description: r.description }));
       await api(`/api/reports/${nextReport.id}/lims`, 'PUT', rows);
