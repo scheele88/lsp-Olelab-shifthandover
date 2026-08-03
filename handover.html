@@ -467,7 +467,15 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
     </div>
     <div class="card-body" style="padding:8px;overflow-x:auto">
       <table class="etable">
-        <thead><tr><th>#</th><th style="min-width:90px">Plant</th><th style="min-width:260px">Change Description</th><th style="min-width:115px">Effective Date</th><th style="min-width:140px">Requested By</th><th></th></tr></thead>
+        <thead><tr>
+          <th style="width:36px">#</th>
+          <th style="width:110px">Plant</th>
+          <th style="width:160px">Sampling Point</th>
+          <th>Change Description</th>
+          <th style="width:130px">Effective Date</th>
+          <th style="width:150px">Requested By</th>
+          <th style="width:36px"></th>
+        </tr></thead>
         <tbody id="sched-tbody"></tbody>
       </table>
       <p id="no-sched" style="text-align:center;padding:20px;color:var(--gray-lt)">No schedule changes.</p>
@@ -480,7 +488,16 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
     </div>
     <div class="card-body" style="padding:8px;overflow-x:auto">
       <table class="etable">
-        <thead><tr><th>#</th><th style="min-width:90px">Plant</th><th style="min-width:160px">Product / Stream</th><th style="min-width:190px">Test Items</th><th style="min-width:130px">Requested By</th><th style="min-width:115px">Target Date</th><th style="min-width:85px">Priority</th><th></th></tr></thead>
+        <thead><tr>
+          <th style="width:36px">#</th>
+          <th style="width:110px">Plant</th>
+          <th style="width:170px">Product / Stream</th>
+          <th>Test Items</th>
+          <th style="width:140px">Requested By</th>
+          <th style="width:130px">Target Date</th>
+          <th style="width:95px">Priority</th>
+          <th style="width:36px"></th>
+        </tr></thead>
         <tbody id="req-tbody"></tbody>
       </table>
       <p id="no-req" style="text-align:center;padding:20px;color:var(--gray-lt)">No requested samples.</p>
@@ -1365,16 +1382,17 @@ function renderSched() {
   schedRows.forEach((row, i) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
+      <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
       <td><select onchange="schedRows[${i}].plant=this.value">${plantSel(row.plant)}</select></td>
-      <td><textarea oninput="schedRows[${i}].change_desc=this.value">${esc(row.change_desc||'')}</textarea></td>
+      <td><input value="${esc(row.sampling_point||'')}" oninput="schedRows[${i}].sampling_point=this.value" placeholder="e.g. SPC-21001"/></td>
+      <td><textarea oninput="schedRows[${i}].change_desc=this.value" style="min-height:38px">${esc(row.change_desc||'')}</textarea></td>
       <td><input type="date" value="${row.effective_date?row.effective_date.slice(0,10):''}" onchange="schedRows[${i}].effective_date=this.value"/></td>
       <td><input value="${esc(row.requested_by||'')}" oninput="schedRows[${i}].requested_by=this.value" placeholder="Name"/></td>
-      <td><button class="btn-red btn-xs del-btn" onclick="schedRows.splice(${i},1);renderSched()">🗑</button></td>`;
+      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="schedRows.splice(${i},1);renderSched()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
-function addScheduleRow(){ schedRows.push({plant:'Hot',change_desc:'',effective_date:'',requested_by:''}); renderSched(); }
+function addScheduleRow(){ schedRows.push({plant:'Hot',sampling_point:'',change_desc:'',effective_date:'',requested_by:''}); renderSched(); }
 async function saveSchedules(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/schedules`,'PUT',schedRows); }
 
 // ── Requested samples ──────────────────────────────────────────────────────
@@ -1385,17 +1403,17 @@ function renderReq() {
   reqRows.forEach((row, i) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
+      <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
       <td><select onchange="reqRows[${i}].plant=this.value">${plantSel(row.plant)}</select></td>
-      <td><input value="${esc(row.product_stream||'')}" oninput="reqRows[${i}].product_stream=this.value" placeholder="e.g. Ethylene"/></td>
-      <td><textarea oninput="reqRows[${i}].test_items=this.value">${esc(row.test_items||'')}</textarea></td>
+      <td><input value="${esc(row.product_stream||'')}" oninput="reqRows[${i}].product_stream=this.value" placeholder="e.g. Ethylene product"/></td>
+      <td><textarea oninput="reqRows[${i}].test_items=this.value" style="min-height:38px">${esc(row.test_items||'')}</textarea></td>
       <td><input value="${esc(row.requested_by||'')}" oninput="reqRows[${i}].requested_by=this.value" placeholder="Name"/></td>
       <td><input type="date" value="${row.target_date?row.target_date.slice(0,10):''}" onchange="reqRows[${i}].target_date=this.value"/></td>
       <td><select onchange="reqRows[${i}].priority=this.value">
         <option ${(row.priority||'Normal')==='Normal'?'selected':''}>Normal</option>
         <option ${row.priority==='High'?'selected':''}>High</option>
       </select></td>
-      <td><button class="btn-red btn-xs del-btn" onclick="reqRows.splice(${i},1);renderReq()">🗑</button></td>`;
+      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="reqRows.splice(${i},1);renderReq()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }

@@ -122,6 +122,7 @@ async function initDB() {
   // Migration: add missing columns to existing handover_reports table (safe — IF NOT EXISTS)
   const migrations = [
     `ALTER TABLE pending_samples ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'In-progress'`,
+    `ALTER TABLE schedule_changes ADD COLUMN IF NOT EXISTS sampling_point VARCHAR(200) DEFAULT ''`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS logged_by VARCHAR(50)`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS current_shift_team VARCHAR(5)`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS current_supervisor VARCHAR(100)`,
@@ -292,8 +293,8 @@ app.put('/api/reports/:id/schedules', async (req, res) => {
   try {
     await pool.query('DELETE FROM schedule_changes WHERE report_id=$1',[req.params.id]);
     for (let i=0;i<rows.length;i++)
-      await pool.query(`INSERT INTO schedule_changes (report_id,plant,change_desc,effective_date,requested_by,sort_order) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [req.params.id,rows[i].plant||'',rows[i].change_desc||'',rows[i].effective_date||null,rows[i].requested_by||'',i]);
+      await pool.query(`INSERT INTO schedule_changes (report_id,plant,sampling_point,change_desc,effective_date,requested_by,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+        [req.params.id,rows[i].plant||'',rows[i].sampling_point||'',rows[i].change_desc||'',rows[i].effective_date||null,rows[i].requested_by||'',i]);
     const { rows:saved } = await pool.query('SELECT * FROM schedule_changes WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
     res.json(saved);
   } catch(e){ res.status(500).json({error:e.message}); }
