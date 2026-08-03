@@ -162,18 +162,19 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 }
 
 /* ── Equipment table ──────────────────────────────────────────────────────── */
-.etable{width:100%;border-collapse:collapse;font-size:12px}
+.etable{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
 .etable th{
   background:linear-gradient(135deg,var(--navy3) 0%,var(--navy) 100%);
-  color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;
-  font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+  color:#fff;padding:6px 5px;text-align:left;white-space:nowrap;
+  font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;
+  overflow:hidden;text-overflow:ellipsis;
 }
 .etable th:first-child{border-radius:0}
-.etable td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.etable td{padding:4px 5px;border-bottom:1px solid var(--border);vertical-align:top;overflow:hidden}
 .etable tbody tr:nth-child(even) td{background:#fafbfd}
 .etable tbody tr:hover td{background:var(--green-bg)}
-.etable select,.etable input[type=text],.etable input:not([type]){font-size:12px;padding:4px 6px;border-radius:5px}
-.etable textarea{font-size:12px;padding:4px 6px;min-height:36px;border-radius:5px}
+.etable select,.etable input[type=text],.etable input:not([type]){font-size:11px;padding:3px 4px;border-radius:5px;width:100%}
+.etable textarea{font-size:11px;padding:3px 4px;min-height:32px;border-radius:5px;width:100%}
 .done-row td{opacity:.45;background:#f9f9f9!important;text-decoration:line-through;color:var(--gray-lt)}
 
 /* Status colours in table */
@@ -283,15 +284,15 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 .unlock-btns{display:flex;gap:10px;justify-content:center;margin-top:4px}
 
 /* ── Attachments ──────────────────────────────────────────────────────────── */
-.att-cell{display:flex;flex-direction:column;gap:4px;min-width:140px}
-.att-chip{display:flex;align-items:center;gap:5px;background:var(--green-bg);border:1px solid var(--green-lt);
-  border-radius:5px;padding:2px 6px;font-size:11px;max-width:180px}
-.att-chip span.att-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;color:var(--navy)}
-.att-chip button{background:none;border:none;color:var(--red);font-size:13px;padding:0 2px;cursor:pointer}
-.att-upload-btn{font-size:11px;padding:3px 8px;background:var(--green2);color:#fff;border-radius:5px;
-  cursor:pointer;display:inline-block;text-align:center}
+.att-cell{display:flex;flex-direction:column;gap:3px;width:100%;overflow:hidden}
+.att-chip{display:flex;align-items:center;gap:4px;background:var(--green-bg);border:1px solid var(--green-lt);
+  border-radius:4px;padding:2px 4px;font-size:10px;max-width:100%}
+.att-chip span.att-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;color:var(--navy);min-width:0}
+.att-chip button{background:none;border:none;color:var(--red);font-size:12px;padding:0 2px;cursor:pointer;flex-shrink:0}
+.att-upload-btn{font-size:10px;padding:2px 6px;background:var(--green2);color:#fff;border-radius:4px;
+  cursor:pointer;display:inline-block;text-align:center;white-space:nowrap}
 .att-upload-btn input{display:none}
-.att-locked-note{font-size:11px;color:var(--gray-lt);font-style:italic}
+.att-locked-note{font-size:10px;color:var(--gray-lt);font-style:italic}
 
 </style>
 </head>
@@ -418,19 +419,19 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
     </div>
     <div class="card-body" style="padding:8px;overflow-x:auto">
       <table class="etable">
-        <thead><tr>
-          <th>#</th>
-          <th style="min-width:100px">Lab</th>
-          <th style="min-width:200px">Equipment Name</th>
-          <th style="min-width:95px">ID (auto)</th>
-          <th style="min-width:150px">Issue</th>
-          <th style="min-width:170px">Details</th>
-          <th style="min-width:150px">Root Cause</th>
-          <th style="min-width:170px">Action Taken</th>
-          <th style="min-width:55px">OOS?</th>
-          <th style="min-width:115px">Status</th>
-          <th style="min-width:150px">Attachments</th>
-          <th></th>
+       <thead><tr>
+          <th style="width:26px">#</th>
+          <th style="width:68px">Lab</th>
+          <th style="width:150px">Equipment Name</th>
+          <th style="width:78px">ID</th>
+          <th style="width:100px">Issue</th>
+          <th style="width:125px">Details</th>
+          <th style="width:110px">Root Cause</th>
+          <th style="width:125px">Action Taken</th>
+          <th style="width:38px">OOS?</th>
+          <th style="width:95px">Status</th>
+          <th style="width:100px">Attach.</th>
+          <th style="width:30px"></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
       </table>
@@ -449,8 +450,7 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
     <div class="card-body" style="padding:8px;overflow-x:auto">
       <p style="color:var(--gray-lt);font-size:12px;padding:6px 6px 10px">Samples received this shift but not yet completed — carry over to next shift.</p>
       <table class="etable">
-        <thead><tr><th>#</th><th style="min-width:200px">Sample Point / Description</th><th style="min-width:200px">Reason for Pending</th><th style="min-width:200px">Action Needed</th><th style="min-width:120px">Status</th><th style="min-width:150px">Attachments</th><th></th></tr></thead>
-        <tbody id="pending-tbody"></tbody>
+       <thead><tr><th style="width:26px">#</th><th style="width:190px">Sample Point / Description</th><th style="width:190px">Reason for Pending</th><th style="width:190px">Action Needed</th><th style="width:100px">Status</th><th style="width:110px">Attach.</th><th style="width:30px"></th></tr></thead>
       </table>
       <p id="no-pending" style="text-align:center;padding:20px;color:var(--gray-lt)">No pending samples.</p>
     </div>
