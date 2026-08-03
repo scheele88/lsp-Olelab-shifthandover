@@ -1,10 +1,10 @@
 {
   "name": "lsp-lab-handover",
   "version": "1.0.0",
-  "description": "LSP Lab Shift Handover Tool — Node/Express/PostgreSQL",
   "main": "handover-server.js",
   "scripts": {
     "start": "node handover-server.js"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
