@@ -5,6 +5,20 @@ const { Pool } = require('pg');
 const path     = require('path');
 const EQUIPMENT = require('./equipment.js');
 
+const multer = require('multer');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+const ATTACHMENT_BUCKET = 'handover-attachments';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB per file
+});
+
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
@@ -79,6 +93,17 @@ async function initDB() {
       target_date    DATE,
       priority       VARCHAR(10) DEFAULT 'Normal',
       sort_order     INTEGER DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS attachments (
+      id            SERIAL PRIMARY KEY,
+      report_id     INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      section       VARCHAR(20) NOT NULL,
+      row_id        INTEGER NOT NULL,
+      file_name     VARCHAR(255),
+      file_url      TEXT,
+      storage_path  TEXT,
+      uploaded_by   VARCHAR(50),
+      uploaded_at   TIMESTAMPTZ DEFAULT NOW()
     );
   `);
 
@@ -279,6 +304,73 @@ app.patch('/api/reports/:id/unlock', async (req, res) => {
     if (!r) return res.status(404).json({ error: 'Not found' });
     res.json(r);
   } catch(e){ res.status(500).json({ error: e.message }); }
+});
+
+// ── Attachments (Equipment Trouble / Pending Samples file uploads) ─────────
+
+app.post('/api/attachments', upload.array('files', 10), async (req, res) => {
+  try {
+    const { report_id, section, row_id, uploaded_by } = req.body;
+    if (!report_id || !section || !row_id) {
+      return res.status(400).json({ error: 'Missing report_id, section, or row_id' });
+    }
+    if (!['trouble', 'pending'].includes(section)) {
+      return res.status(400).json({ error: 'Invalid section' });
+    }
+    if (!req.files || !req.files.length) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const inserted = [];
+    for (const file of req.files) {
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const storagePath = `${section}/${row_id}/${Date.now()}-${safeName}`;
+
+      const { error: upErr } = await supabase.storage
+        .from(ATTACHMENT_BUCKET)
+        .upload(storagePath, file.buffer, { contentType: file.mimetype, upsert: false });
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage.from(ATTACHMENT_BUCKET).getPublicUrl(storagePath);
+
+      const { rows } = await pool.query(
+        `INSERT INTO attachments (report_id, section, row_id, file_name, file_url, storage_path, uploaded_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [report_id, section, row_id, file.originalname, pub.publicUrl, storagePath, uploaded_by || '']
+      );
+      inserted.push(rows[0]);
+    }
+    res.json(inserted);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/attachments/:reportId/:section', async (req, res) => {
+  try {
+    const { reportId, section } = req.params;
+    const { rows } = await pool.query(
+      `SELECT * FROM attachments WHERE report_id=$1 AND section=$2 ORDER BY uploaded_at ASC`,
+      [reportId, section]
+    );
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/attachments/:id', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`SELECT * FROM attachments WHERE id=$1`, [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    const att = rows[0];
+    await supabase.storage.from(ATTACHMENT_BUCKET).remove([att.storage_path]);
+    await pool.query(`DELETE FROM attachments WHERE id=$1`, [req.params.id]);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/health', async (_,res) => {
