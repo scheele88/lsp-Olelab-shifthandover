@@ -1284,7 +1284,12 @@ function renderPending() {
   });
 }
 function addPendingRow(){ pendingRows.push({sample_point:'',reason:'',action_needed:'',status:'In-progress'}); renderPending(); }
-async function savePending(){ if(!currentReport)return; const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows); pendingRows = saved; renderPending(); }
+async function savePending(){
+  if(!currentReport)return;
+  const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows);
+  pendingRows = saved;
+  if (document.getElementById('pending-tbody')) renderPending();
+}
 
 // ── Schedule changes ───────────────────────────────────────────────────────
 function plantSel(v){ return PLANTS.map(p=>`<option ${v===p?'selected':''}>${p}</option>`).join(''); }
