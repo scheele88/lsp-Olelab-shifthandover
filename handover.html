@@ -969,19 +969,20 @@ async function saveAll() {
   setSaveStatus('Saving…');
   try {
     await saveHeader();
-    await savePending();
+    await savePending(true);   // skipRender — we reload once at the end
     await saveSchedules();
     await saveReqSamples();
-    await saveLims();
-    await saveRemarks();
-    // Reload all attachment data after full save (row IDs may have changed)
+    await saveLims(true);      // skipRender
+    await saveRemarks(true);   // skipRender
+    // ONE final reload of all attachment data (row IDs are now stable)
     await Promise.all([
       loadAttachments('trouble'),
       loadAttachments('pending'),
       loadAttachments('lims'),
       loadAttachments('remarks'),
     ]);
-    renderTrouble(); renderPending(); renderLims(); renderRemarks();
+    renderTrouble(); renderPending(); renderSched(); renderReq();
+    renderLims(); renderRemarks();
     setSaveStatus('✅ Saved ' + new Date().toLocaleTimeString('en-GB'));
     toast('✅ Saved');
   } catch(e) { toast('❌ ' + e.message, 4000); setSaveStatus('❌ Save failed'); }
@@ -1345,12 +1346,14 @@ async function addPendingRow(){
   pendingRows.push({sample_point:'',reason:'',action_needed:'',status:'In-progress'});
   await savePending();
 }
-async function savePending(){
+async function savePending(skipRender=false){
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows);
   pendingRows = saved;
-  await loadAttachments('pending');
-  if (document.getElementById('pending-tbody')) renderPending();
+  if(!skipRender){
+    await loadAttachments('pending');
+    if (document.getElementById('pending-tbody')) renderPending();
+  }
 }
 
 // ── Schedule changes ───────────────────────────────────────────────────────
@@ -1422,12 +1425,14 @@ async function addLimsRow() {
   limsRows.push({description:''});
   await saveLims();
 }
-async function saveLims() {
+async function saveLims(skipRender=false) {
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/lims`,'PUT',limsRows);
   limsRows = saved;
-  await loadAttachments('lims');
-  renderLims();
+  if(!skipRender){
+    await loadAttachments('lims');
+    renderLims();
+  }
 }
 
 // ── General Remarks ────────────────────────────────────────────────────────
@@ -1452,12 +1457,14 @@ async function addRemarkRow() {
   remarksRows.push({description:''});
   await saveRemarks();
 }
-async function saveRemarks() {
+async function saveRemarks(skipRender=false) {
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/remarks`,'PUT',remarksRows);
   remarksRows = saved;
-  await loadAttachments('remarks');
-  renderRemarks();
+  if(!skipRender){
+    await loadAttachments('remarks');
+    renderRemarks();
+  }
 }
 
 // ── History ────────────────────────────────────────────────────────────────
