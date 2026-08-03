@@ -331,6 +331,271 @@ header .sub{font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:1
 .att-locked-note{font-size:10px;color:var(--gray-xl);font-style:italic;padding:2px 0}
 
 </style>
+
+<style>
+/* ══════════════════════════════════════════════════════
+   VISUAL OVERHAUL — Strong differentiation & hierarchy
+   ══════════════════════════════════════════════════════ */
+
+/* Background with subtle pattern */
+body { background: #e8edf5 !important; }
+
+/* ── Header: bolder brand bar ── */
+header {
+  height: 66px !important;
+  background: linear-gradient(135deg, #060f24 0%, #0e1f3d 40%, #0d3060 100%) !important;
+  border-bottom: 4px solid #10b981 !important;
+}
+header h1 { font-size: 20px !important; font-weight: 900 !important; letter-spacing: -.5px !important; }
+header .sub { font-size: 10px !important; letter-spacing: 2px !important; color: rgba(255,255,255,.45) !important; }
+header .hdr-icon { font-size: 28px !important; }
+
+/* ── Shift bar: more visual weight ── */
+#shift-bar {
+  background: linear-gradient(135deg, #0a1628 0%, #111e38 100%) !important;
+  border-bottom: 3px solid #10b981 !important;
+  padding: 11px 28px !important;
+  gap: 18px !important;
+}
+.shift-chip {
+  font-size: 14px !important;
+  padding: 7px 20px !important;
+  border-radius: 24px !important;
+  font-weight: 800 !important;
+  background: linear-gradient(135deg, #047857 0%, #10b981 100%) !important;
+  box-shadow: 0 3px 14px rgba(16,185,129,.5) !important;
+  letter-spacing: .3px !important;
+}
+.shift-chip.night {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%) !important;
+  box-shadow: 0 3px 14px rgba(59,130,246,.5) !important;
+}
+#shift-date-disp { font-size: 16px !important; font-weight: 700 !important; }
+
+/* ── Tabs: pill style ── */
+.tabs {
+  background: #fff !important;
+  border-bottom: none !important;
+  padding: 0 24px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+.tab-btn {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .8px !important;
+  padding: 14px 16px !important;
+  color: #94a3b8 !important;
+  border-bottom: 3px solid transparent !important;
+}
+.tab-btn.active {
+  color: #0e1f3d !important;
+  border-bottom-color: #10b981 !important;
+  background: linear-gradient(180deg, rgba(16,185,129,.06) 0%, transparent 100%) !important;
+}
+.tab-btn:hover { color: #0e1f3d !important; background: #f8fafc !important; }
+
+/* ── Cards: stronger visual hierarchy ── */
+.card {
+  border-radius: 14px !important;
+  border: none !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06) !important;
+  overflow: hidden !important;
+  margin-bottom: 18px !important;
+}
+.card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.09) !important; }
+
+.card-hdr {
+  background: linear-gradient(135deg, #060f24 0%, #0d2050 100%) !important;
+  padding: 14px 22px !important;
+  border-bottom: none !important;
+}
+.card-hdr h2 {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1.5px !important;
+  color: rgba(255,255,255,.92) !important;
+  gap: 12px !important;
+}
+.card-hdr h2::before {
+  width: 4px !important;
+  height: 20px !important;
+  background: linear-gradient(180deg, #10b981 0%, #047857 100%) !important;
+  border-radius: 3px !important;
+}
+.card-body { padding: 22px !important; }
+
+/* Section colour accent strips — each section gets a top accent */
+#tab-s1 .card-hdr  { background: linear-gradient(135deg, #0c1a3a 0%, #0f2558 100%) !important; }
+#tab-s2 .card-hdr  { background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 100%) !important; }
+#tab-s3 .card-hdr  { background: linear-gradient(135deg, #0a1f3a 0%, #0f3460 100%) !important; }
+#tab-s4 .card-hdr  { background: linear-gradient(135deg, #0f2244 0%, #1a3a6e 100%) !important; }
+#tab-s4b .card-hdr { background: linear-gradient(135deg, #0a2a1f 0%, #0d3d2a 100%) !important; }
+#tab-s5 .card-hdr  { background: linear-gradient(135deg, #2a0d0d 0%, #4a1515 100%) !important; }
+
+/* ── Main content area ── */
+.main { padding: 22px 22px 100px !important; }
+
+/* ── §1 General: info display cards ── */
+.card-body .row .col input[readonly],
+.card-body .row .col2 input[readonly] {
+  background: #f0f4f8 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  font-size: 14px !important;
+}
+
+/* ── Table redesign ── */
+.etable { border-radius: 8px; overflow: hidden; }
+.etable th {
+  background: linear-gradient(135deg, #0e1f3d 0%, #162848 100%) !important;
+  color: rgba(255,255,255,.8) !important;
+  padding: 10px 12px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+  border-bottom: 2px solid rgba(16,185,129,.4) !important;
+}
+.etable td { padding: 8px 10px !important; }
+.etable tbody tr:hover td { background: #f0fdf4 !important; }
+.etable tbody tr:nth-child(even) td { background: #fafbfd !important; }
+
+/* ── History table ── */
+.htable th {
+  background: linear-gradient(135deg, #0e1f3d 0%, #162848 100%) !important;
+  padding: 11px 16px !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+  border-bottom: 2px solid rgba(16,185,129,.35) !important;
+}
+.htable td { padding: 11px 16px !important; font-size: 13px !important; }
+.htable tbody tr:hover td { background: #f0fdf4 !important; }
+
+/* ── Buttons: stronger styles ── */
+.btn-blue, .btn-navy {
+  background: linear-gradient(135deg, #0e1f3d 0%, #1a3a6e 100%) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  letter-spacing: .3px !important;
+  box-shadow: 0 2px 10px rgba(14,31,61,.4) !important;
+}
+.btn-green {
+  background: linear-gradient(135deg, #047857 0%, #10b981 100%) !important;
+  box-shadow: 0 2px 10px rgba(4,120,87,.45) !important;
+}
+.btn-red {
+  background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%) !important;
+  box-shadow: 0 2px 10px rgba(185,28,28,.4) !important;
+}
+.btn-amber {
+  background: linear-gradient(135deg, #92400e 0%, #d97706 100%) !important;
+  box-shadow: 0 2px 10px rgba(146,64,14,.4) !important;
+}
+button.btn-sm { font-size: 12px !important; font-weight: 700 !important; }
+
+/* ── Badges: bolder ── */
+.badge { font-size: 11px !important; font-weight: 800 !important; padding: 3px 12px !important; }
+.b-green { background: #d1fae5 !important; color: #065f46 !important; border: 1px solid #6ee7b7 !important; }
+.b-amber { background: #fef3c7 !important; color: #92400e !important; border: 1px solid #fcd34d !important; }
+
+/* ── Locked banner ── */
+.locked-banner {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+  border: 2px solid #10b981 !important;
+  border-radius: 14px !important;
+  padding: 15px 22px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(4,120,87,.2) !important;
+  color: #065f46 !important;
+}
+
+/* ── Sign-off boxes ── */
+.signoff-box {
+  border-radius: 14px !important;
+  border: 2px solid #e2e8f0 !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  padding: 24px !important;
+}
+.signoff-box:hover { border-color: #10b981 !important; box-shadow: 0 0 0 4px rgba(16,185,129,.1) !important; }
+.sig-done {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+  border: 2px solid #10b981 !important;
+  border-radius: 10px !important;
+  padding: 14px 20px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #065f46 !important;
+  box-shadow: 0 2px 12px rgba(4,120,87,.2) !important;
+}
+
+/* ── Save bar ── */
+#save-bar {
+  background: linear-gradient(135deg, #060f24 0%, #0e1f3d 100%) !important;
+  border-top: 4px solid #10b981 !important;
+  padding: 12px 30px !important;
+}
+
+/* ── Input focus ── */
+input:focus, select:focus, textarea:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.15) !important;
+}
+
+/* ── Attachment chips ── */
+.att-chip {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+  border: 1.5px solid #6ee7b7 !important;
+  border-radius: 6px !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 4px rgba(4,120,87,.15) !important;
+}
+.att-chip span.att-name { color: #047857 !important; font-weight: 700 !important; }
+
+/* ── Toast ── */
+#toast {
+  background: linear-gradient(135deg, #060f24 0%, #0d2050 100%) !important;
+  border: 1.5px solid rgba(16,185,129,.4) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.45) !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: .2px !important;
+}
+
+/* ── Hist viewer ── */
+#hist-viewer {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+  border: 2px solid #f59e0b !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 16px rgba(245,158,11,.2) !important;
+  padding: 14px 22px !important;
+}
+
+/* ── Gate ── */
+#gate-box {
+  border-top: 6px solid #10b981 !important;
+  border-radius: 24px !important;
+  padding: 48px 52px !important;
+  box-shadow: 0 32px 100px rgba(0,0,0,.6) !important;
+}
+#gate-btn {
+  background: linear-gradient(135deg, #047857 0%, #10b981 100%) !important;
+  box-shadow: 0 6px 24px rgba(4,120,87,.55) !important;
+  font-size: 16px !important;
+  padding: 14px !important;
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+}
+
+/* ── Combo / dropdowns ── */
+.combo-drop { border: 2px solid #10b981 !important; border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,.2) !important; }
+.eq-drop { border: 2px solid #10b981 !important; border-radius: 12px !important; box-shadow: 0 8px 28px rgba(0,0,0,.22) !important; }
+.eq-drop-item:hover { background: #ecfdf5 !important; }
+</style>
 </head>
 <body>
 
