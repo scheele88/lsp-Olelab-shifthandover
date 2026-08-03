@@ -94,6 +94,19 @@ async function initDB() {
       priority       VARCHAR(10) DEFAULT 'Normal',
       sort_order     INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS import_export (
+      id              SERIAL PRIMARY KEY,
+      report_id       INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      direction       VARCHAR(10)  NOT NULL DEFAULT 'Import',
+      material        VARCHAR(200) NOT NULL DEFAULT '',
+      etb             DATE,
+      num_tanks       VARCHAR(50),
+      num_samples     VARCHAR(50),
+      status          VARCHAR(20)  DEFAULT 'Initial',
+      quality         VARCHAR(20),
+      remark          TEXT,
+      sort_order      INTEGER DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS lims_issues (
       id          SERIAL PRIMARY KEY,
       report_id   INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
@@ -158,9 +171,10 @@ async function loadFull(reportId) {
   const { rows: pending }    = await pool.query('SELECT * FROM pending_samples  WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: schedules }  = await pool.query('SELECT * FROM schedule_changes WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: reqsamples }   = await pool.query('SELECT * FROM requested_samples WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  const { rows: limsRows }     = await pool.query('SELECT * FROM lims_issues      WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  const { rows: remarksRows }  = await pool.query('SELECT * FROM general_remarks  WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows };
+  const { rows: limsRows }      = await pool.query('SELECT * FROM lims_issues    WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  const { rows: remarksRows }   = await pool.query('SELECT * FROM general_remarks WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  const { rows: impexpRows }    = await pool.query('SELECT * FROM import_export   WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows, impexpRows };
 }
 
 app.get('/api/reports', async (req, res) => {
@@ -341,7 +355,7 @@ app.post('/api/attachments', upload.array('files', 10), async (req, res) => {
     if (!report_id || !section || !row_id) {
       return res.status(400).json({ error: 'Missing report_id, section, or row_id' });
     }
-    if (!['trouble', 'pending', 'lims', 'remarks'].includes(section)) {
+    if (!['trouble', 'pending', 'lims', 'remarks', 'impexp'].includes(section)) {
       return res.status(400).json({ error: 'Invalid section' });
     }
     if (!req.files || !req.files.length) {
@@ -444,6 +458,33 @@ app.put('/api/reports/:id/remarks', async (req, res) => {
       }
     }
     const {rows:saved} = await pool.query('SELECT * FROM general_remarks WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+// ── Import / Export rows ─────────────────────────────────────────────────────
+app.put('/api/reports/:id/impexp', async (req, res) => {
+  const rows = req.body;
+  try {
+    const existingIds = rows.filter(r=>r.id).map(r=>r.id);
+    if (existingIds.length > 0) {
+      await pool.query(`DELETE FROM import_export WHERE report_id=$1 AND id != ALL($2::int[])`, [req.params.id, existingIds]);
+    } else {
+      await pool.query('DELETE FROM import_export WHERE report_id=$1', [req.params.id]);
+    }
+    for (let i=0;i<rows.length;i++) {
+      const r = rows[i];
+      if (r.id) {
+        await pool.query(
+          `UPDATE import_export SET direction=$1,material=$2,etb=$3,num_tanks=$4,num_samples=$5,status=$6,quality=$7,remark=$8,sort_order=$9 WHERE id=$10`,
+          [r.direction||'Import',r.material||'',r.etb||null,r.num_tanks||'',r.num_samples||'',r.status||'Initial',r.quality||'',r.remark||'',i,r.id]);
+      } else {
+        await pool.query(
+          `INSERT INTO import_export (report_id,direction,material,etb,num_tanks,num_samples,status,quality,remark,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+          [req.params.id,r.direction||'Import',r.material||'',r.etb||null,r.num_tanks||'',r.num_samples||'',r.status||'Initial',r.quality||'',r.remark||'',i]);
+      }
+    }
+    const {rows:saved} = await pool.query('SELECT * FROM import_export WHERE report_id=$1 ORDER BY sort_order,id',[req.params.id]);
     res.json(saved);
   } catch(e){ res.status(500).json({error:e.message}); }
 });
