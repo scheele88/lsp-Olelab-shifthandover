@@ -765,18 +765,19 @@ async function carryForwardPending() {
 }
 
 async function applyReport(data, isPast) {
+  try {
   currentReport = data;
   viewingPast = isPast;
   isLocked = data.locked || isPast;
 
-  document.getElementById('r-date').value = data.shift_date ? data.shift_date.slice(0,10) : '';
-  document.getElementById('r-shift').value = data.shift_type || '';
-  document.getElementById('r-loggedby').value = isPast ? (data.logged_by||'') : loggedBy;
-  document.getElementById('r-cur-team').value = data.current_shift_team || 'A';
-  document.getElementById('r-cur-sup').value = data.current_supervisor || '';
-  document.getElementById('r-hov-team').value = data.handover_shift_team || 'A';
-  document.getElementById('r-hov-sup').value = data.handover_supervisor || '';
-  // lims_issues and general_remarks are now structured rows (not textareas)
+  const setVal = (id, v) => { const el=document.getElementById(id); if(el) el.value=v; };
+  setVal('r-date',    data.shift_date ? data.shift_date.slice(0,10) : '');
+  setVal('r-shift',   data.shift_type || '');
+  setVal('r-loggedby',isPast ? (data.logged_by||'') : loggedBy);
+  setVal('r-cur-team',data.current_shift_team  || 'A');
+  setVal('r-cur-sup', data.current_supervisor  || '');
+  setVal('r-hov-team',data.handover_shift_team || 'A');
+  setVal('r-hov-sup', data.handover_supervisor || '');
 
   troubleRows  = data.trouble     || [];
   pendingRows  = data.pending     || [];
@@ -809,6 +810,7 @@ async function applyReport(data, isPast) {
 
   document.getElementById('locked-banner').style.display = data.locked ? '' : 'none';
   applyLock();
+  } catch(err) { console.error('applyReport error:', err); toast('❌ Load error: ' + err.message, 5000); }
 }
 
 function applyLock() {
