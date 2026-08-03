@@ -971,6 +971,14 @@ async function saveAll() {
     await saveReqSamples();
     await saveLims();
     await saveRemarks();
+    // Reload all attachment data after full save (row IDs may have changed)
+    await Promise.all([
+      loadAttachments('trouble'),
+      loadAttachments('pending'),
+      loadAttachments('lims'),
+      loadAttachments('remarks'),
+    ]);
+    renderTrouble(); renderPending(); renderLims(); renderRemarks();
     setSaveStatus('✅ Saved ' + new Date().toLocaleTimeString('en-GB'));
     toast('✅ Saved');
   } catch(e) { toast('❌ ' + e.message, 4000); setSaveStatus('❌ Save failed'); }
@@ -1333,6 +1341,7 @@ async function savePending(){
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows);
   pendingRows = saved;
+  await loadAttachments('pending');
   if (document.getElementById('pending-tbody')) renderPending();
 }
 
