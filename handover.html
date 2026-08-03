@@ -152,13 +152,13 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .locked-banner{background:var(--green-bg);border:1.5px solid var(--green-lt);border-left:5px solid var(--green);border-radius:var(--radius-lg);padding:12px 18px;margin-bottom:14px;color:var(--green2);font-weight:700;font-size:13px;display:flex;align-items:center;gap:10px}
 
 /* ── Equipment table ── */
-.etable{width:100%;border-collapse:collapse;font-size:12px}
+.etable{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
 .etable th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
-.etable td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
-.etable td:has(textarea){vertical-align:top}
+.etable td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.etable td:has(textarea){vertical-align:top;white-space:normal;overflow:visible}
 .etable tbody tr:nth-child(even) td{background:#fafafa}
 .etable tbody tr:hover td{background:var(--green-bg)}
-.etable select,.etable input[type=text],.etable input:not([type]){font-size:12px;padding:4px 6px;border-radius:3px}
+.etable select,.etable input[type=text],.etable input:not([type]){font-size:12px;padding:4px 6px;border-radius:3px;width:100%;box-sizing:border-box;min-width:0}
 .etable textarea{font-size:12px;padding:4px 6px;min-height:34px;border-radius:3px}
 .done-row td{opacity:.4;background:#fafafa!important;text-decoration:line-through;color:var(--gray-lt)}
 
@@ -403,20 +403,20 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       </div>
     </div>
     <div class="card-body" style="padding:8px;overflow-x:auto">
-      <table class="etable">
-       <thead><tr>
-          <th style="width:26px">#</th>
-          <th style="width:68px">Lab</th>
-          <th style="width:150px">Equipment Name</th>
-          <th style="width:78px">ID</th>
-          <th style="width:100px">Issue</th>
-          <th style="width:125px">Details</th>
-          <th style="width:110px">Root Cause</th>
-          <th style="width:125px">Action Taken</th>
-          <th style="width:38px">OOS?</th>
-          <th style="width:95px">Status</th>
-          <th style="width:100px">Attach.</th>
-          <th style="width:30px"></th>
+      <table class="etable" style="min-width:1280px">
+        <thead><tr>
+          <th style="width:36px">#</th>
+          <th style="width:90px">Lab</th>
+          <th style="width:190px">Equipment Name</th>
+          <th style="width:125px">ID (auto)</th>
+          <th style="width:155px">Issue</th>
+          <th style="width:170px">Details</th>
+          <th style="width:150px">Root Cause</th>
+          <th style="width:160px">Action Taken</th>
+          <th style="width:52px">OOS?</th>
+          <th style="width:130px">Status</th>
+          <th style="width:170px">Attach.</th>
+          <th style="width:36px"></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
       </table>
