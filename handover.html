@@ -776,13 +776,14 @@ async function applyReport(data, isPast) {
   document.getElementById('r-cur-sup').value = data.current_supervisor || '';
   document.getElementById('r-hov-team').value = data.handover_shift_team || 'A';
   document.getElementById('r-hov-sup').value = data.handover_supervisor || '';
-  document.getElementById('r-lims').value = data.lims_issues || '';
-  document.getElementById('r-remarks').value = data.general_remarks || '';
+  // lims_issues and general_remarks are now structured rows (not textareas)
 
-  troubleRows = data.trouble || [];
-  pendingRows = data.pending || [];
-  schedRows = data.schedules || [];
-  reqRows = data.reqsamples || [];
+  troubleRows  = data.trouble     || [];
+  pendingRows  = data.pending     || [];
+  schedRows    = data.schedules   || [];
+  reqRows      = data.reqsamples  || [];
+  limsRows     = data.limsRows    || [];
+  remarksRows  = data.remarksRows || [];
 
   await loadAttachments('trouble');
   await loadAttachments('pending');
@@ -893,8 +894,8 @@ async function navToShift() {
       document.getElementById('r-cur-sup').value = '';
       document.getElementById('r-hov-team').value = 'A';
       document.getElementById('r-hov-sup').value = '';
-      document.getElementById('r-lims').value = '';
-      document.getElementById('r-remarks').value = '';
+      // r-lims removed
+      // r-remarks removed
       troubleRows = []; pendingRows = []; schedRows = []; reqRows = [];
       attachmentsData = { trouble: {}, pending: {}, lims: {}, remarks: {} };
       renderTrouble(); renderPending(); renderSched(); renderReq();
@@ -1336,7 +1337,12 @@ function renderPending() {
     tbody.appendChild(tr);
   });
 }
-function addPendingRow(){ pendingRows.push({sample_point:'',reason:'',action_needed:'',status:'In-progress'}); renderPending(); }
+async function addPendingRow(){
+  if(!currentReport){ await saveAll(); }
+  if(!currentReport) return;
+  pendingRows.push({sample_point:'',reason:'',action_needed:'',status:'In-progress'});
+  await savePending();
+}
 async function savePending(){
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows);
@@ -1408,7 +1414,12 @@ function renderLims() {
     tbody.appendChild(tr);
   });
 }
-function addLimsRow() { limsRows.push({description:''}); renderLims(); }
+async function addLimsRow() {
+  if(!currentReport){ await saveAll(); }
+  if(!currentReport) return;
+  limsRows.push({description:''});
+  await saveLims();
+}
 async function saveLims() {
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/lims`,'PUT',limsRows);
@@ -1433,7 +1444,12 @@ function renderRemarks() {
     tbody.appendChild(tr);
   });
 }
-function addRemarkRow() { remarksRows.push({description:''}); renderRemarks(); }
+async function addRemarkRow() {
+  if(!currentReport){ await saveAll(); }
+  if(!currentReport) return;
+  remarksRows.push({description:''});
+  await saveRemarks();
+}
 async function saveRemarks() {
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/remarks`,'PUT',remarksRows);
