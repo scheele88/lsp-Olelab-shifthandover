@@ -1388,7 +1388,7 @@ function renderLims() {
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
       <td><textarea oninput="limsRows[${i}].description=this.value" style="min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
-      <td>${row.id ? renderAttachments('lims', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
+      <td>${row.id ? attachmentCellHTML('lims', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="limsRows.splice(${i},1);renderLims()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
@@ -1413,7 +1413,7 @@ function renderRemarks() {
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
       <td><textarea oninput="remarksRows[${i}].description=this.value" style="min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
-      <td>${row.id ? renderAttachments('remarks', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
+      <td>${row.id ? attachmentCellHTML('remarks', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="remarksRows.splice(${i},1);renderRemarks()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
