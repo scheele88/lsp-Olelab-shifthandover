@@ -1081,7 +1081,10 @@ async function uploadAttachments(inputEl, section, rowId) {
     const res = await fetch('/api/attachments', { method: 'POST', body: fd });
     if (!res.ok) { const j = await res.json().catch(()=>({})); throw new Error(j.error || 'Upload failed'); }
     await loadAttachments(section);
-    if (section === 'trouble') renderTrouble(); else renderPending();
+    if      (section === 'trouble') renderTrouble();
+    else if (section === 'pending') renderPending();
+    else if (section === 'lims')    renderLims();
+    else if (section === 'remarks') renderRemarks();
     toast('✅ File(s) attached');
   } catch (e) {
     toast('⚠ ' + e.message, 4000);
@@ -1094,7 +1097,10 @@ async function deleteAttachment(id, section) {
   try {
     await fetch(`/api/attachments/${id}`, { method: 'DELETE' });
     await loadAttachments(section);
-    if (section === 'trouble') renderTrouble(); else renderPending();
+    if      (section === 'trouble') renderTrouble();
+    else if (section === 'pending') renderPending();
+    else if (section === 'lims')    renderLims();
+    else if (section === 'remarks') renderRemarks();
     toast('🗑 File deleted');
   } catch (e) {
     toast('⚠ ' + e.message, 4000);
