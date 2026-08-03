@@ -328,7 +328,7 @@ app.post('/api/attachments', upload.array('files', 10), async (req, res) => {
     if (!report_id || !section || !row_id) {
       return res.status(400).json({ error: 'Missing report_id, section, or row_id' });
     }
-    if (!['trouble', 'pending'].includes(section)) {
+    if (!['trouble', 'pending', 'lims', 'remarks'].includes(section)) {
       return res.status(400).json({ error: 'Invalid section' });
     }
     if (!req.files || !req.files.length) {
