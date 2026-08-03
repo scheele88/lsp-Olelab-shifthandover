@@ -711,8 +711,12 @@ async function loadCurrentShift() {
     const data = await api(`/api/reports/by-shift?date=${shiftDate}&shift=${shiftType}`);
     if (data) {
       applyReport(data, false);
+      // If this shift has no rows yet, check if carry-forward is needed
+      const isEmpty = !data.trouble?.length && !data.pending?.length &&
+                      !data.schedules?.length && !data.reqsamples?.length;
+      if (isEmpty) await carryForwardPending();
     } else {
-      // New shift — carry forward non-Done pending samples from previous shift
+      // Completely new shift — create header then carry forward
       await saveHeader();
       await carryForwardPending();
     }
@@ -722,7 +726,9 @@ async function loadCurrentShift() {
 async function carryForwardPending() {
   try {
     const reports = await api('/api/reports?limit=5');
-    const prev = reports.find(r => !(r.shift_date.slice(0,10) === (activeDate||shiftDate) && r.shift_type === (activeShift||shiftType)));
+    const curDate = activeDate || shiftDate;
+    const curShift = activeShift || shiftType;
+    const prev = reports.find(r => !(r.shift_date.slice(0,10) === curDate && r.shift_type === curShift));
     if (!prev) return;
     const prevFull = await api(`/api/reports/${prev.id}`);
     if (!prevFull) return;
@@ -757,7 +763,8 @@ async function carryForwardPending() {
     // 3. Schedule changes — carry all (still relevant until acted on)
     if (prevFull.schedules && prevFull.schedules.length) {
       schedRows = prevFull.schedules.map(s => ({
-        plant: s.plant, change_desc: s.change_desc,
+        plant: s.plant, sampling_point: s.sampling_point||'',
+        change_desc: s.change_desc,
         effective_date: s.effective_date, requested_by: s.requested_by
       }));
       renderSched();
