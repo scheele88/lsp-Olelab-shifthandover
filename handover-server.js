@@ -266,10 +266,22 @@ app.delete('/api/trouble/:id', async (req, res) => {
 app.put('/api/reports/:id/pending', async (req, res) => {
   const rows = req.body;
   try {
-    await pool.query('DELETE FROM pending_samples WHERE report_id=$1',[req.params.id]);
-    for (let i=0;i<rows.length;i++)
-      await pool.query(`INSERT INTO pending_samples (report_id,sample_point,reason,action_needed,status,sort_order) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [req.params.id,rows[i].sample_point||'',rows[i].reason||'',rows[i].action_needed||'',rows[i].status||'In-progress',i]);
+    const existingIds = rows.filter(r=>r.id).map(r=>r.id);
+    // Delete rows that were removed by the user
+    if (existingIds.length > 0) {
+      await pool.query(`DELETE FROM pending_samples WHERE report_id=$1 AND id != ALL($2::int[])`, [req.params.id, existingIds]);
+    } else {
+      await pool.query('DELETE FROM pending_samples WHERE report_id=$1', [req.params.id]);
+    }
+    for (let i=0;i<rows.length;i++) {
+      if (rows[i].id) {
+        await pool.query(`UPDATE pending_samples SET sample_point=$1,reason=$2,action_needed=$3,status=$4,sort_order=$5 WHERE id=$6`,
+          [rows[i].sample_point||'',rows[i].reason||'',rows[i].action_needed||'',rows[i].status||'In-progress',i,rows[i].id]);
+      } else {
+        await pool.query(`INSERT INTO pending_samples (report_id,sample_point,reason,action_needed,status,sort_order) VALUES ($1,$2,$3,$4,$5,$6)`,
+          [req.params.id,rows[i].sample_point||'',rows[i].reason||'',rows[i].action_needed||'',rows[i].status||'In-progress',i]);
+      }
+    }
     const { rows:saved } = await pool.query('SELECT * FROM pending_samples WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
     res.json(saved);
   } catch(e){ res.status(500).json({error:e.message}); }
@@ -391,10 +403,21 @@ app.delete('/api/attachments/:id', async (req, res) => {
 app.put('/api/reports/:id/lims', async (req, res) => {
   const rows = req.body;
   try {
-    await pool.query('DELETE FROM lims_issues WHERE report_id=$1',[req.params.id]);
-    for (let i=0;i<rows.length;i++)
-      await pool.query('INSERT INTO lims_issues (report_id,description,sort_order) VALUES ($1,$2,$3)',
-        [req.params.id, rows[i].description||'', i]);
+    const existingIds = rows.filter(r=>r.id).map(r=>r.id);
+    if (existingIds.length > 0) {
+      await pool.query(`DELETE FROM lims_issues WHERE report_id=$1 AND id != ALL($2::int[])`, [req.params.id, existingIds]);
+    } else {
+      await pool.query('DELETE FROM lims_issues WHERE report_id=$1', [req.params.id]);
+    }
+    for (let i=0;i<rows.length;i++) {
+      if (rows[i].id) {
+        await pool.query(`UPDATE lims_issues SET description=$1,sort_order=$2 WHERE id=$3`,
+          [rows[i].description||'', i, rows[i].id]);
+      } else {
+        await pool.query('INSERT INTO lims_issues (report_id,description,sort_order) VALUES ($1,$2,$3)',
+          [req.params.id, rows[i].description||'', i]);
+      }
+    }
     const {rows:saved} = await pool.query('SELECT * FROM lims_issues WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
     res.json(saved);
   } catch(e){ res.status(500).json({error:e.message}); }
@@ -404,10 +427,21 @@ app.put('/api/reports/:id/lims', async (req, res) => {
 app.put('/api/reports/:id/remarks', async (req, res) => {
   const rows = req.body;
   try {
-    await pool.query('DELETE FROM general_remarks WHERE report_id=$1',[req.params.id]);
-    for (let i=0;i<rows.length;i++)
-      await pool.query('INSERT INTO general_remarks (report_id,description,sort_order) VALUES ($1,$2,$3)',
-        [req.params.id, rows[i].description||'', i]);
+    const existingIds = rows.filter(r=>r.id).map(r=>r.id);
+    if (existingIds.length > 0) {
+      await pool.query(`DELETE FROM general_remarks WHERE report_id=$1 AND id != ALL($2::int[])`, [req.params.id, existingIds]);
+    } else {
+      await pool.query('DELETE FROM general_remarks WHERE report_id=$1', [req.params.id]);
+    }
+    for (let i=0;i<rows.length;i++) {
+      if (rows[i].id) {
+        await pool.query(`UPDATE general_remarks SET description=$1,sort_order=$2 WHERE id=$3`,
+          [rows[i].description||'', i, rows[i].id]);
+      } else {
+        await pool.query('INSERT INTO general_remarks (report_id,description,sort_order) VALUES ($1,$2,$3)',
+          [req.params.id, rows[i].description||'', i]);
+      }
+    }
     const {rows:saved} = await pool.query('SELECT * FROM general_remarks WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
     res.json(saved);
   } catch(e){ res.status(500).json({error:e.message}); }
