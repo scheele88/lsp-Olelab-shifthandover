@@ -1337,7 +1337,11 @@ function renderTrouble() {
     const rid = row.id;
     const isOther = row.owner === 'Other' || (!row.owner && !row.equip_code);
     const tr = document.createElement('tr');
+    const oosFlag = row.out_of_service === 'Yes';
     if (row.status === 'Done') tr.className = 'done-row';
+    else if (oosFlag) tr.className = 'row-oos';
+    else if (!row.status || row.status === 'Investigating') tr.className = 'row-investigating';
+    else if (row.status === 'In-progress') tr.className = 'row-inprogress';
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${idx+1}</td>
       <td>
@@ -1375,7 +1379,7 @@ function renderTrouble() {
       <td><textarea onchange="trField(${rid},'root_cause',this.value)">${esc(row.root_cause||'')}</textarea></td>
       <td><textarea onchange="trField(${rid},'action_taken',this.value)">${esc(row.action_taken||'')}</textarea></td>
       <td>
-        <select onchange="trField(${rid},'out_of_service',this.value)">
+        <select onchange="trField(${rid},'out_of_service',this.value)" style="font-weight:700;color:${oos?'#c62828':'#757575'}">
           <option ${(row.out_of_service||'No')==='No'?'selected':''}>No</option>
           <option ${row.out_of_service==='Yes'?'selected':''}>Yes</option>
         </select>
@@ -1527,8 +1531,9 @@ function renderPending() {
   pendingRows.forEach((row, i) => {
     const status = row.status || 'In-progress';
     const isDone = status === 'Done';
+    const pCls = isDone?'pend-done':status==='Sent'?'pend-sent':status==='Received'?'pend-received':'pend-inprogress';
     const tr = document.createElement('tr');
-    if (isDone) tr.style.cssText = 'opacity:.45;text-decoration:line-through;background:#f9f9f9';
+    tr.className = pCls;
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
       <td><input value="${esc(row.sample_point||'')}" oninput="pendingRows[${i}].sample_point=this.value" placeholder="e.g. SPC-001 Ethylene product"/></td>
@@ -1694,6 +1699,8 @@ function renderImpExp() {
   impexpRows.forEach((row, i) => {
     const dir = row.direction || 'Import';
     const tr = document.createElement('tr');
+    const ieCls = row.status==='Complete'?'ie-complete':dir==='Import'?'ie-import':'ie-export';
+    tr.className = ieCls;
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
       <td>
