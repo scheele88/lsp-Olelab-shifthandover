@@ -1052,7 +1052,6 @@ async function signOff(role) {
   const selId = role === 'outgoing' ? 'out-name' : 'in-name';
   const name = document.getElementById(selId).value;
   if (!name) { toast('Select a name first'); return; }
-  // Enforce: you can only sign as yourself (the logged-in user)
   if (name !== loggedBy) {
     toast(`⚠ You are signed in as "${loggedBy}" — you cannot sign as "${name}"`, 4000);
     return;
@@ -1065,9 +1064,118 @@ async function signOff(role) {
     isLocked = r.locked;
     renderSignoffs(r);
     applyLock();
-    toast(role==='outgoing' ? '✍ Outgoing signed' : '✅ Handover complete & locked!', 4000);
-    loadHistory();
+    if (r.locked) {
+      // Both signed — push unfinished items to next shift immediately
+      toast('✅ Handover complete & locked! Carrying forward unfinished items...', 3000);
+      await pushToNextShift();
+      loadHistory();
+    } else {
+      toast('✍ Outgoing signed', 3000);
+    }
   } catch(e) { toast('❌ '+e.message, 4000); }
+}
+
+function calcNextShift(dateStr, shiftType) {
+  // Given current shift date+type, return the next shift's date+type
+  if (shiftType === 'Day') {
+    return { date: dateStr, shift: 'Night' };
+  } else {
+    // Night shift → next Day shift is tomorrow
+    const d = new Date(dateStr + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + 1);
+    return { date: d.toISOString().slice(0,10), shift: 'Day' };
+  }
+}
+
+async function pushToNextShift() {
+  try {
+    const srcDate  = currentReport.shift_date.slice(0,10);
+    const srcShift = currentReport.shift_type;
+    const next = calcNextShift(srcDate, srcShift);
+
+    // Ensure next shift report exists (create if not)
+    let nextReport = await api(`/api/reports/by-shift?date=${next.date}&shift=${next.shift}`);
+    if (!nextReport) {
+      nextReport = await api('/api/reports', 'POST', {
+        shift_date: next.date, shift_type: next.shift,
+        logged_by: '', current_shift_team: '', current_supervisor: '',
+        handover_shift_team: '', handover_supervisor: '',
+        pending_samples_note: '', lims_issues: '', general_remarks: ''
+      });
+    }
+    if (!nextReport || !nextReport.id) return;
+
+    // Only push if next shift is still empty (don't overwrite if already filled)
+    const nextFull = nextReport.trouble !== undefined ? nextReport :
+                     await api(`/api/reports/${nextReport.id}`);
+    const nextEmpty = !nextFull.trouble?.length && !nextFull.pending?.length &&
+                      !nextFull.schedules?.length && !nextFull.reqsamples?.length;
+    if (!nextEmpty) {
+      toast('ℹ Next shift already has data — carry-forward skipped', 3000);
+      return;
+    }
+
+    // Load current shift's full data fresh
+    const src = await api(`/api/reports/${currentReport.id}`);
+    let carried = [];
+
+    // 1. Equipment trouble — non-Done
+    if (src.trouble?.length) {
+      const notDone = src.trouble.filter(t => t.status !== 'Done');
+      for (const t of notDone) {
+        await api(`/api/reports/${nextReport.id}/trouble`, 'POST', {
+          equip_code: t.equip_code, equip_name: t.equip_name, owner: t.owner,
+          issue_type: t.issue_type, issue_other: t.issue_other || '',
+          details: t.details || '', root_cause: t.root_cause || '',
+          action_taken: t.action_taken || '',
+          out_of_service: t.out_of_service || 'No',
+          status: t.status || 'Investigating'
+        });
+      }
+      if (notDone.length) carried.push(`${notDone.length} equipment issue(s)`);
+    }
+
+    // 2. Pending samples — non-Done
+    if (src.pending?.length) {
+      const notDone = src.pending.filter(p => p.status !== 'Done').map(p => ({
+        sample_point: p.sample_point, reason: p.reason,
+        action_needed: p.action_needed, status: p.status || 'In-progress'
+      }));
+      if (notDone.length) {
+        await api(`/api/reports/${nextReport.id}/pending`, 'PUT', notDone);
+        carried.push(`${notDone.length} pending sample(s)`);
+      }
+    }
+
+    // 3. Schedule changes — all
+    if (src.schedules?.length) {
+      const rows = src.schedules.map(s => ({
+        plant: s.plant, sampling_point: s.sampling_point || '',
+        change_desc: s.change_desc, effective_date: s.effective_date,
+        requested_by: s.requested_by
+      }));
+      await api(`/api/reports/${nextReport.id}/schedules`, 'PUT', rows);
+      carried.push(`${rows.length} schedule change(s)`);
+    }
+
+    // 4. Requested samples — all
+    if (src.reqsamples?.length) {
+      const rows = src.reqsamples.map(r => ({
+        plant: r.plant, product_stream: r.product_stream,
+        test_items: r.test_items, requested_by: r.requested_by,
+        target_date: r.target_date, priority: r.priority || 'Normal'
+      }));
+      await api(`/api/reports/${nextReport.id}/reqsamples`, 'PUT', rows);
+      carried.push(`${rows.length} requested sample(s)`);
+    }
+
+    if (carried.length) {
+      toast(`📋 Pushed to ${next.shift} shift (${fmtDateOnly(next.date)}): ${carried.join(', ')}`, 6000);
+    }
+  } catch(e) {
+    console.error('pushToNextShift error:', e);
+    toast('⚠ Carry-forward error: ' + e.message, 4000);
+  }
 }
 function renderSignoffs(r) {
   if (r.outgoing_name) {
