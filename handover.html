@@ -9,31 +9,31 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   /* Primary palette — deep navy + emerald green (matches reference) */
-  --navy:    #1a2744;
-  --navy2:   #243256;
-  --navy3:   #0f1a30;
-  --green:   #1e7e4a;
-  --green2:  #25a05e;
+  --navy: #1a2744;
+  --navy2: #243256;
+  --navy3: #0f1a30;
+  --green: #1e7e4a;
+  --green2: #25a05e;
   --green-bg:#e8f5ee;
   --green-lt:#d0edd9;
-  --amber:   #d97706;
+  --amber: #d97706;
   --amber-bg:#fef3c7;
-  --red:     #c0392b;
-  --red-bg:  #fdecea;
-  --blue:    #1a2744;   /* alias for legacy references */
-  --blue2:   #243256;
+  --red: #c0392b;
+  --red-bg: #fdecea;
+  --blue: #1a2744;   /* alias for legacy references */
+  --blue2: #243256;
   --blue-bg: #eef1f8;
-  --gray:    #2d3748;
+  --gray: #2d3748;
   --gray-lt: #718096;
   --gray-xl: #a0aec0;
-  --bg:      #f1f4f9;
-  --card:    #ffffff;
-  --border:  #e2e8f0;
-  --radius:  8px;
+  --bg: #f1f4f9;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --radius: 8px;
   --radius-lg:12px;
-  --shadow:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
   --shadow-md:0 4px 12px rgba(0,0,0,.1);
-  --font:    'Inter','Segoe UI',Arial,sans-serif;
+  --font: 'Inter','Segoe UI',Arial,sans-serif;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--gray);font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}
 button{cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;border:none;border-radius:var(--radius);padding:7px 16px;transition:all .18s;letter-spacing:.2px}
@@ -282,6 +282,17 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 #unlock-pw{text-align:center;font-size:16px;letter-spacing:3px;margin-bottom:8px;padding:10px}
 .unlock-btns{display:flex;gap:10px;justify-content:center;margin-top:4px}
 
+/* ── Attachments ──────────────────────────────────────────────────────────── */
+.att-cell{display:flex;flex-direction:column;gap:4px;min-width:140px}
+.att-chip{display:flex;align-items:center;gap:5px;background:var(--green-bg);border:1px solid var(--green-lt);
+  border-radius:5px;padding:2px 6px;font-size:11px;max-width:180px}
+.att-chip span.att-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;color:var(--navy)}
+.att-chip button{background:none;border:none;color:var(--red);font-size:13px;padding:0 2px;cursor:pointer}
+.att-upload-btn{font-size:11px;padding:3px 8px;background:var(--green2);color:#fff;border-radius:5px;
+  cursor:pointer;display:inline-block;text-align:center}
+.att-upload-btn input{display:none}
+.att-locked-note{font-size:11px;color:var(--gray-lt);font-style:italic}
+
 </style>
 </head>
 <body>
@@ -418,6 +429,7 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
           <th style="min-width:170px">Action Taken</th>
           <th style="min-width:55px">OOS?</th>
           <th style="min-width:115px">Status</th>
+          <th style="min-width:150px">Attachments</th>
           <th></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
@@ -437,7 +449,7 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
     <div class="card-body" style="padding:8px;overflow-x:auto">
       <p style="color:var(--gray-lt);font-size:12px;padding:6px 6px 10px">Samples received this shift but not yet completed — carry over to next shift.</p>
       <table class="etable">
-        <thead><tr><th>#</th><th style="min-width:200px">Sample Point / Description</th><th style="min-width:200px">Reason for Pending</th><th style="min-width:200px">Action Needed</th><th style="min-width:120px">Status</th><th></th></tr></thead>
+        <thead><tr><th>#</th><th style="min-width:200px">Sample Point / Description</th><th style="min-width:200px">Reason for Pending</th><th style="min-width:200px">Action Needed</th><th style="min-width:120px">Status</th><th style="min-width:150px">Attachments</th><th></th></tr></thead>
         <tbody id="pending-tbody"></tbody>
       </table>
       <p id="no-pending" style="text-align:center;padding:20px;color:var(--gray-lt)">No pending samples.</p>
@@ -574,30 +586,31 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
-const USERS  = ['daipc','hientx','tuanpv','huyvq','khuelv','vupt','truocnt','huongbtm'];
+const USERS = ['daipc','hientx','tuanpv','huyvq','khuelv','vupt','truocnt','huongbtm'];
 const PLANTS = ['Hot','Cold','BDU','CTU','TF','Other'];
-const OWN    = {Gas:'Gas Lab', Oil:'Oil Lab', Uti:'Utility Lab'};
+const OWN = {Gas:'Gas Lab', Oil:'Oil Lab', Uti:'Utility Lab'};
 
 // ── State ──────────────────────────────────────────────────────────────────
-let loggedBy      = '';
+let loggedBy = '';
 let currentReport = null;
-let viewingPast   = false;
-let equipMaster   = [];
-let troubleRows   = [];
-let pendingRows   = [];
-let schedRows     = [];
-let reqRows       = [];
-let shiftDate     = '';   // clock-determined current shift date
-let shiftType     = '';   // clock-determined current shift type
-let activeDate    = '';   // currently active/editing shift date (may differ from clock)
-let activeShift   = '';   // currently active/editing shift type
-let isLocked      = false;
+let viewingPast = false;
+let equipMaster = [];
+let troubleRows = [];
+let pendingRows = [];
+let schedRows = [];
+let reqRows = [];
+let shiftDate = ''; // clock-determined current shift date
+let shiftType = ''; // clock-determined current shift type
+let activeDate = ''; // currently active/editing shift date (may differ from clock)
+let activeShift = ''; // currently active/editing shift type
+let isLocked = false;
+let attachmentsData = { trouble: {}, pending: {} };
 
 // ── Shift logic ────────────────────────────────────────────────────────────
 function calcShift() {
   const now = new Date();
-  const h   = now.getHours();
-  let date  = new Date(now);
+  const h = now.getHours();
+  let date = new Date(now);
   let type;
   if (h >= 8 && h < 20) { type = 'Day'; }
   else { type = 'Night'; if (h < 8) date.setDate(date.getDate()-1); }
@@ -618,16 +631,16 @@ function enterApp() {
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
   const s = calcShift();
-  shiftDate  = s.date;
-  shiftType  = s.type;
+  shiftDate = s.date;
+  shiftType = s.type;
   activeDate = s.date;
   activeShift= s.type;
 
   const chip = document.getElementById('shift-chip');
   chip.textContent = s.type === 'Day' ? '☀ Day (08:00–20:00)' : '🌙 Night (20:00–08:00)';
-  chip.className   = 'shift-chip' + (s.type === 'Night' ? ' night' : '');
+  chip.className = 'shift-chip' + (s.type === 'Night' ? ' night' : '');
   document.getElementById('shift-date-disp').textContent = fmtDateOnly(s.date);
-  document.getElementById('r-date').value  = s.date;
+  document.getElementById('r-date').value = s.date;
   document.getElementById('r-shift').value = s.type;
   document.getElementById('r-loggedby').value = loggedBy;
 
@@ -718,26 +731,28 @@ async function carryForwardPending() {
   } catch(e) { console.error('carryForward error:', e); }
 }
 
-function applyReport(data, isPast) {
+async function applyReport(data, isPast) {
   currentReport = data;
-  viewingPast   = isPast;
-  isLocked      = data.locked || isPast;
+  viewingPast = isPast;
+  isLocked = data.locked || isPast;
 
-  document.getElementById('r-date').value      = data.shift_date ? data.shift_date.slice(0,10) : '';
-  document.getElementById('r-shift').value     = data.shift_type || '';
-  document.getElementById('r-loggedby').value  = isPast ? (data.logged_by||'') : loggedBy;
-  document.getElementById('r-cur-team').value  = data.current_shift_team  || 'A';
-  document.getElementById('r-cur-sup').value   = data.current_supervisor  || '';
-  document.getElementById('r-hov-team').value  = data.handover_shift_team || 'A';
-  document.getElementById('r-hov-sup').value   = data.handover_supervisor || '';
-  document.getElementById('r-lims').value      = data.lims_issues    || '';
-  document.getElementById('r-remarks').value   = data.general_remarks || '';
+  document.getElementById('r-date').value = data.shift_date ? data.shift_date.slice(0,10) : '';
+  document.getElementById('r-shift').value = data.shift_type || '';
+  document.getElementById('r-loggedby').value = isPast ? (data.logged_by||'') : loggedBy;
+  document.getElementById('r-cur-team').value = data.current_shift_team || 'A';
+  document.getElementById('r-cur-sup').value = data.current_supervisor || '';
+  document.getElementById('r-hov-team').value = data.handover_shift_team || 'A';
+  document.getElementById('r-hov-sup').value = data.handover_supervisor || '';
+  document.getElementById('r-lims').value = data.lims_issues || '';
+  document.getElementById('r-remarks').value = data.general_remarks || '';
 
-  troubleRows = data.trouble    || [];
-  pendingRows = data.pending    || [];
-  schedRows   = data.schedules  || [];
-  reqRows     = data.reqsamples || [];
+  troubleRows = data.trouble || [];
+  pendingRows = data.pending || [];
+  schedRows = data.schedules || [];
+  reqRows = data.reqsamples || [];
 
+  await loadAttachments('trouble');
+  await loadAttachments('pending');
   renderTrouble(); renderPending(); renderSched(); renderReq(); renderSignoffs(data);
 
   // Past viewer banner
@@ -766,7 +781,7 @@ function applyLock() {
     el.disabled = lock;
   });
   document.querySelectorAll('.main button').forEach(b => {
-    if (b.closest('#tab-hist')) return;            // never disable history buttons
+    if (b.closest('#tab-hist')) return; // never disable history buttons
     if (b.onclick && b.onclick.toString().includes('openUnlockModal')) return;
     if (b.onclick && b.onclick.toString().includes('returnToCurrentShift')) return;
     b.disabled = lock;
@@ -776,8 +791,8 @@ function applyLock() {
 }
 
 async function returnToCurrentShift() {
-  viewingPast   = false;
-  isLocked      = false;
+  viewingPast = false;
+  isLocked = false;
   currentReport = null; // force fresh load
 
   document.getElementById('hist-viewer').style.display = 'none';
@@ -785,7 +800,7 @@ async function returnToCurrentShift() {
   if (navBtn) navBtn.style.display = 'none';
 
   // Reset active shift to clock-determined current
-  activeDate  = shiftDate;
+  activeDate = shiftDate;
   activeShift = shiftType;
   // Reset nav picker to current shift
   const navDate = document.getElementById('nav-date');
@@ -804,7 +819,7 @@ async function returnToCurrentShift() {
 }
 
 async function navToShift() {
-  const date  = document.getElementById('nav-date').value;
+  const date = document.getElementById('nav-date').value;
   const shift = document.getElementById('nav-shift').value;
   if (!date) { toast('Select a date first'); return; }
 
@@ -817,37 +832,38 @@ async function navToShift() {
       // Report exists — load it
       // It's editable if: it's the clock-current shift OR it's a draft (not locked)
       const isPast = !isCurrent && data.locked;
-      applyReport(data, isPast);
+      await applyReport(data, isPast);
       // Override active date/shift so save operations target this report
       if (!isCurrent) {
-        activeDate  = date;
+        activeDate = date;
         activeShift = shift;
       } else {
-        activeDate  = shiftDate;
+        activeDate = shiftDate;
         activeShift = shiftType;
       }
     } else {
       // No report yet — create a new editable one for this date/shift
-      activeDate  = date;
+      activeDate = date;
       activeShift = shift;
       // Reset UI to blank editable state
       currentReport = null;
-      viewingPast   = false;
-      isLocked      = false;
-      document.getElementById('r-date').value      = date;
-      document.getElementById('r-shift').value     = shift;
-      document.getElementById('r-loggedby').value  = loggedBy;
-      document.getElementById('r-cur-team').value  = 'A';
-      document.getElementById('r-cur-sup').value   = '';
-      document.getElementById('r-hov-team').value  = 'A';
-      document.getElementById('r-hov-sup').value   = '';
-      document.getElementById('r-lims').value      = '';
-      document.getElementById('r-remarks').value   = '';
+      viewingPast = false;
+      isLocked = false;
+      document.getElementById('r-date').value = date;
+      document.getElementById('r-shift').value = shift;
+      document.getElementById('r-loggedby').value = loggedBy;
+      document.getElementById('r-cur-team').value = 'A';
+      document.getElementById('r-cur-sup').value = '';
+      document.getElementById('r-hov-team').value = 'A';
+      document.getElementById('r-hov-sup').value = '';
+      document.getElementById('r-lims').value = '';
+      document.getElementById('r-remarks').value = '';
       troubleRows = []; pendingRows = []; schedRows = []; reqRows = [];
+      attachmentsData = { trouble: {}, pending: {} };
       renderTrouble(); renderPending(); renderSched(); renderReq();
       renderSignoffs({});
-      document.getElementById('locked-banner').style.display  = 'none';
-      document.getElementById('hist-viewer').style.display    = 'none';
+      document.getElementById('locked-banner').style.display = 'none';
+      document.getElementById('hist-viewer').style.display = 'none';
       applyLock();
       toast(`📋 New handover started: ${shift} shift — ${fmtDateOnly(date)}`, 3500);
     }
@@ -860,12 +876,12 @@ async function navToShift() {
 
 // ── Combobox (supervisor name field) ──────────────────────────────────────
 function comboPositionAndShow(dropId, inputId) {
-  const inp  = document.getElementById(inputId);
+  const inp = document.getElementById(inputId);
   const drop = document.getElementById(dropId);
   if (!inp || !drop) return;
   const rect = inp.getBoundingClientRect();
-  drop.style.top   = (rect.bottom + 2) + 'px';
-  drop.style.left  = rect.left + 'px';
+  drop.style.top = (rect.bottom + 2) + 'px';
+  drop.style.left = rect.left + 'px';
   drop.style.width = rect.width + 'px';
   drop.style.display = 'block';
 }
@@ -876,8 +892,8 @@ function comboOpen(dropId) {
   comboPositionAndShow(dropId, inputId);
 }
 function comboFilter(inputId, dropId) {
-  const q     = document.getElementById(inputId).value.toLowerCase();
-  const drop  = document.getElementById(dropId);
+  const q = document.getElementById(inputId).value.toLowerCase();
+  const drop = document.getElementById(dropId);
   const items = USERS.filter(u => u.toLowerCase().includes(q));
   drop.innerHTML = items.map(u => `<div onmousedown="comboPick('${dropId}','${u}')">${u}</div>`).join('');
   if (items.length) comboPositionAndShow(dropId, inputId);
@@ -901,10 +917,10 @@ function syncSignoffNames() {
   const curSup = (document.getElementById('r-cur-sup')?.value||'').trim();
   const hovSup = (document.getElementById('r-hov-sup')?.value||'').trim();
   const outSel = document.getElementById('out-name');
-  const inSel  = document.getElementById('in-name');
+  const inSel = document.getElementById('in-name');
   // Always sync — §5 sign-off follows §1 supervisor names
   if (outSel && USERS.includes(curSup)) outSel.value = curSup;
-  if (inSel  && USERS.includes(hovSup)) inSel.value  = hovSup;
+  if (inSel && USERS.includes(hovSup)) inSel.value = hovSup;
 }
 
 // ── Save ───────────────────────────────────────────────────────────────────
@@ -942,7 +958,7 @@ function setSaveStatus(m){ document.getElementById('save-status').textContent = 
 async function signOff(role) {
   if (!currentReport) { toast('Save first'); return; }
   const selId = role === 'outgoing' ? 'out-name' : 'in-name';
-  const name  = document.getElementById(selId).value;
+  const name = document.getElementById(selId).value;
   if (!name) { toast('Select a name first'); return; }
   // Enforce: you can only sign as yourself (the logged-in user)
   if (name !== loggedBy) {
@@ -977,17 +993,86 @@ function renderSignoffs(r) {
   if (banner) banner.style.display = r.locked ? '' : 'none';
 }
 
+// ── Attachments (Equipment Trouble / Pending Samples) ───────────────────────
+async function loadAttachments(section) {
+  if (!currentReport || !currentReport.id) { attachmentsData[section] = {}; return; }
+  try {
+    const list = await api(`/api/attachments/${currentReport.id}/${section}`);
+    const grouped = {};
+    list.forEach(a => {
+      if (!grouped[a.row_id]) grouped[a.row_id] = [];
+      grouped[a.row_id].push(a);
+    });
+    attachmentsData[section] = grouped;
+  } catch (e) { console.error(e); }
+}
+
+function attachmentCellHTML(section, rowId) {
+  if (!rowId) {
+    return `<div class="att-locked-note">Save row first</div>`;
+  }
+  const files = (attachmentsData[section] && attachmentsData[section][rowId]) || [];
+  let chips = files.map(f => `
+    <div class="att-chip">
+      <span class="att-name" onclick="window.open('${f.file_url}','_blank')" title="${esc(f.file_name)}">${esc(f.file_name)}</span>
+      <button onclick="deleteAttachment(${f.id}, '${section}')" title="Delete">🗑</button>
+    </div>
+  `).join('');
+
+  return `
+    <div class="att-cell">
+      ${chips}
+      <label class="att-upload-btn">📎 Attach
+        <input type="file" multiple onchange="uploadAttachments(this, '${section}', ${rowId})"/>
+      </label>
+    </div>
+  `;
+}
+
+async function uploadAttachments(inputEl, section, rowId) {
+  if (!inputEl.files || !inputEl.files.length) return;
+  const fd = new FormData();
+  fd.append('report_id', currentReport.id);
+  fd.append('section', section);
+  fd.append('row_id', rowId);
+  fd.append('uploaded_by', loggedBy);
+  for (const f of inputEl.files) fd.append('files', f);
+
+  try {
+    const res = await fetch('/api/attachments', { method: 'POST', body: fd });
+    if (!res.ok) { const j = await res.json().catch(()=>({})); throw new Error(j.error || 'Upload failed'); }
+    await loadAttachments(section);
+    if (section === 'trouble') renderTrouble(); else renderPending();
+    toast('✅ File(s) attached');
+  } catch (e) {
+    toast('⚠ ' + e.message, 4000);
+  }
+  inputEl.value = '';
+}
+
+async function deleteAttachment(id, section) {
+  if (!confirm('Delete this file permanently?')) return;
+  try {
+    await fetch(`/api/attachments/${id}`, { method: 'DELETE' });
+    await loadAttachments(section);
+    if (section === 'trouble') renderTrouble(); else renderPending();
+    toast('🗑 File deleted');
+  } catch (e) {
+    toast('⚠ ' + e.message, 4000);
+  }
+}
+
 // ── Equipment Trouble ──────────────────────────────────────────────────────
 function renderTrouble() {
   const showDone = document.getElementById('show-done').checked;
-  const visible  = troubleRows.filter(r => showDone || r.status !== 'Done');
-  const tbody    = document.getElementById('trouble-tbody');
+  const visible = troubleRows.filter(r => showDone || r.status !== 'Done');
+  const tbody = document.getElementById('trouble-tbody');
   document.getElementById('no-trouble').style.display = troubleRows.length ? 'none' : '';
   tbody.innerHTML = '';
   visible.forEach((row, idx) => {
     const rid = row.id;
     const isOther = row.owner === 'Other' || (!row.owner && !row.equip_code);
-    const tr  = document.createElement('tr');
+    const tr = document.createElement('tr');
     if (row.status === 'Done') tr.className = 'done-row';
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${idx+1}</td>
@@ -1004,8 +1089,7 @@ function renderTrouble() {
         <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
           <input id="eqname-${rid}" value="${esc(row.equip_name||'')}"
             placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
-            autocomplete="off"
-            ${!row.owner && !isOther ? 'readonly' : ''}
+            autocomplete="off" ${!row.owner && !isOther ? 'readonly' : ''}
             oninput="eqNameInput(${rid},this.value)"
             onfocus="eqNameFocus(${rid})"
             onblur="setTimeout(()=>eqDropClose(${rid}),200)"/>
@@ -1039,6 +1123,7 @@ function renderTrouble() {
           <option ${row.status==='Done'?'selected':''}>Done</option>
         </select>
       </td>
+      <td>${attachmentCellHTML('trouble', rid)}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="delTrouble(${rid})">🗑</button></td>
     `;
     tbody.appendChild(tr);
@@ -1119,16 +1204,16 @@ function eqNameInput(rid, val) {
 }
 
 function eqDropOpen(rid, query) {
-  const row  = troubleRows.find(r => r.id === rid);
+  const row = troubleRows.find(r => r.id === rid);
   if (!row || !row.owner || row.owner === 'Other') return;
-  const q    = (query||'').toLowerCase().trim();
+  const q = (query||'').toLowerCase().trim();
   const pool = equipMaster.filter(e => e.owner === row.owner);
   const hits = q ? pool.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)) : pool;
   const drop = document.getElementById('eq-drop-'+rid);
   if (!hits.length) { drop.innerHTML='<div style="padding:10px 14px;color:var(--gray-lt);font-size:12px">No matches found</div>'; }
   else {
     drop.innerHTML = hits.slice(0,60).map(e =>
-      `<div class="eq-drop-item" onmousedown="eqPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}','${e.owner}')">
+      `<div class="eq-drop-item" onmousedown="eqPick(event,${rid},'${e.code.replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.owner}')">
          <span>${esc(e.name)}</span>
          <span class="eq-drop-code">${esc(e.code)}</span>
        </div>`).join('');
@@ -1136,8 +1221,8 @@ function eqDropOpen(rid, query) {
   const inp = document.getElementById('eqname-'+rid);
   if (inp) {
     const rect = inp.getBoundingClientRect();
-    drop.style.top   = (rect.bottom + 2) + 'px';
-    drop.style.left  = rect.left + 'px';
+    drop.style.top = (rect.bottom + 2) + 'px';
+    drop.style.left = rect.left + 'px';
     drop.style.width = Math.max(rect.width, 340) + 'px';
   }
   drop.style.display = 'block';
@@ -1193,12 +1278,13 @@ function renderPending() {
           <option ${status==='Done'?'selected':''}>Done</option>
         </select>
       </td>
+      <td>${attachmentCellHTML('pending', row.id)}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="pendingRows.splice(${i},1);renderPending()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
 function addPendingRow(){ pendingRows.push({sample_point:'',reason:'',action_needed:'',status:'In-progress'}); renderPending(); }
-async function savePending(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows); }
+async function savePending(){ if(!currentReport)return; const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows); pendingRows = saved; renderPending(); }
 
 // ── Schedule changes ───────────────────────────────────────────────────────
 function plantSel(v){ return PLANTS.map(p=>`<option ${v===p?'selected':''}>${p}</option>`).join(''); }
@@ -1271,7 +1357,7 @@ async function loadHistory() {
 }
 
 async function viewSelectedShift() {
-  const date  = document.getElementById('hist-date-pick').value;
+  const date = document.getElementById('hist-date-pick').value;
   const shift = document.getElementById('hist-shift-pick').value;
   if (!date) { toast('Select a date first'); return; }
   await jumpToReport(date, shift);
@@ -1282,7 +1368,7 @@ async function jumpToReport(date, shift) {
   try {
     const data = await api(`/api/reports/by-shift?date=${date}&shift=${shift}`);
     if (!data) { toast(`No ${shift} shift report found for ${fmtDateOnly(date)}`); return; }
-    applyReport(data, isPast);
+    await applyReport(data, isPast);
     switchTab('s1');
   } catch(e) { toast('❌ '+e.message, 4000); }
 }
@@ -1343,7 +1429,7 @@ async function doUnlock() {
   try {
     const r = await api(`/api/reports/${currentReport.id}/unlock`, 'PATCH', { password: pw });
     Object.assign(currentReport, r);
-    isLocked  = false;
+    isLocked = false;
     viewingPast = false;
     // Reset sign-off UI
     renderSignoffs(r);
