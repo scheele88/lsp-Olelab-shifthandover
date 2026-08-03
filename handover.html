@@ -154,11 +154,11 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 /* ── Equipment table ── */
 .etable{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
 .etable th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
-.etable td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.etable td{padding:4px 6px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden}
 .etable td:has(textarea){vertical-align:top;white-space:normal;overflow:visible}
 .etable tbody tr:nth-child(even) td{background:#fafafa}
 .etable tbody tr:hover td{background:var(--green-bg)}
-.etable select,.etable input[type=text],.etable input:not([type]){font-size:12px;padding:4px 6px;border-radius:3px;width:100%;box-sizing:border-box;min-width:0}
+.etable select,.etable input[type=text],.etable input:not([type]){font-size:11px;padding:3px 5px;border-radius:3px;width:100%;box-sizing:border-box;min-width:0}
 .etable textarea{font-size:12px;padding:4px 6px;min-height:34px;border-radius:3px}
 .done-row td{opacity:.4;background:#fafafa!important;text-decoration:line-through;color:var(--gray-lt)}
 
@@ -396,27 +396,25 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
     <div class="card-hdr">
       <h2>§2 — Equipment Trouble Log</h2>
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <label style="margin:0;display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--gray-lt);cursor:pointer">
-          <input type="checkbox" id="show-done" onchange="renderTrouble()"> Show Done rows
-        </label>
+<span style="font-size:11px;color:var(--gray-lt)">Done rows stay until next shift</span>
         <button class="btn-blue btn-sm" id="add-trouble-btn" onclick="addTroubleRow()">➕ Add Row</button>
       </div>
     </div>
     <div class="card-body" style="padding:8px;overflow-x:auto">
-      <table class="etable" style="min-width:1280px">
+      <table class="etable" style="min-width:900px;table-layout:fixed">
         <thead><tr>
-          <th style="width:36px">#</th>
-          <th style="width:90px">Lab</th>
-          <th style="width:190px">Equipment Name</th>
-          <th style="width:125px">ID (auto)</th>
-          <th style="width:155px">Issue</th>
-          <th style="width:170px">Details</th>
-          <th style="width:150px">Root Cause</th>
-          <th style="width:160px">Action Taken</th>
-          <th style="width:52px">OOS?</th>
-          <th style="width:130px">Status</th>
-          <th style="width:170px">Attach.</th>
-          <th style="width:36px"></th>
+          <th style="width:28px">#</th>
+          <th style="width:80px">Lab</th>
+          <th style="width:155px">Equipment Name</th>
+          <th style="width:100px">ID</th>
+          <th style="width:115px">Issue</th>
+          <th style="width:130px">Details</th>
+          <th style="width:115px">Root Cause</th>
+          <th style="width:130px">Action Taken</th>
+          <th style="width:44px">OOS?</th>
+          <th style="width:105px">Status</th>
+          <th style="width:130px">Attach.</th>
+          <th style="width:28px"></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
       </table>
@@ -1398,8 +1396,9 @@ async function deleteAttachment(id, section) {
 
 // ── Equipment Trouble ──────────────────────────────────────────────────────
 function renderTrouble() {
-  const showDone = document.getElementById('show-done').checked;
-  const visible = troubleRows.filter(r => showDone || r.status !== 'Done');
+  // All rows always visible in current shift; Done = greyed out
+  // They only disappear from the NEXT shift (carry-forward skips Done rows)
+  const visible = troubleRows;
   const tbody = document.getElementById('trouble-tbody');
   document.getElementById('no-trouble').style.display = troubleRows.length ? 'none' : '';
   tbody.innerHTML = '';
