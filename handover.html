@@ -490,13 +490,43 @@ header .sub{font-size:11px;opacity:.6;text-transform:uppercase;letter-spacing:.7
 
 <!-- §5 Others & Sign-off -->
 <div id="tab-s5" style="display:none">
+  <!-- §5a LIMS Issues -->
   <div class="card" style="margin-bottom:12px">
-    <div class="card-hdr"><h2>§5 — Others</h2></div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col2"><label>LIMS Issues</label><textarea id="r-lims" rows="4" placeholder="Describe any LIMS system problems, downtime, workarounds..."></textarea></div>
-        <div class="col2"><label>General Remarks</label><textarea id="r-remarks" rows="4" placeholder="Any other information the incoming supervisor needs to know..."></textarea></div>
-      </div>
+    <div class="card-hdr">
+      <h2>§5a — LIMS Issues</h2>
+      <button class="btn-blue btn-sm" onclick="addLimsRow()">➕ Add Row</button>
+    </div>
+    <div class="card-body" style="padding:8px;overflow-x:auto">
+      <table class="etable">
+        <thead><tr>
+          <th>#</th>
+          <th style="min-width:420px">Issue Description</th>
+          <th style="min-width:160px">Attachments</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="lims-tbody"></tbody>
+      </table>
+      <p id="no-lims" style="text-align:center;padding:16px;color:var(--gray-lt)">No LIMS issues this shift.</p>
+    </div>
+  </div>
+
+  <!-- §5b General Remarks -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-hdr">
+      <h2>§5b — General Remarks</h2>
+      <button class="btn-blue btn-sm" onclick="addRemarkRow()">➕ Add Row</button>
+    </div>
+    <div class="card-body" style="padding:8px;overflow-x:auto">
+      <table class="etable">
+        <thead><tr>
+          <th>#</th>
+          <th style="min-width:420px">Remark</th>
+          <th style="min-width:160px">Attachments</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="remarks-tbody"></tbody>
+      </table>
+      <p id="no-remarks" style="text-align:center;padding:16px;color:var(--gray-lt)">No general remarks this shift.</p>
     </div>
   </div>
   <div class="card">
@@ -600,12 +630,14 @@ let troubleRows = [];
 let pendingRows = [];
 let schedRows = [];
 let reqRows = [];
+let limsRows = [];
+let remarksRows = [];
 let shiftDate = ''; // clock-determined current shift date
 let shiftType = ''; // clock-determined current shift type
 let activeDate = ''; // currently active/editing shift date (may differ from clock)
 let activeShift = ''; // currently active/editing shift type
 let isLocked = false;
-let attachmentsData = { trouble: {}, pending: {} };
+let attachmentsData = { trouble: {}, pending: {}, lims: {}, remarks: {} };
 
 // ── Shift logic ────────────────────────────────────────────────────────────
 function calcShift() {
@@ -754,7 +786,11 @@ async function applyReport(data, isPast) {
 
   await loadAttachments('trouble');
   await loadAttachments('pending');
-  renderTrouble(); renderPending(); renderSched(); renderReq(); renderSignoffs(data);
+  await loadAttachments('lims');
+  await loadAttachments('remarks');
+  renderTrouble(); renderPending(); renderSched(); renderReq();
+  renderLims(); renderRemarks();
+  renderSignoffs(data);
 
   // Past viewer banner
   const hvBanner = document.getElementById('hist-viewer');
@@ -860,7 +896,7 @@ async function navToShift() {
       document.getElementById('r-lims').value = '';
       document.getElementById('r-remarks').value = '';
       troubleRows = []; pendingRows = []; schedRows = []; reqRows = [];
-      attachmentsData = { trouble: {}, pending: {} };
+      attachmentsData = { trouble: {}, pending: {}, lims: {}, remarks: {} };
       renderTrouble(); renderPending(); renderSched(); renderReq();
       renderSignoffs({});
       document.getElementById('locked-banner').style.display = 'none';
@@ -933,6 +969,8 @@ async function saveAll() {
     await savePending();
     await saveSchedules();
     await saveReqSamples();
+    await saveLims();
+    await saveRemarks();
     setSaveStatus('✅ Saved ' + new Date().toLocaleTimeString('en-GB'));
     toast('✅ Saved');
   } catch(e) { toast('❌ ' + e.message, 4000); setSaveStatus('❌ Save failed'); }
@@ -946,8 +984,8 @@ async function saveHeader() {
     handover_shift_team: document.getElementById('r-hov-team').value,
     handover_supervisor: document.getElementById('r-hov-sup').value.trim(),
     pending_samples_note: '',
-    lims_issues:    document.getElementById('r-lims').value.trim(),
-    general_remarks:document.getElementById('r-remarks').value.trim(),
+    lims_issues:    '',
+    general_remarks:'',
   };
   const r = await api('/api/reports','POST', body);
   if (!currentReport) currentReport = r;
@@ -1337,6 +1375,57 @@ function renderReq() {
 }
 function addReqRow(){ reqRows.push({plant:'Hot',product_stream:'',test_items:'',requested_by:'',target_date:'',priority:'Normal'}); renderReq(); }
 async function saveReqSamples(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/reqsamples`,'PUT',reqRows); }
+
+// ── LIMS Issues ────────────────────────────────────────────────────────────
+function renderLims() {
+  const tbody = document.getElementById('lims-tbody');
+  if (!tbody) return;
+  document.getElementById('no-lims').style.display = limsRows.length ? 'none' : '';
+  tbody.innerHTML = '';
+  limsRows.forEach((row, i) => {
+    const rid = row.id || ('lims-new-'+i);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
+      <td><textarea oninput="limsRows[${i}].description=this.value" style="min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
+      <td>${row.id ? renderAttachments('lims', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
+      <td><button class="btn-red btn-xs del-btn" onclick="limsRows.splice(${i},1);renderLims()">🗑</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function addLimsRow() { limsRows.push({description:''}); renderLims(); }
+async function saveLims() {
+  if(!currentReport)return;
+  const saved = await api(`/api/reports/${currentReport.id}/lims`,'PUT',limsRows);
+  limsRows = saved;
+  await loadAttachments('lims');
+  renderLims();
+}
+
+// ── General Remarks ────────────────────────────────────────────────────────
+function renderRemarks() {
+  const tbody = document.getElementById('remarks-tbody');
+  if (!tbody) return;
+  document.getElementById('no-remarks').style.display = remarksRows.length ? 'none' : '';
+  tbody.innerHTML = '';
+  remarksRows.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
+      <td><textarea oninput="remarksRows[${i}].description=this.value" style="min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
+      <td>${row.id ? renderAttachments('remarks', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
+      <td><button class="btn-red btn-xs del-btn" onclick="remarksRows.splice(${i},1);renderRemarks()">🗑</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function addRemarkRow() { remarksRows.push({description:''}); renderRemarks(); }
+async function saveRemarks() {
+  if(!currentReport)return;
+  const saved = await api(`/api/reports/${currentReport.id}/remarks`,'PUT',remarksRows);
+  remarksRows = saved;
+  await loadAttachments('remarks');
+  renderRemarks();
+}
 
 // ── History ────────────────────────────────────────────────────────────────
 async function loadHistory() {

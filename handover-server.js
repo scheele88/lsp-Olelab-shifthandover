@@ -94,6 +94,18 @@ async function initDB() {
       priority       VARCHAR(10) DEFAULT 'Normal',
       sort_order     INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS lims_issues (
+      id          SERIAL PRIMARY KEY,
+      report_id   INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      description TEXT,
+      sort_order  INTEGER DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS general_remarks (
+      id          SERIAL PRIMARY KEY,
+      report_id   INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      description TEXT,
+      sort_order  INTEGER DEFAULT 0
+    );
     CREATE TABLE IF NOT EXISTS attachments (
       id            SERIAL PRIMARY KEY,
       report_id     INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
@@ -144,8 +156,10 @@ async function loadFull(reportId) {
   const { rows: trouble }    = await pool.query('SELECT * FROM equip_trouble    WHERE report_id=$1 ORDER BY id',[reportId]);
   const { rows: pending }    = await pool.query('SELECT * FROM pending_samples  WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: schedules }  = await pool.query('SELECT * FROM schedule_changes WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  const { rows: reqsamples } = await pool.query('SELECT * FROM requested_samples WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  return { ...r, trouble, pending, schedules, reqsamples };
+  const { rows: reqsamples }   = await pool.query('SELECT * FROM requested_samples WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  const { rows: limsRows }     = await pool.query('SELECT * FROM lims_issues      WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  const { rows: remarksRows }  = await pool.query('SELECT * FROM general_remarks  WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows };
 }
 
 app.get('/api/reports', async (req, res) => {
@@ -371,6 +385,32 @@ app.delete('/api/attachments/:id', async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// ── LIMS Issues rows ─────────────────────────────────────────────────────────
+app.put('/api/reports/:id/lims', async (req, res) => {
+  const rows = req.body;
+  try {
+    await pool.query('DELETE FROM lims_issues WHERE report_id=$1',[req.params.id]);
+    for (let i=0;i<rows.length;i++)
+      await pool.query('INSERT INTO lims_issues (report_id,description,sort_order) VALUES ($1,$2,$3)',
+        [req.params.id, rows[i].description||'', i]);
+    const {rows:saved} = await pool.query('SELECT * FROM lims_issues WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+// ── General Remarks rows ──────────────────────────────────────────────────────
+app.put('/api/reports/:id/remarks', async (req, res) => {
+  const rows = req.body;
+  try {
+    await pool.query('DELETE FROM general_remarks WHERE report_id=$1',[req.params.id]);
+    for (let i=0;i<rows.length;i++)
+      await pool.query('INSERT INTO general_remarks (report_id,description,sort_order) VALUES ($1,$2,$3)',
+        [req.params.id, rows[i].description||'', i]);
+    const {rows:saved} = await pool.query('SELECT * FROM general_remarks WHERE report_id=$1 ORDER BY sort_order',[req.params.id]);
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
 });
 
 app.get('/api/health', async (_,res) => {
