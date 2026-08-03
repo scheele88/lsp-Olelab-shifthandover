@@ -1298,13 +1298,61 @@ function attachmentCellHTML(section, rowId) {
   `).join('');
 
   return `
-    <div class="att-cell">
+    <div class="att-cell" id="att-cell-${section}-${rowId}"
+      ondragover="event.preventDefault();this.style.outline='2px dashed #4caf50'"
+      ondragleave="this.style.outline=''"
+      ondrop="handleAttDrop(event,'${section}',${rowId})"
+      onpaste="handleAttPaste(event,'${section}',${rowId})"
+      tabindex="0"
+      title="Drop files here, or paste (Ctrl+V) after clicking this area">
       ${chips}
       <label class="att-upload-btn">📎 Attach
         <input type="file" multiple onchange="uploadAttachments(this, '${section}', ${rowId})"/>
       </label>
     </div>
   `;
+}
+
+function handleAttDrop(evt, section, rowId) {
+  evt.preventDefault();
+  const cell = document.getElementById('att-cell-' + section + '-' + rowId);
+  if (cell) cell.style.outline = '';
+  const files = evt.dataTransfer.files;
+  if (files && files.length) uploadFileList(files, section, rowId);
+}
+
+function handleAttPaste(evt, section, rowId) {
+  const items = evt.clipboardData && evt.clipboardData.items;
+  if (!items) return;
+  const files = [];
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].kind === 'file') {
+      const f = items[i].getAsFile();
+      if (f) files.push(f);
+    }
+  }
+  if (files.length) uploadFileList(files, section, rowId);
+}
+
+async function uploadFileList(fileList, section, rowId) {
+  if (!currentReport) return;
+  const formData = new FormData();
+  for (const f of fileList) formData.append('files', f);
+  formData.append('section', section);
+  formData.append('row_id', rowId);
+  formData.append('report_id', currentReport.id);
+  formData.append('uploaded_by', loggedBy);
+  try {
+    const res = await fetch('/api/attachments', { method:'POST', body:formData });
+    if (!res.ok) throw new Error(await res.text());
+    await loadAttachments(section);
+    if (section === 'trouble') renderTrouble();
+    else if (section === 'pending') renderPending();
+    else if (section === 'lims') renderLims();
+    else if (section === 'remarks') renderRemarks();
+    else if (section === 'impexp') renderImpExp();
+    toast('✅ File(s) attached');
+  } catch(e) { toast('❌ Upload failed: ' + e.message, 4000); }
 }
 
 async function uploadAttachments(inputEl, section, rowId) {
@@ -1918,6 +1966,14 @@ function signOut() {
   localStorage.removeItem('lsp_handover_user');
   location.reload();
 }
+
+// Global paste on att-cell focus
+document.addEventListener('paste', function(evt) {
+  const focused = document.activeElement;
+  if (focused && focused.classList.contains('att-cell')) {
+    // Already handled by onpaste on the div
+  }
+});
 
 // Auto-save every 2 min
 setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
