@@ -1337,9 +1337,9 @@ function renderTrouble() {
     const rid = row.id;
     const isOther = row.owner === 'Other' || (!row.owner && !row.equip_code);
     const tr = document.createElement('tr');
-    const oosFlag = row.out_of_service === 'Yes';
+    const oos = row.out_of_service === 'Yes';
     if (row.status === 'Done') tr.className = 'done-row';
-    else if (oosFlag) tr.className = 'row-oos';
+    else if (oos) tr.className = 'row-oos';
     else if (!row.status || row.status === 'Investigating') tr.className = 'row-investigating';
     else if (row.status === 'In-progress') tr.className = 'row-inprogress';
     tr.innerHTML = `
