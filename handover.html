@@ -1121,12 +1121,23 @@ async function pushToNextShift() {
     const src = await api(`/api/reports/${currentReport.id}`);
     let carried = [];
 
+    // Helper: copy attachments for a section using old→new row_id map
+    async function copyAtts(section, rowMap) {
+      if (!rowMap.length) return;
+      await api('/api/attachments/copy', 'POST', {
+        from_report_id: currentReport.id,
+        to_report_id: nextReport.id,
+        row_map: rowMap.map(m => ({ ...m, section }))
+      });
+    }
+
     if (!hasStructuralData) {
     // 1. Equipment trouble — non-Done
     if (src.trouble?.length) {
       const notDone = src.trouble.filter(t => t.status !== 'Done');
+      const troubleMap = [];
       for (const t of notDone) {
-        await api(`/api/reports/${nextReport.id}/trouble`, 'POST', {
+        const r = await api(`/api/reports/${nextReport.id}/trouble`, 'POST', {
           equip_code: t.equip_code, equip_name: t.equip_name, owner: t.owner,
           issue_type: t.issue_type, issue_other: t.issue_other || '',
           details: t.details || '', root_cause: t.root_cause || '',
@@ -1134,23 +1145,31 @@ async function pushToNextShift() {
           out_of_service: t.out_of_service || 'No',
           status: t.status || 'Investigating'
         });
+        troubleMap.push({ old_row_id: t.id, new_row_id: r.id });
       }
-      if (notDone.length) carried.push(`${notDone.length} equipment issue(s)`);
+      if (notDone.length) {
+        await copyAtts('trouble', troubleMap);
+        carried.push(`${notDone.length} equipment issue(s)`);
+      }
     }
 
     // 2. Pending samples — non-Done
     if (src.pending?.length) {
-      const notDone = src.pending.filter(p => p.status !== 'Done').map(p => ({
-        sample_point: p.sample_point, reason: p.reason,
-        action_needed: p.action_needed, status: p.status || 'In-progress'
-      }));
+      const notDone = src.pending.filter(p => p.status !== 'Done');
       if (notDone.length) {
-        await api(`/api/reports/${nextReport.id}/pending`, 'PUT', notDone);
+        const payload = notDone.map(p => ({
+          sample_point: p.sample_point, reason: p.reason,
+          action_needed: p.action_needed, status: p.status || 'In-progress'
+        }));
+        const saved = await api(`/api/reports/${nextReport.id}/pending`, 'PUT', payload);
+        // Match old→new IDs by position
+        const pendingMap = notDone.map((p, i) => ({ old_row_id: p.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
+        await copyAtts('pending', pendingMap);
         carried.push(`${notDone.length} pending sample(s)`);
       }
     }
 
-    // 3. Schedule changes — all
+    // 3. Schedule changes — all (no attachments)
     if (src.schedules?.length) {
       const rows = src.schedules.map(s => ({
         plant: s.plant, sampling_point: s.sampling_point || '',
@@ -1161,7 +1180,7 @@ async function pushToNextShift() {
       carried.push(`${rows.length} schedule change(s)`);
     }
 
-    // 4. Requested samples — all
+    // 4. Requested samples — all (no attachments)
     if (src.reqsamples?.length) {
       const rows = src.reqsamples.map(r => ({
         plant: r.plant, product_stream: r.product_stream,
@@ -1174,18 +1193,22 @@ async function pushToNextShift() {
 
     } // end !hasStructuralData
 
-    // 5. LIMS Issues — always push (incoming shift decides what to keep)
+    // 5. LIMS Issues — always push with attachments
     if (src.limsRows?.length) {
-      const rows = src.limsRows.map(r => ({ description: r.description }));
-      await api(`/api/reports/${nextReport.id}/lims`, 'PUT', rows);
-      carried.push(`${rows.length} LIMS issue(s)`);
+      const payload = src.limsRows.map(r => ({ description: r.description }));
+      const saved = await api(`/api/reports/${nextReport.id}/lims`, 'PUT', payload);
+      const limsMap = src.limsRows.map((r, i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
+      await copyAtts('lims', limsMap);
+      carried.push(`${src.limsRows.length} LIMS issue(s)`);
     }
 
-    // 6. General Remarks — all (incoming shift decides what to keep)
+    // 6. General Remarks — always push with attachments
     if (src.remarksRows?.length) {
-      const rows = src.remarksRows.map(r => ({ description: r.description }));
-      await api(`/api/reports/${nextReport.id}/remarks`, 'PUT', rows);
-      carried.push(`${rows.length} remark(s)`);
+      const payload = src.remarksRows.map(r => ({ description: r.description }));
+      const saved = await api(`/api/reports/${nextReport.id}/remarks`, 'PUT', payload);
+      const remarksMap = src.remarksRows.map((r, i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
+      await copyAtts('remarks', remarksMap);
+      carried.push(`${src.remarksRows.length} remark(s)`);
     }
 
     if (carried.length) {

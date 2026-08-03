@@ -448,6 +448,30 @@ app.put('/api/reports/:id/remarks', async (req, res) => {
   } catch(e){ res.status(500).json({error:e.message}); }
 });
 
+// ── Copy attachments to new report rows ──────────────────────────────────────
+// body: { from_report_id, to_report_id, row_map: [{old_row_id, new_row_id, section}] }
+app.post('/api/attachments/copy', async (req, res) => {
+  const { from_report_id, to_report_id, row_map } = req.body;
+  try {
+    const inserted = [];
+    for (const { old_row_id, new_row_id, section } of row_map) {
+      const { rows: atts } = await pool.query(
+        `SELECT * FROM attachments WHERE report_id=$1 AND section=$2 AND row_id=$3`,
+        [from_report_id, section, old_row_id]
+      );
+      for (const att of atts) {
+        const { rows: [newAtt] } = await pool.query(
+          `INSERT INTO attachments (report_id, section, row_id, file_name, file_url, storage_path, uploaded_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+          [to_report_id, section, new_row_id, att.file_name, att.file_url, att.storage_path, att.uploaded_by]
+        );
+        inserted.push(newAtt);
+      }
+    }
+    res.json(inserted);
+  } catch(e) { res.status(500).json({error:e.message}); }
+});
+
 app.get('/api/health', async (_,res) => {
   try { await pool.query('SELECT 1'); res.json({status:'ok'}); }
   catch(e){ res.status(500).json({status:'error',error:e.message}); }
