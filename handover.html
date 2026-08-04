@@ -279,20 +279,6 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .ie-export td { background:#e3f2fd !important; }
 .ie-export td:first-child { border-left-color: #1565c0 !important; }
 .ie-complete td { opacity:.5; text-decoration:line-through; }
-/* --- Fix: floating horizontal scrollbar on tall section boxes --- */
-.section-box, .card, .panel, .table-wrap, div:has(> table) {
-  overflow-x: visible !important;
-  max-height: none !important;
-}
-body, html {
-  overflow-x: auto;
-}
-  /* --- Fix: cap box height so scrollbar stays attached, not floating --- */
-.section-box, .card, .panel, .table-wrap {
-  max-height: 70vh !important;
-  overflow-y: auto !important;
-  overflow-x: auto !important;
-}
 </style>
 
 </head>
