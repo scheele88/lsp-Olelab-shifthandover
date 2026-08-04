@@ -1604,9 +1604,9 @@ function renderTrouble() {
           style="margin-top:3px;display:${row.issue_type==='Others'?'':'none'}"
           oninput="trField(${rid},'issue_other',this.value)"/>
       </td>
-      <td><input type="text" value="${esc(row.details||'')}" title="${esc(row.details||'')}" placeholder="Details…" oninput="trField(${rid},'details',this.value)" style="width:100%;font-size:11px"/></td>
-      <td><input type="text" value="${esc(row.root_cause||'')}" title="${esc(row.root_cause||'')}" placeholder="Root cause…" oninput="trField(${rid},'root_cause',this.value)" style="width:100%;font-size:11px"/></td>
-      <td><input type="text" value="${esc(row.action_taken||'')}" title="${esc(row.action_taken||'')}" placeholder="Action taken…" oninput="trField(${rid},'action_taken',this.value)" style="width:100%;font-size:11px"/></td>
+      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'details',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.details||'')}</textarea></td>
+      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'root_cause',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.root_cause||'')}</textarea></td>
+      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'action_taken',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.action_taken||'')}</textarea></td>
       <td style="background:${oos?'#ffebee':'#f1f8f1'}!important;text-align:center;padding:3px">
         <select onchange="trField(${rid},'out_of_service',this.value)"
           style="background:transparent;border:none;font-weight:800;font-size:12px;color:${oos?'#b71c1c':'#2e7d32'};width:100%;cursor:pointer;text-align:center">
