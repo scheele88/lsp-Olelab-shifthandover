@@ -422,7 +422,7 @@ html, body {
 .ps-normal  { background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
 .ps-other   { background:#fff9c4;color:#f57f17;border:1px solid #ffe082;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
 
-.ps-table { width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;table-layout:fixed }
+.ps-table { width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px }
 .ps-table th { background:#0097a7;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase }
 .ps-table td { padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle }
 .ps-table tbody tr:nth-child(even) td { background:#f9fffe }
@@ -695,10 +695,10 @@ html, body {
   <div class="card">
     <div class="card-hdr"><h2>§6 — Product Summary</h2></div>
     <div class="card-body" style="padding:12px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;min-width:0">
 
-        <!-- LEFT COLUMN: Main, By Products, Import/Export -->
-        <div>
+        <!-- LEFT COLUMN -->
+        <div style="min-width:0;overflow:hidden">
           <!-- Main Products -->
           <div class="ps-section-title">🟢 Main Products</div>
           <table class="ps-table"><thead><tr>
@@ -717,16 +717,16 @@ html, body {
 
           <!-- Import / Export -->
           <div class="ps-section-title">⚓ Import / Export</div>
-          <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:65px">Type</th><th style="width:120px">Material</th>
-            <th>Sampling Point</th><th style="width:108px">Quality</th>
-            <th style="width:65px">Remark</th><th style="width:24px"></th>
+          <table class="ps-table" style="table-layout:fixed"><thead><tr>
+            <th style="width:28px">No.</th><th style="width:14%">Type</th><th style="width:22%">Material</th>
+            <th style="width:26%">Sampling Point</th><th style="width:18%">Quality</th>
+            <th>Remark</th><th style="width:28px"></th>
           </tr></thead><tbody id="ps-ie-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;font-size:11px" onclick="psAddRow('ie')">➕ Add Row</button>
         </div>
 
-        <!-- RIGHT COLUMN: CTU, Tank Farm (aligns with By), Others (aligns with IE) -->
-        <div>
+        <!-- RIGHT COLUMN -->
+        <div style="min-width:0;overflow:hidden">
           <!-- CTU -->
           <div class="ps-section-title">🔷 CTU</div>
           <table class="ps-table"><thead><tr>
@@ -2336,8 +2336,7 @@ function psFromData(data) {
     {col1:'CWBD',       col2:'PIT-9900A',  col3:'', col4:''},
     {col1:'Wastewater', col2:'PIT-5656A/B',col3:'', col4:''},
   ];
-  if (!psRows.tf.length)   psRows.tf   = [{col1:'Tank Farm',col2:'',col3:'Normal',col4:''},
-                                           {col1:'Ethylene',col2:'Export Line',col3:'',col4:''}];
+  if (!psRows.tf.length)   psRows.tf   = [{col1:'Tank Farm',col2:'',col3:'Normal',col4:''}];
   if (!psRows.ie.length)   psRows.ie   = [{col1:'Import',col2:'',col3:'Ship Tank',col4:'',col5:''}];
   if (!psRows.other.length)psRows.other= [{col1:'',col2:'',col3:'',col4:''}];
   psRenderAll();
