@@ -98,7 +98,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 #logged-as-name::before{content:'●';color:var(--green);margin-right:4px;font-size:10px}
 
 /* ── Tabs: clean underline style ── */
-.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);padding:0 20px;overflow-x:auto}
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);padding:0 20px;overflow-x:hidden}
 .tab-btn{padding:12px 16px;font-size:12px;font-weight:600;color:var(--gray-lt);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap;border-radius:0;letter-spacing:.3px;transition:all .15s}
 .tab-btn.active{color:var(--green2);border-bottom-color:var(--green);font-weight:700}
 .tab-btn:hover{color:var(--gray);background:#f9f9f9;transform:none;box-shadow:none;filter:none}
@@ -303,6 +303,32 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .table-scroll-x::-webkit-scrollbar-thumb {
   background: #d0d0d0;
   border-radius: 999px;
+}
+  html, body {
+  overflow-x: hidden !important;
+}
+
+.main {
+  overflow-x: hidden !important;
+}
+
+.card {
+  overflow-x: hidden !important;
+}
+
+.card-body {
+  overflow-x: visible !important;
+}
+
+.etable {
+  min-width: 1200px;
+}
+
+.table-scroll-x {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
 }
 </style>
 
