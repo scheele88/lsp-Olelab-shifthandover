@@ -406,6 +406,10 @@ html, body {
 .card-body {
   max-width: 100%;
 }
+
+/* Compact date inputs in trouble table */
+.etable input[type=date]{-webkit-appearance:none;appearance:none}
+.etable input[type=date]::-webkit-calendar-picker-indicator{opacity:.5;padding:0;margin:0;width:12px;height:12px;cursor:pointer}
 </style>
 
 </head>
@@ -544,16 +548,16 @@ html, body {
         <thead><tr>
           <th style="width:28px">#</th>
           <th style="width:65px">Lab</th>
-          <th style="width:140px">Equipment Name</th>
-          <th style="width:0;padding:0;overflow:hidden;font-size:0;border:none"></th>
-          <th style="width:76px">Start</th>
+          <th style="width:200px">Equipment Name</th>
+          <th style="display:none"></th>
+          <th style="width:68px">Start</th>
           <th style="width:110px">Issue</th>
           <th style="width:120px">Details</th>
           <th style="width:110px">Root Cause</th>
           <th style="width:120px">Action Taken</th>
           <th style="width:55px">OOS?</th>
           <th style="width:100px">Status</th>
-          <th style="width:76px">End</th>
+          <th style="width:68px">End</th>
           <th style="width:80px">Attach.</th>
           <th style="width:28px"></th>
         </tr></thead>
@@ -1588,8 +1592,8 @@ function renderTrouble() {
           <div class="eq-drop" id="eq-drop-${rid}"></div>
         </div>
       </td>
-      <td style="width:0;padding:0;overflow:hidden;border:none"><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="display:none"/></td>
-      <td><input type="date" value="${row.start_date?row.start_date.slice(0,10):''}" onchange="trField(${rid},'start_date',this.value)" style="font-size:10px;padding:2px 3px;width:100%"/></td>
+      <td style="display:none"><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}"/></td>
+      <td><input type="date" value="${row.start_date?row.start_date.slice(0,10):''}" onchange="trField(${rid},'start_date',this.value)" style="font-size:10px;padding:2px;width:100%;-webkit-appearance:none"/></td>
       <td>
         <select id="eqiss-${rid}" onchange="eqIssChange(${rid},this.value)">
           <option ${(row.issue_type||'Failed SQC')==='Failed SQC'?'selected':''}>Failed SQC</option>
@@ -1617,7 +1621,7 @@ function renderTrouble() {
           <option ${row.status==='Done'?'selected':''}>Done</option>
         </select>
       </td>
-      <td><input type="date" id="enddate-${rid}" value="${row.end_date?row.end_date.slice(0,10):''}" onchange="trField(${rid},'end_date',this.value)" style="font-size:10px;padding:2px 3px;width:100%;background:${row.status==='Done'?'#e8f5e9':'#fff'}"/></td>
+      <td><input type="date" id="enddate-${rid}" value="${row.end_date?row.end_date.slice(0,10):''}" onchange="trField(${rid},'end_date',this.value)" style="font-size:10px;padding:2px;width:100%;-webkit-appearance:none;background:${row.status==='Done'?'#e8f5e9':'#fff'}"/></td>
       <td>${attachmentCellHTML('trouble', rid)}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="delTrouble(${rid})">🗑</button></td>
     `;
