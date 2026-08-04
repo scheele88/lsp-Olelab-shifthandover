@@ -191,7 +191,20 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .eq-drop-wrap input,.eq-drop-wrap input:focus,.eq-drop-wrap input:focus-visible,.eq-drop-wrap input:not(:placeholder-shown){box-shadow:none!important;border-color:var(--border)!important;outline:none!important;-webkit-box-shadow:0 0 0 30px #fff inset!important}
 .eq-drop-wrap{position:relative}
 .eq-drop-wrap input,.eq-drop-wrap select{width:100%}
-.eq-drop{position:fixed;min-width:320px;background:#fff;border:1px solid var(--border2);border-radius:var(--radius);max-height:260px;overflow-y:auto;z-index:9000;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.eq-drop{
+  position: fixed;
+  min-width: 320px;
+  max-width: min(420px, calc(100vw - 24px));
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 9000;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  display: none;
+}
 .eq-drop-item{padding:7px 12px;cursor:pointer;font-size:12px;line-height:1.5;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);transition:background .1s}
 .eq-drop-item:hover{background:var(--green-bg)}
 .eq-drop-code{font-family:monospace;color:var(--gray-xl);font-size:11px;white-space:nowrap;flex-shrink:0;align-self:center}
@@ -1651,12 +1664,15 @@ function eqDropOpen(rid, query) {
        </div>`).join('');
   }
   const inp = document.getElementById('eqname-'+rid);
-  if (inp) {
-    const rect = inp.getBoundingClientRect();
-    drop.style.top = (rect.bottom + 2) + 'px';
-    drop.style.left = rect.left + 'px';
-    drop.style.width = Math.max(rect.width, 340) + 'px';
-  }
+if (inp) {
+  const rect = inp.getBoundingClientRect();
+  const left = Math.max(8, rect.left);
+  const width = Math.min(Math.max(rect.width, 340), window.innerWidth - left - 12);
+
+  drop.style.top = (rect.bottom + 2) + 'px';
+  drop.style.left = left + 'px';
+  drop.style.width = width + 'px';
+}
   drop.style.display = 'block';
 }
 
