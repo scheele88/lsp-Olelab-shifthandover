@@ -697,49 +697,49 @@ html, body {
     <div class="card-body" style="padding:12px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 
-        <!-- LEFT COLUMN -->
+        <!-- LEFT COLUMN: Main, By Products, Import/Export -->
         <div>
           <!-- Main Products -->
           <div class="ps-section-title">🟢 Main Products</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:140px">Product</th><th style="width:100px">Sample Point</th>
-            <th style="width:100px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:130px">Product</th><th style="width:95px">Sample Point</th>
+            <th style="width:95px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-main-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:10px;font-size:11px" onclick="psAddRow('main')">➕ Add Row</button>
 
           <!-- By Products -->
           <div class="ps-section-title">🔵 By Products</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:140px">By Product</th><th style="width:100px">Sample Point</th>
-            <th style="width:100px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:130px">By Product</th><th style="width:95px">Sample Point</th>
+            <th style="width:95px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-by-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:10px;font-size:11px" onclick="psAddRow('by')">➕ Add Row</button>
 
           <!-- Import / Export -->
           <div class="ps-section-title">⚓ Import / Export</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:60px">Type</th><th style="width:140px">Material</th>
-            <th>Sampling Point</th><th style="width:95px">Quality</th>
-            <th style="width:75px">Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:65px">Type</th><th style="width:120px">Material</th>
+            <th>Sampling Point</th><th style="width:108px">Quality</th>
+            <th style="width:65px">Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-ie-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;font-size:11px" onclick="psAddRow('ie')">➕ Add Row</button>
         </div>
 
-        <!-- RIGHT COLUMN -->
+        <!-- RIGHT COLUMN: CTU, Tank Farm (aligns with By), Others (aligns with IE) -->
         <div>
           <!-- CTU -->
           <div class="ps-section-title">🔷 CTU</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:120px">Stream / Sample</th><th style="width:95px">Sample Point</th>
-            <th style="width:95px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:120px">Stream / Sample</th><th style="width:90px">Sample Point</th>
+            <th style="width:90px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-ctu-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:10px;font-size:11px" onclick="psAddRow('ctu')">➕ Add Row</button>
 
           <!-- Tank Farm -->
           <div class="ps-section-title">🛢 Tank Farm & Pipeline</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th>Raw Mat. / Products</th><th style="width:105px">Sample Point</th>
-            <th style="width:110px">Status</th><th style="width:90px">Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:120px">Raw Mat. / Products</th><th style="width:90px">Sample Point</th>
+            <th style="width:90px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-tf-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:10px;font-size:11px" onclick="psAddRow('tf')">➕ Add Row</button>
 
@@ -747,10 +747,10 @@ html, body {
           <div class="ps-section-title">🔬 Other Sample Points</div>
           <table class="ps-table"><thead><tr>
             <th style="width:24px">No.</th><th style="width:120px">Sample Point</th><th style="width:90px">Type</th>
-            <th style="width:95px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="width:90px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-other-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;font-size:11px" onclick="psAddRow('other')">➕ Add Row</button>
-        </div>
+        </div></div>
 
       </div><!-- /grid -->
     </div>
@@ -2312,6 +2312,8 @@ function psFromData(data) {
     'Raw Pygas':'SPC-26034','CKB':'SPC-20007',
     'TWW':'PIT-9900','CWBD':'PIT-9900A','Wastewater':'PIT-5656A/B'
   };
+  // Remove unwanted default by-product rows
+  psRows.by = psRows.by.filter(r => r.col1 !== '1st Stage Pygas' && r.col1 !== 'Pyrolysis Gasoline');
   // Backfill missing sample points from known defaults
   ['main','by','ctu'].forEach(s => {
     psRows[s].forEach(r => { if (!r.col2 && DEFAULT_SP[r.col1]) r.col2 = DEFAULT_SP[r.col1]; });
