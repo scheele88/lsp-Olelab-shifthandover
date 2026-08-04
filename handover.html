@@ -406,7 +406,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       </div>
     </div>
     <div class="card-body" style="padding:8px">
-      <table class="etable" style="width:100%;table-layout:auto">
+      <table class="etable">
         <thead><tr>
           <th style="width:28px">#</th>
           <th style="width:80px">Lab</th>
@@ -501,7 +501,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <button class="btn-blue btn-sm" onclick="addImpExpRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
-      <table class="etable" id="impexp-table">
+      <table class="etable">
         <thead><tr>
           <th style="width:36px">#</th>
           <th style="width:100px">Type</th>
@@ -529,7 +529,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <h2>§6a — LIMS Issues</h2>
       <button class="btn-blue btn-sm" onclick="addLimsRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:8px;overflow-x:auto">
+    <div class="card-body" style="padding:8px">
       <table class="etable">
         <thead><tr>
           <th>#</th>
@@ -549,7 +549,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <h2>§6b — General Remarks</h2>
       <button class="btn-blue btn-sm" onclick="addRemarkRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:8px;overflow-x:auto">
+    <div class="card-body" style="padding:8px">
       <table class="etable">
         <thead><tr>
           <th>#</th>
@@ -629,7 +629,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <h2>Recent Reports</h2>
       <button class="btn-ghost btn-sm" onclick="loadHistory()">🔄 Refresh</button>
     </div>
-    <div class="card-body" style="padding:0;overflow-x:auto">
+    <div class="card-body" style="padding:0">
       <table class="htable">
         <thead><tr><th>Date</th><th>Shift</th><th>Team</th><th>Logged By</th><th>Current Supervisor</th><th>Handover Supervisor</th><th>Outgoing Sign</th><th>Incoming Sign</th><th>Status</th></tr></thead>
         <tbody id="hist-tbody"></tbody>
