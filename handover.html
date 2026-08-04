@@ -276,6 +276,63 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .card-body::-webkit-scrollbar-track { background: transparent; }
 .card-body::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
 
+/* Product Summary Report Print Styles */
+@media print {
+  body > *:not(#ps-report-overlay) { display:none !important; }
+  #ps-report-overlay { display:block !important; position:static !important; }
+}
+
+/* Product Summary Report Overlay */
+#ps-report-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#fff;
+  z-index:9999;
+  overflow:auto;
+  padding:20px;
+  font-family:'Inter','Segoe UI',Arial,sans-serif;
+}
+.ps-report { max-width:1100px; margin:0 auto; }
+.ps-report-header {
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:3px solid #0097a7; padding-bottom:10px; margin-bottom:16px;
+}
+.ps-report-header h1 { font-size:18px; font-weight:800; color:#212121; }
+.ps-report-header .ps-report-meta { font-size:12px; color:#757575; text-align:right; }
+.ps-report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ps-report-section { margin-bottom:12px; }
+.ps-report-title {
+  font-size:11px; font-weight:800; color:#0097a7;
+  text-transform:uppercase; letter-spacing:.8px;
+  border-bottom:2px solid #b2ebf2; padding-bottom:3px; margin-bottom:5px;
+}
+.ps-report table { width:100%; border-collapse:collapse; font-size:11px; }
+.ps-report th {
+  background:#0097a7; color:#fff; padding:5px 7px;
+  text-align:left; font-size:10px; font-weight:700; letter-spacing:.5px;
+}
+.ps-report td { padding:4px 7px; border-bottom:1px solid #e0e0e0; }
+.ps-report tr:nth-child(even) td { background:#f0fdfd; }
+.ps-report .s-onspec  { color:#1b5e20; font-weight:700; background:#e8f5e9; padding:1px 6px; border-radius:3px; }
+.ps-report .s-offspec { color:#b71c1c; font-weight:700; background:#ffebee; padding:1px 6px; border-radius:3px; }
+.ps-report .s-normal  { color:#0d47a1; font-weight:700; background:#e3f2fd; padding:1px 6px; border-radius:3px; }
+.ps-report .s-nosampling { color:#757575; font-weight:700; background:#f5f5f5; padding:1px 6px; border-radius:3px; }
+.ps-report .s-other   { color:#e65100; font-weight:700; background:#fff9c4; padding:1px 6px; border-radius:3px; }
+.ps-report .name-cell { font-weight:700; color:#006064; }
+.ps-report-close-btn {
+  position:fixed; top:16px; right:16px;
+  background:#424242; color:#fff; border:none; border-radius:4px;
+  padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; z-index:10000;
+}
+.ps-report-actions {
+  position:fixed; top:16px; right:120px;
+  display:flex; gap:8px; z-index:10000;
+}
+@media print {
+  .ps-report-close-btn, .ps-report-actions { display:none !important; }
+}
+
 @media print{
   #tab-s6 .card-body > div { grid-template-columns:1fr 1fr !important; }
   .ps-table { font-size:10px !important; }
@@ -2351,6 +2408,117 @@ async function saveProductSummary() {
   await api(`/api/reports/${currentReport.id}/productsummary`,'PUT',allRows);
 }
 
+
+// ── Product Summary Export ────────────────────────────────────────────────
+function psStatusBadge(val) {
+  if (!val) return '—';
+  const cls = val==='On-spec'?'s-onspec':val==='Off-spec'?'s-offspec':val==='Normal'?'s-normal':val==='No sampling'?'s-nosampling':'s-other';
+  return `<span class="${cls}">${val}</span>`;
+}
+
+function psBuildReportHTML() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  const timeStr = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const shift = document.getElementById('shift-chip')?.textContent || '';
+  const shiftDate = document.getElementById('shift-date-disp')?.textContent || '';
+
+  function simpleTable(rows, col1Label) {
+    if (!rows.length) return '<p style="color:#9e9e9e;font-size:11px;padding:4px 0">No entries</p>';
+    return `<table><thead><tr><th style="width:22px">No.</th><th>${col1Label}</th><th style="width:85px">Sample Point</th><th style="width:85px">Status</th><th>Remark</th></tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="name-cell">${r.col1||'—'}</td><td>${r.col2||'—'}</td><td>${psStatusBadge(r.col3)}</td><td>${r.col4||''}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  function ieTable(rows) {
+    if (!rows.length) return '<p style="color:#9e9e9e;font-size:11px;padding:4px 0">No entries</p>';
+    return `<table><thead><tr><th style="width:22px">No.</th><th style="width:55px">Type</th><th style="width:100px">Material</th><th>Sampling Point</th><th style="width:75px">Quality</th><th>Remark</th></tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="name-cell" style="color:${r.col1==='Export'?'#0d47a1':'#1b5e20'}">${r.col1||'—'}</td><td class="name-cell">${r.col2||'—'}</td><td>${r.col3||'—'}</td><td>${psStatusBadge(r.col4)}</td><td>${r.col5||''}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  function otherTable(rows) {
+    if (!rows.length) return '<p style="color:#9e9e9e;font-size:11px;padding:4px 0">No entries</p>';
+    return `<table><thead><tr><th style="width:22px">No.</th><th>Sample Point</th><th style="width:70px">Type</th><th style="width:85px">Status</th><th>Remark</th></tr></thead><tbody>
+      ${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="name-cell">${r.col1||'—'}</td><td>${r.col2||'—'}</td><td>${psStatusBadge(r.col3)}</td><td>${r.col4||''}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  return `
+  <div class="ps-report-header">
+    <div>
+      <h1>🧪 Laboratory — Product Quality Summary</h1>
+      <div style="font-size:12px;color:#424242;margin-top:3px">Long Son Petrochemicals · Olefins Plant Laboratory</div>
+    </div>
+    <div class="ps-report-meta">
+      <div style="font-weight:700;color:#0097a7">${shift} ${shiftDate}</div>
+      <div>Generated: ${dateStr} ${timeStr}</div>
+      <div>Logged by: ${loggedBy}</div>
+    </div>
+  </div>
+  <div class="ps-report-grid">
+    <div>
+      <div class="ps-report-section">
+        <div class="ps-report-title">🟢 Main Products</div>
+        ${simpleTable(psRows.main, 'Product')}
+      </div>
+      <div class="ps-report-section">
+        <div class="ps-report-title">🔵 By Products</div>
+        ${simpleTable(psRows.by, 'By Product')}
+      </div>
+      <div class="ps-report-section">
+        <div class="ps-report-title">⚓ Import / Export</div>
+        ${ieTable(psRows.ie)}
+      </div>
+    </div>
+    <div>
+      <div class="ps-report-section">
+        <div class="ps-report-title">🔷 CTU</div>
+        ${simpleTable(psRows.ctu, 'Stream / Sample')}
+      </div>
+      <div class="ps-report-section">
+        <div class="ps-report-title">🛢 Tank Farm & Pipeline</div>
+        ${simpleTable(psRows.tf, 'Raw Mat. / Products')}
+      </div>
+      <div class="ps-report-section">
+        <div class="ps-report-title">🔬 Other Sample Points</div>
+        ${otherTable(psRows.other)}
+      </div>
+    </div>
+  </div>`;
+}
+
+function psExportPDF() {
+  document.getElementById('ps-report-content').innerHTML = psBuildReportHTML();
+  document.getElementById('ps-report-overlay').style.display = 'block';
+  setTimeout(() => window.print(), 400);
+}
+
+function psExportImage() {
+  document.getElementById('ps-report-content').innerHTML = psBuildReportHTML();
+  document.getElementById('ps-report-overlay').style.display = 'block';
+  toast('📸 Use browser Print → Save as PDF, or screenshot the report', 5000);
+}
+
+function psExportPPT() {
+  // Build a simple HTML table-based PPT via data URI
+  const content = psBuildReportHTML();
+  const pptHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:p="urn:schemas-microsoft-com:office:powerpoint">
+    <head><meta charset="utf-8"/><title>Product Summary</title>
+    <style>body{font-family:Calibri,Arial;font-size:12px}</style></head>
+    <body>${content}</body></html>`;
+  const blob = new Blob([pptHtml], {type:'application/vnd.ms-powerpoint'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'product-summary-' + new Date().toISOString().slice(0,10) + '.ppt';
+  a.click();
+  toast('✅ PPT downloaded');
+}
+
+async function psDownloadImage() {
+  toast('📸 Use Ctrl+P → Save as PDF, or take a screenshot of this view', 5000);
+}
+
 // ── History ────────────────────────────────────────────────────────────────
 async function loadHistory() {
   try {
@@ -2515,5 +2683,15 @@ setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
   </div>
 </div>
 
+
+<!-- Product Summary Report Overlay -->
+<div id="ps-report-overlay">
+  <button class="ps-report-close-btn" onclick="document.getElementById('ps-report-overlay').style.display='none'">✕ Close</button>
+  <div class="ps-report-actions">
+    <button onclick="window.print()" style="padding:6px 14px;background:#c62828;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer">📄 Print / Save PDF</button>
+    <button onclick="psDownloadImage()" style="padding:6px 14px;background:#1565c0;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer">🖼 Save as Image</button>
+  </div>
+  <div class="ps-report" id="ps-report-content"></div>
+</div>
 </body>
 </html>
