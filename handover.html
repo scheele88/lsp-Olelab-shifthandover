@@ -279,11 +279,30 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .ie-export td { background:#e3f2fd !important; }
 .ie-export td:first-child { border-left-color: #1565c0 !important; }
 .ie-complete td { opacity:.5; text-decoration:line-through; }
-/* --- Fix: cap card-body height so scrollbar stays attached to the box --- */
+/* --- Better scroll behavior: vertical only for card body --- */
 .card-body {
-  max-height: 70vh !important;
-  overflow-y: auto !important;
-  overflow-x: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+}
+  /* --- Only table area can scroll horizontally, not the whole card --- */
+.table-scroll-x {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.table-scroll-x::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scroll-x::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 999px;
 }
 </style>
 
@@ -412,6 +431,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       </div>
     </div>
     <div class="card-body" style="padding:8px">
+      <div class="table-scroll-x">
       <table class="etable">
         <thead><tr>
           <th style="width:28px">#</th>
@@ -429,6 +449,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
       </table>
+        </div>
       <p id="no-trouble" style="text-align:center;padding:24px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
     </div>
   </div>
