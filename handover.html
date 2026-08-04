@@ -527,8 +527,14 @@ html, body {
   <div class="card">
     <div class="card-hdr">
       <h2>§2 — Equipment Trouble Log</h2>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-<span style="font-size:11px;color:var(--gray-lt)">Done rows stay until next shift</span>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:10px;color:var(--gray-lt);font-weight:600">Export:</span>
+        <input type="date" id="export-from" style="width:115px;font-size:11px;padding:2px 5px;border:1px solid var(--border2);border-radius:3px" title="From date"/>
+        <span style="font-size:11px;color:var(--gray-lt)">→</span>
+        <input type="date" id="export-to" style="width:115px;font-size:11px;padding:2px 5px;border:1px solid var(--border2);border-radius:3px" title="To date"/>
+        <button onclick="exportTroubleCSV()" style="padding:3px 10px;font-size:11px;background:#1565c0;color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:600">⬇ CSV</button>
+        <button onclick="exportTroubleExcel()" style="padding:3px 10px;font-size:11px;background:#217346;color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:600">⬇ Excel</button>
+        <div style="width:1px;height:18px;background:var(--border);margin:0 2px"></div>
         <button class="btn-blue btn-sm" id="add-trouble-btn" onclick="addTroubleRow()">➕ Add Row</button>
       </div>
     </div>
@@ -539,15 +545,15 @@ html, body {
           <th style="width:28px">#</th>
           <th style="width:65px">Lab</th>
           <th style="width:140px">Equipment Name</th>
-          <th style="width:95px">ID</th>
-          <th style="width:90px">Start Date</th>
+          <th style="width:0;padding:0;overflow:hidden;font-size:0;border:none"></th>
+          <th style="width:76px">Start</th>
           <th style="width:110px">Issue</th>
           <th style="width:120px">Details</th>
           <th style="width:110px">Root Cause</th>
           <th style="width:120px">Action Taken</th>
           <th style="width:55px">OOS?</th>
           <th style="width:100px">Status</th>
-          <th style="width:90px">End Date</th>
+          <th style="width:76px">End</th>
           <th style="width:80px">Attach.</th>
           <th style="width:28px"></th>
         </tr></thead>
@@ -1582,8 +1588,8 @@ function renderTrouble() {
           <div class="eq-drop" id="eq-drop-${rid}"></div>
         </div>
       </td>
-      <td><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="background:#f5f5f5;font-family:monospace;font-size:11px" title="${esc(row.equip_code||'')}"/></td>
-      <td><input type="date" value="${row.start_date?row.start_date.slice(0,10):''}" onchange="trField(${rid},'start_date',this.value)" style="font-size:11px;padding:3px 4px"/></td>
+      <td style="width:0;padding:0;overflow:hidden;border:none"><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="display:none"/></td>
+      <td><input type="date" value="${row.start_date?row.start_date.slice(0,10):''}" onchange="trField(${rid},'start_date',this.value)" style="font-size:10px;padding:2px 3px;width:100%"/></td>
       <td>
         <select id="eqiss-${rid}" onchange="eqIssChange(${rid},this.value)">
           <option ${(row.issue_type||'Failed SQC')==='Failed SQC'?'selected':''}>Failed SQC</option>
@@ -1611,7 +1617,7 @@ function renderTrouble() {
           <option ${row.status==='Done'?'selected':''}>Done</option>
         </select>
       </td>
-      <td><input type="date" id="enddate-${rid}" value="${row.end_date?row.end_date.slice(0,10):''}" onchange="trField(${rid},'end_date',this.value)" style="font-size:11px;padding:3px 4px;background:${row.status==='Done'?'#e8f5e9':'#fff'}"/></td>
+      <td><input type="date" id="enddate-${rid}" value="${row.end_date?row.end_date.slice(0,10):''}" onchange="trField(${rid},'end_date',this.value)" style="font-size:10px;padding:2px 3px;width:100%;background:${row.status==='Done'?'#e8f5e9':'#fff'}"/></td>
       <td>${attachmentCellHTML('trouble', rid)}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="delTrouble(${rid})">🗑</button></td>
     `;
