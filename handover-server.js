@@ -271,7 +271,7 @@ app.patch('/api/trouble/:id', async (req, res) => {
   try {
     const { rows:[r] } = await pool.query(
       `UPDATE equip_trouble SET ${f.map((x,i)=>`${x}=$${i+1}`).join(',')} WHERE id=$${f.length+1} RETURNING *`,
-      [...f.map(x => req.body[x] ?? null), req.params.id]);
+      [...f.map(x => { const v = req.body[x]; return (v === '' || v === undefined || v === null) ? null : v; }), req.params.id]);
     res.json(r);
   } catch(e){ res.status(500).json({error:e.message}); }
 });
