@@ -302,81 +302,13 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
   overflow-y: visible !important;
   overflow-x: visible !important;
 }
-  /* --- Only table area can scroll horizontally, not the whole card --- */
+
+/* --- Only table area can scroll horizontally --- */
 .table-scroll-x {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
-}
-
-.table-scroll-x::-webkit-scrollbar {
-  height: 6px;
-}
-
-.table-scroll-x::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.table-scroll-x::-webkit-scrollbar-thumb {
-  background: #d0d0d0;
-  border-radius: 999px;
-}
-  html, body {
-  overflow-x: hidden !important;
-}
-
-.main {
-  overflow-x: hidden !important;
-}
-
-.card {
-  overflow-x: hidden !important;
-}
-
-.card-body {
-  overflow-x: visible !important;
-}
-
-.etable {
-  min-width: 1200px;
-}
-
-.table-scroll-x {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto !important;
-  overflow-y: visible !important;
-}
-  html, body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden !important;
-}
-
-.main {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden !important;
-}
-
-.card,
-.card-body {
-  max-width: 100%;
-}
-
-.card {
-  overflow-x: hidden !important;
-}
-
-.card-body {
-  overflow: visible !important;
-}
-
-.table-scroll-x {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto !important;
-  overflow-y: visible !important;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -384,13 +316,34 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
   height: 6px;
 }
 
+.table-scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .table-scroll-x::-webkit-scrollbar-thumb {
   background: #d0d0d0;
   border-radius: 999px;
 }
 
-.table-scroll-x::-webkit-scrollbar-track {
-  background: transparent;
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.main {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.card {
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.card-body {
+  max-width: 100%;
 }
 </style>
 
@@ -552,10 +505,12 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
     </div>
     <div class="card-body" style="padding:8px">
       <p style="color:var(--gray-lt);font-size:12px;padding:6px 6px 10px">Samples received this shift but not yet completed — carry over to next shift.</p>
+     <div class="table-scroll-x">
       <table class="etable">
               <thead><tr><th style="width:26px">#</th><th style="width:190px">Sample Point / Description</th><th style="width:190px">Reason for Pending</th><th style="width:190px">Action Needed</th><th style="width:100px">Status</th><th style="width:110px">Attach.</th><th style="width:30px"></th></tr></thead>
               <tbody id="pending-tbody"></tbody>
             </table>
+       </div>
       <p id="no-pending" style="text-align:center;padding:20px;color:var(--gray-lt)">No pending samples.</p>
     </div>
   </div>
@@ -569,6 +524,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <button class="btn-blue btn-sm" onclick="addScheduleRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
+      <div class="table-scroll-x">
       <table class="etable">
         <thead><tr>
           <th style="width:36px">#</th>
@@ -581,6 +537,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
         </tr></thead>
         <tbody id="sched-tbody"></tbody>
       </table>
+        </div>
       <p id="no-sched" style="text-align:center;padding:20px;color:var(--gray-lt)">No schedule changes.</p>
     </div>
   </div>
@@ -590,6 +547,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <button class="btn-blue btn-sm" onclick="addReqRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
+      <div class="table-scroll-x">
       <table class="etable">
         <thead><tr>
           <th style="width:36px">#</th>
@@ -603,6 +561,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
         </tr></thead>
         <tbody id="req-tbody"></tbody>
       </table>
+        </div>
       <p id="no-req" style="text-align:center;padding:20px;color:var(--gray-lt)">No requested samples.</p>
     </div>
   </div>
@@ -616,6 +575,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <button class="btn-blue btn-sm" onclick="addImpExpRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
+     <div class="table-scroll-x">
       <table class="etable">
         <thead><tr>
           <th style="width:36px">#</th>
@@ -631,6 +591,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
         </tr></thead>
         <tbody id="impexp-tbody"></tbody>
       </table>
+        </div>
       <p id="no-impexp" style="text-align:center;padding:20px;color:var(--gray-lt)">No import/export entries this shift.</p>
     </div>
   </div>
@@ -645,6 +606,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <button class="btn-blue btn-sm" onclick="addLimsRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
+      <div class="table-scroll-x">
       <table class="etable">
         <thead><tr>
           <th>#</th>
@@ -654,6 +616,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
         </tr></thead>
         <tbody id="lims-tbody"></tbody>
       </table>
+         </div>
       <p id="no-lims" style="text-align:center;padding:16px;color:var(--gray-lt)">No LIMS issues this shift.</p>
     </div>
   </div>
@@ -665,7 +628,8 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <button class="btn-blue btn-sm" onclick="addRemarkRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
-      <table class="etable">
+       <div class="table-scroll-x">
+         <table class="etable">
         <thead><tr>
           <th>#</th>
           <th style="min-width:420px">Remark</th>
@@ -674,6 +638,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
         </tr></thead>
         <tbody id="remarks-tbody"></tbody>
       </table>
+          </div>
       <p id="no-remarks" style="text-align:center;padding:16px;color:var(--gray-lt)">No general remarks this shift.</p>
     </div>
   </div>
