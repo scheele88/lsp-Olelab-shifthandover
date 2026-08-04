@@ -1449,9 +1449,9 @@ function renderTrouble() {
           style="margin-top:3px;display:${row.issue_type==='Others'?'':'none'}"
           oninput="trField(${rid},'issue_other',this.value)"/>
       </td>
-      <td><textarea onchange="trField(${rid},'details',this.value)">${esc(row.details||'')}</textarea></td>
-      <td><textarea onchange="trField(${rid},'root_cause',this.value)">${esc(row.root_cause||'')}</textarea></td>
-      <td><textarea onchange="trField(${rid},'action_taken',this.value)">${esc(row.action_taken||'')}</textarea></td>
+      <td><textarea style="resize:none" onchange="trField(${rid},'details',this.value)">${esc(row.details||'')}</textarea></td>
+      <td><textarea style="resize:none" onchange="trField(${rid},'root_cause',this.value)">${esc(row.root_cause||'')}</textarea></td>
+      <td><textarea style="resize:none" onchange="trField(${rid},'action_taken',this.value)">${esc(row.action_taken||'')}</textarea></td>
       <td style="background:${oos?'#ffebee':'#f1f8f1'}!important;text-align:center;padding:3px">
         <select onchange="trField(${rid},'out_of_service',this.value)"
           style="background:transparent;border:none;font-weight:800;font-size:12px;color:${oos?'#b71c1c':'#2e7d32'};width:100%;cursor:pointer;text-align:center">
@@ -1612,8 +1612,8 @@ function renderPending() {
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px">${i+1}</td>
       <td><input value="${esc(row.sample_point||'')}" oninput="pendingRows[${i}].sample_point=this.value" placeholder="e.g. SPC-001 Ethylene product"/></td>
-      <td><textarea oninput="pendingRows[${i}].reason=this.value">${esc(row.reason||'')}</textarea></td>
-      <td><textarea oninput="pendingRows[${i}].action_needed=this.value">${esc(row.action_needed||'')}</textarea></td>
+      <td><textarea style="resize:none" oninput="pendingRows[${i}].reason=this.value">${esc(row.reason||'')}</textarea></td>
+      <td><textarea style="resize:none" oninput="pendingRows[${i}].action_needed=this.value">${esc(row.action_needed||'')}</textarea></td>
       <td>
         <select onchange="pendingRows[${i}].status=this.value;renderPending()">
           <option ${status==='Sent'?'selected':''}>Sent</option>
@@ -1655,7 +1655,7 @@ function renderSched() {
       <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
       <td><select onchange="schedRows[${i}].plant=this.value">${plantSel(row.plant)}</select></td>
       <td><input value="${esc(row.sampling_point||'')}" oninput="schedRows[${i}].sampling_point=this.value" placeholder="e.g. SPC-21001"/></td>
-      <td><textarea oninput="schedRows[${i}].change_desc=this.value" style="min-height:38px">${esc(row.change_desc||'')}</textarea></td>
+      <td><textarea oninput="schedRows[${i}].change_desc=this.value" style="resize:none;min-height:38px">${esc(row.change_desc||'')}</textarea></td>
       <td><input type="date" value="${row.effective_date?row.effective_date.slice(0,10):''}" onchange="schedRows[${i}].effective_date=this.value"/></td>
       <td><input value="${esc(row.requested_by||'')}" oninput="schedRows[${i}].requested_by=this.value" placeholder="Name"/></td>
       <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="schedRows.splice(${i},1);renderSched()">🗑</button></td>`;
@@ -1676,7 +1676,7 @@ function renderReq() {
       <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
       <td><select onchange="reqRows[${i}].plant=this.value">${plantSel(row.plant)}</select></td>
       <td><input value="${esc(row.product_stream||'')}" oninput="reqRows[${i}].product_stream=this.value" placeholder="e.g. Ethylene product"/></td>
-      <td><textarea oninput="reqRows[${i}].test_items=this.value" style="min-height:38px">${esc(row.test_items||'')}</textarea></td>
+      <td><textarea oninput="reqRows[${i}].test_items=this.value" style="resize:none;min-height:38px">${esc(row.test_items||'')}</textarea></td>
       <td><input value="${esc(row.requested_by||'')}" oninput="reqRows[${i}].requested_by=this.value" placeholder="Name"/></td>
       <td><input type="date" value="${row.target_date?row.target_date.slice(0,10):''}" onchange="reqRows[${i}].target_date=this.value"/></td>
       <td><select onchange="reqRows[${i}].priority=this.value">
@@ -1701,7 +1701,7 @@ function renderLims() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
-      <td><textarea oninput="limsRows[${i}].description=this.value" style="min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
+      <td><textarea oninput="limsRows[${i}].description=this.value" style="resize:none;min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
       <td>${row.id ? attachmentCellHTML('lims', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="limsRows.splice(${i},1);renderLims()">🗑</button></td>`;
     tbody.appendChild(tr);
@@ -1733,7 +1733,7 @@ function renderRemarks() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
-      <td><textarea oninput="remarksRows[${i}].description=this.value" style="min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
+      <td><textarea oninput="remarksRows[${i}].description=this.value" style="resize:none;min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
       <td>${row.id ? attachmentCellHTML('remarks', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="remarksRows.splice(${i},1);renderRemarks()">🗑</button></td>`;
     tbody.appendChild(tr);
@@ -1810,7 +1810,7 @@ function renderImpExp() {
           <option ${row.quality==='Off-spec'?'selected':''}>Off-spec</option>
         </select>
       </td>
-      <td><textarea oninput="impexpRows[${i}].remark=this.value" style="min-height:36px">${esc(row.remark||'')}</textarea></td>
+      <td><textarea oninput="impexpRows[${i}].remark=this.value" style="resize:none;min-height:36px">${esc(row.remark||'')}</textarea></td>
       <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="impexpRows.splice(${i},1);renderImpExp()">🗑</button></td>
     `;
     tbody.appendChild(tr);
