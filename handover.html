@@ -422,7 +422,7 @@ html, body {
 .ps-normal  { background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
 .ps-other   { background:#fff9c4;color:#f57f17;border:1px solid #ffe082;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
 
-.ps-table { width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px }
+.ps-table { width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;table-layout:fixed }
 .ps-table th { background:#0097a7;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase }
 .ps-table td { padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle }
 .ps-table tbody tr:nth-child(even) td { background:#f9fffe }
@@ -718,9 +718,9 @@ html, body {
           <!-- Import / Export -->
           <div class="ps-section-title">⚓ Import / Export</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:70px">Type</th><th>Material</th>
-            <th style="width:120px">Sampling Point</th><th style="width:100px">Quality</th>
-            <th style="width:80px">Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:60px">Type</th><th style="width:140px">Material</th>
+            <th>Sampling Point</th><th style="width:95px">Quality</th>
+            <th style="width:75px">Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-ie-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;font-size:11px" onclick="psAddRow('ie')">➕ Add Row</button>
         </div>
@@ -730,8 +730,8 @@ html, body {
           <!-- CTU -->
           <div class="ps-section-title">🔷 CTU</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:130px">Stream / Sample</th><th style="width:100px">Sample Point</th>
-            <th style="width:100px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:120px">Stream / Sample</th><th style="width:95px">Sample Point</th>
+            <th style="width:95px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-ctu-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:10px;font-size:11px" onclick="psAddRow('ctu')">➕ Add Row</button>
 
@@ -746,8 +746,8 @@ html, body {
           <!-- Other Sample Points -->
           <div class="ps-section-title">🔬 Other Sample Points</div>
           <table class="ps-table"><thead><tr>
-            <th style="width:24px">No.</th><th style="width:130px">Sample Point</th><th style="width:90px">Type</th>
-            <th style="width:100px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="width:24px">No.</th><th style="width:120px">Sample Point</th><th style="width:90px">Type</th>
+            <th style="width:95px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-other-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;font-size:11px" onclick="psAddRow('other')">➕ Add Row</button>
         </div>
@@ -2215,13 +2215,13 @@ function psRender(section) {
       // Simple table: col1=name/stream, col2=sample_point, col3=status, col4=remark
       let col1Html = '';
       if (section === 'main') {
-        col1Html = `<select onchange="psSet('main',${i},'col1',this.value)" style="width:100%;font-size:11px">
+        col1Html = `<select onchange="psSet('main',${i},'col1',this.value)" style="width:100%;font-size:12px;font-weight:700;color:#006064">
           <option value="${esc(row.col1||'')}"}>${esc(row.col1||'— Select —')}</option>
           ${PS_MAIN_PRODUCTS.map(p=>`<option ${row.col1===p?'selected':''}>${p}</option>`).join('')}
           <option ${!PS_MAIN_PRODUCTS.includes(row.col1)&&row.col1?'selected':''} value="${esc(row.col1||'')}">Other</option>
         </select>`;
       } else if (section === 'by') {
-        col1Html = `<select onchange="psSet('by',${i},'col1',this.value)" style="width:100%;font-size:11px">
+        col1Html = `<select onchange="psSet('by',${i},'col1',this.value)" style="width:100%;font-size:12px;font-weight:700;color:#006064">
           <option value="">— Select —</option>
           ${PS_BY_PRODUCTS.map(p=>`<option ${row.col1===p?'selected':''}>${p}</option>`).join('')}
           <option value="other" ${row.col1==='other'?'selected':''}>Other</option>
@@ -2252,13 +2252,13 @@ function psRender(section) {
         <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
         <td>
           <select onchange="psSet('ie',${i},'col1',this.value);psRender('ie')"
-            style="width:100%;font-size:11px;font-weight:700;color:${dir==='Import'?'#1b5e20':'#0d47a1'}">
+            style="width:100%;font-size:12px;font-weight:800;color:${dir==='Import'?'#1b5e20':'#0d47a1'}">
             <option ${dir==='Import'?'selected':''}>Import</option>
             <option ${dir==='Export'?'selected':''}>Export</option>
           </select>
         </td>
         <td>
-          <select onchange="psSet('ie',${i},'col2',this.value)" style="width:100%;font-size:11px;margin-bottom:2px">
+          <select onchange="psSet('ie',${i},'col2',this.value)" style="width:100%;font-size:12px;font-weight:700;color:#006064;margin-bottom:2px">
             <option value="">— Select —</option>
             ${mats.map(m=>`<option ${matVal===m?'selected':''}>${m}</option>`).join('')}
             <option value="__custom__" ${isCustomMat?'selected':''}>Other (type below)</option>
