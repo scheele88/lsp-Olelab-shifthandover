@@ -138,6 +138,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 #tab-s4  .card-hdr{border-left-color:var(--orange)}
 #tab-s4b .card-hdr{border-left-color:#00897b}
 #tab-s5  .card-hdr{border-left-color:var(--red)}
+#tab-s6  .card-hdr{border-left-color:#0097a7}
 
 /* ── Buttons ── */
 .btn-navy,.btn-blue{background:var(--blue);color:#fff;box-shadow:0 2px 6px rgba(21,101,192,.3)}
@@ -410,6 +411,20 @@ html, body {
 /* Compact date inputs in trouble table */
 .etable input[type=date]{-webkit-appearance:none;appearance:none}
 .etable input[type=date]::-webkit-calendar-picker-indicator{opacity:.5;padding:0;margin:0;width:12px;height:12px;cursor:pointer}
+
+/* Product summary status colours */
+.ps-onspec  { background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+.ps-offspec { background:#ffebee;color:#b71c1c;border:1px solid #ef9a9a;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+.ps-normal  { background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+.ps-other   { background:#fff9c4;color:#f57f17;border:1px solid #ffe082;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+
+.ps-table { width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px }
+.ps-table th { background:#0097a7;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase }
+.ps-table td { padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle }
+.ps-table tbody tr:nth-child(even) td { background:#f9fffe }
+.ps-table tbody tr:hover td { background:#e0f7fa }
+.ps-table select,.ps-table input { font-size:12px;padding:3px 6px;border-radius:3px;width:100% }
+.ps-section-title { font-size:12px;font-weight:700;color:#0097a7;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #b2ebf2;padding-bottom:4px }
 </style>
 
 </head>
@@ -470,7 +485,8 @@ html, body {
   <button class="tab-btn" data-tab="s3" onclick="switchTab('s3')">§3 Pending Samples</button>
   <button class="tab-btn" data-tab="s4" onclick="switchTab('s4')">§4 Plant Samples</button>
   <button class="tab-btn" data-tab="s4b" onclick="switchTab('s4b')">§5 Import/Export</button>
-  <button class="tab-btn" data-tab="s5" onclick="switchTab('s5')">§6 Others & Sign-off</button>
+  <button class="tab-btn" data-tab="s6" onclick="switchTab('s6')">§6 Product Summary</button>
+  <button class="tab-btn" data-tab="s5" onclick="switchTab('s5')">§7 Others & Sign-off</button>
   <button class="tab-btn" data-tab="hist" onclick="switchTab('hist')">🗂 History</button>
 </div>
 
@@ -670,7 +686,108 @@ html, body {
   </div>
 </div>
 
-<!-- §6 Others & Sign-off -->
+<!-- §6 Product Summary -->
+<div id="tab-s6" style="display:none">
+  <div class="card">
+    <div class="card-hdr"><h2>§6 — Product Summary</h2></div>
+    <div class="card-body">
+
+      <!-- Main Products -->
+      <div class="ps-section-title">🟢 Main Products</div>
+      <table class="ps-table" id="ps-main-table">
+        <thead><tr>
+          <th style="width:30px">No.</th>
+          <th style="width:160px">Main Products</th>
+          <th style="width:120px">Sample Point</th>
+          <th style="width:140px">Status</th>
+          <th>Remark</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="ps-main-tbody"></tbody>
+      </table>
+      <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:12px" onclick="psAddRow('main')">➕ Add Row</button>
+
+      <!-- By Products -->
+      <div class="ps-section-title">🔵 By Products</div>
+      <table class="ps-table" id="ps-by-table">
+        <thead><tr>
+          <th style="width:30px">No.</th>
+          <th style="width:160px">By Products</th>
+          <th style="width:120px">Sample Point</th>
+          <th style="width:140px">Status</th>
+          <th>Remark</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="ps-by-tbody"></tbody>
+      </table>
+      <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:12px" onclick="psAddRow('by')">➕ Add Row</button>
+
+      <!-- CTU -->
+      <div class="ps-section-title">🔷 CTU</div>
+      <table class="ps-table" id="ps-ctu-table">
+        <thead><tr>
+          <th style="width:30px">No.</th>
+          <th style="width:160px">Stream / Sample Name</th>
+          <th style="width:120px">Sample Point</th>
+          <th style="width:140px">Status</th>
+          <th>Remark</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="ps-ctu-tbody"></tbody>
+      </table>
+      <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:12px" onclick="psAddRow('ctu')">➕ Add Row</button>
+
+      <!-- Tank Farm -->
+      <div class="ps-section-title">🛢 Tank Farm</div>
+      <table class="ps-table" id="ps-tf-table">
+        <thead><tr>
+          <th style="width:30px">No.</th>
+          <th style="width:160px">Raw Mat. / Products</th>
+          <th style="width:120px">Sample Point</th>
+          <th style="width:140px">Status</th>
+          <th>Remark</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="ps-tf-tbody"></tbody>
+      </table>
+      <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:12px" onclick="psAddRow('tf')">➕ Add Row</button>
+
+      <!-- Import / Export -->
+      <div class="ps-section-title">⚓ Import / Export</div>
+      <table class="ps-table" id="ps-ie-table">
+        <thead><tr>
+          <th style="width:30px">No.</th>
+          <th style="width:85px">Type</th>
+          <th style="width:180px">Raw Mat. / Product</th>
+          <th style="width:200px">Sampling Point</th>
+          <th style="width:150px">Quality</th>
+          <th>Remark</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="ps-ie-tbody"></tbody>
+      </table>
+      <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:12px" onclick="psAddRow('ie')">➕ Add Row</button>
+
+      <!-- Other Sample Points -->
+      <div class="ps-section-title">🔬 Other Sample Points</div>
+      <table class="ps-table" id="ps-other-table">
+        <thead><tr>
+          <th style="width:30px">No.</th>
+          <th style="width:160px">Sample Point</th>
+          <th style="width:120px">Type</th>
+          <th style="width:140px">Status</th>
+          <th>Remark</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody id="ps-other-tbody"></tbody>
+      </table>
+      <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:12px" onclick="psAddRow('other')">➕ Add Row</button>
+
+    </div>
+  </div>
+</div>
+
+<!-- §7 Others & Sign-off -->
 <div id="tab-s5" style="display:none">
   <!-- §5a LIMS Issues -->
   <div class="card" style="margin-bottom:12px">
@@ -996,6 +1113,7 @@ async function applyReport(data, isPast) {
   schedRows    = data.schedules   || [];
   reqRows      = data.reqsamples  || [];
   limsRows     = data.limsRows    || [];
+  psFromData(data);
   remarksRows  = data.remarksRows || [];
   impexpRows   = data.impexpRows  || [];
 
@@ -1187,6 +1305,7 @@ async function saveAll() {
     await saveSchedules();
     await saveReqSamples();
     await saveLims(true);      // skipRender
+    await saveProductSummary();
     await saveRemarks(true);   // skipRender
     await saveImpExp(true);    // skipRender
     // ONE final reload of all attachment data (row IDs are now stable)
@@ -2087,6 +2206,152 @@ async function exportTroubleExcel() {
   } catch(e) { toast('❌ ' + e.message, 4000); }
 }
 
+
+// ── Product Summary ────────────────────────────────────────────────────────
+let psRows = { main:[], by:[], ctu:[], tf:[], ie:[], other:[] };
+
+const PS_MAIN_PRODUCTS = ['Ethylene (C2)','Propylene (C3)','1,3-Butadiene','Hydrogen (H2)'];
+const PS_BY_PRODUCTS   = ['Raw C4','C4 Raffinate-1','Raw Pygas','1st Stage Pygas','CKB','Pyrolysis Gasoline'];
+const PS_CTU_DEFAULTS  = ['TWW','CWBD','Wastewater'];
+const IE_IMPORT_MATS   = ['LPG','Ethane','Naphtha','Butene-1','Raw Hexanes','Hexene-1','Propylene','Ethylene','Wash Oil','Flux Oil','C9+'];
+const IE_EXPORT_MATS   = ['1,3-Butadiene','Propylene','Ethylene','Raw Pygas','1st Stage Pygas','CKB','Raw C4','Raffinate-1','Hydrogen'];
+
+function psStatusSelect(val, name, i, section) {
+  const bg = val==='On-spec'?'#e8f5e9':val==='Off-spec'?'#ffebee':val==='Normal'?'#e3f2fd':val==='Other'?'#fff9c4':'#fff';
+  const col = val==='On-spec'?'#1b5e20':val==='Off-spec'?'#b71c1c':val==='Normal'?'#0d47a1':val==='Other'?'#f57f17':'#424242';
+  return `<select onchange="psSet('${section}',${i},'${name}',this.value);psRender('${section}')"
+    style="font-weight:700;font-size:11px;background:${bg};color:${col};border:1px solid ${col}40;border-radius:3px;width:100%">
+    <option value="">— Select —</option>
+    <option ${val==='On-spec' ?'selected':''}>On-spec</option>
+    <option ${val==='Off-spec'?'selected':''}>Off-spec</option>
+    <option ${val==='Normal'  ?'selected':''}>Normal</option>
+    <option ${val==='Other'   ?'selected':''}>Other</option>
+  </select>`;
+}
+
+function psSet(section, i, field, value) {
+  if (psRows[section] && psRows[section][i]) psRows[section][i][field] = value;
+}
+
+function psRender(section) {
+  const tbody = document.getElementById('ps-'+section+'-tbody');
+  if (!tbody) return;
+  const rows = psRows[section] || [];
+  tbody.innerHTML = '';
+  rows.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    if (section === 'main' || section === 'by' || section === 'ctu' || section === 'tf' || section === 'other') {
+      // Simple table: col1=name/stream, col2=sample_point, col3=status, col4=remark
+      let col1Html = '';
+      if (section === 'main') {
+        col1Html = `<select onchange="psSet('main',${i},'col1',this.value)" style="width:100%;font-size:11px">
+          <option value="${esc(row.col1||'')}"}>${esc(row.col1||'— Select —')}</option>
+          ${PS_MAIN_PRODUCTS.map(p=>`<option ${row.col1===p?'selected':''}>${p}</option>`).join('')}
+          <option ${!PS_MAIN_PRODUCTS.includes(row.col1)&&row.col1?'selected':''} value="${esc(row.col1||'')}">Other</option>
+        </select>`;
+      } else if (section === 'by') {
+        col1Html = `<select onchange="psSet('by',${i},'col1',this.value)" style="width:100%;font-size:11px">
+          <option value="">— Select —</option>
+          ${PS_BY_PRODUCTS.map(p=>`<option ${row.col1===p?'selected':''}>${p}</option>`).join('')}
+          <option value="other" ${row.col1==='other'?'selected':''}>Other</option>
+        </select>`;
+      } else {
+        col1Html = `<input type="text" value="${esc(row.col1||'')}" oninput="psSet('${section}',${i},'col1',this.value)" style="width:100%;font-size:11px"/>`;
+      }
+      tr.innerHTML = `
+        <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
+        <td>${col1Html}</td>
+        <td><input type="text" value="${esc(row.col2||'')}" oninput="psSet('${section}',${i},'col2',this.value)" placeholder="e.g. SPC-28081" style="width:100%;font-size:11px"/></td>
+        <td>${psStatusSelect(row.col3||'','col3',i,section)}</td>
+        <td><input type="text" value="${esc(row.col4||'')}" oninput="psSet('${section}',${i},'col4',this.value)" placeholder="Remark…" style="width:100%;font-size:11px"/></td>
+        <td><button class="btn-red btn-xs" onclick="psRows['${section}'].splice(${i},1);psRender('${section}')">🗑</button></td>`;
+    } else if (section === 'ie') {
+      // Import/Export: col1=type, col2=material, col3=sampling_point, col4=quality, col5=remark
+      const dir = row.col1 || 'Import';
+      const mats = dir === 'Export' ? IE_EXPORT_MATS : IE_IMPORT_MATS;
+      const samplingOpts = dir === 'Export'
+        ? ['Shore Tank','Export Line','Ship Tank - 1st foot','Ship Tank - After Loading']
+        : ['Ship Tank'];
+      const matVal = row.col2 || '';
+      const isCustomMat = matVal && !mats.includes(matVal);
+      const spVal = row.col3 || '';
+      const isCustomSP = spVal && !samplingOpts.includes(spVal);
+
+      tr.innerHTML = `
+        <td style="color:var(--gray-lt);font-size:11px;text-align:center">${i+1}</td>
+        <td>
+          <select onchange="psSet('ie',${i},'col1',this.value);psRender('ie')"
+            style="width:100%;font-size:11px;font-weight:700;color:${dir==='Import'?'#1b5e20':'#0d47a1'}">
+            <option ${dir==='Import'?'selected':''}>Import</option>
+            <option ${dir==='Export'?'selected':''}>Export</option>
+          </select>
+        </td>
+        <td>
+          <select onchange="psSet('ie',${i},'col2',this.value)" style="width:100%;font-size:11px;margin-bottom:2px">
+            <option value="">— Select —</option>
+            ${mats.map(m=>`<option ${matVal===m?'selected':''}>${m}</option>`).join('')}
+            <option value="__custom__" ${isCustomMat?'selected':''}>Other (type below)</option>
+          </select>
+          ${isCustomMat?`<input type="text" value="${esc(matVal)}" oninput="psSet('ie',${i},'col2',this.value)" placeholder="Type material…" style="width:100%;font-size:11px;margin-top:2px"/>`:''}
+        </td>
+        <td>
+          <select onchange="psSet('ie',${i},'col3',this.value)" style="width:100%;font-size:11px;margin-bottom:2px">
+            <option value="">— Select —</option>
+            ${samplingOpts.map(s=>`<option ${spVal===s?'selected':''}>${s}</option>`).join('')}
+            <option value="__custom__" ${isCustomSP?'selected':''}>Other (type below)</option>
+          </select>
+          ${isCustomSP?`<input type="text" value="${esc(spVal)}" oninput="psSet('ie',${i},'col3',this.value)" placeholder="Specify…" style="width:100%;font-size:11px;margin-top:2px"/>`:''}
+        </td>
+        <td>${psStatusSelect(row.col4||'','col4',i,'ie')}</td>
+        <td><input type="text" value="${esc(row.col5||'')}" oninput="psSet('ie',${i},'col5',this.value)" placeholder="Remark…" style="width:100%;font-size:11px"/></td>
+        <td><button class="btn-red btn-xs" onclick="psRows.ie.splice(${i},1);psRender('ie')">🗑</button></td>`;
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+function psRenderAll() {
+  ['main','by','ctu','tf','ie','other'].forEach(s => psRender(s));
+}
+
+function psAddRow(section) {
+  if (!psRows[section]) psRows[section] = [];
+  if (section === 'main') psRows.main.push({col1:'',col2:'',col3:'',col4:''});
+  else if (section === 'by') psRows.by.push({col1:'',col2:'',col3:'',col4:''});
+  else if (section === 'ctu') psRows.ctu.push({col1:'',col2:'',col3:'',col4:''});
+  else if (section === 'tf') psRows.tf.push({col1:'',col2:'',col3:'',col4:''});
+  else if (section === 'ie') psRows.ie.push({col1:'Import',col2:'',col3:'Ship Tank',col4:'',col5:''});
+  else if (section === 'other') psRows.other.push({col1:'',col2:'',col3:'',col4:''});
+  psRender(section);
+}
+
+function psFromData(data) {
+  const flat = data.psRows || [];
+  psRows = { main:[], by:[], ctu:[], tf:[], ie:[], other:[] };
+  flat.forEach(r => {
+    const s = r.section;
+    if (!psRows[s]) psRows[s] = [];
+    psRows[s].push({col1:r.col1,col2:r.col2,col3:r.col3,col4:r.col4,col5:r.col5,col6:r.col6});
+  });
+  // Default rows
+  if (!psRows.main.length) psRows.main = PS_MAIN_PRODUCTS.map(p=>({col1:p,col2:'',col3:'',col4:''}));
+  if (!psRows.by.length)   psRows.by   = PS_BY_PRODUCTS.map(p=>({col1:p,col2:'',col3:'',col4:''}));
+  if (!psRows.ctu.length)  psRows.ctu  = PS_CTU_DEFAULTS.map(p=>({col1:p,col2:'',col3:'',col4:''}));
+  if (!psRows.tf.length)   psRows.tf   = [{col1:'Tank Farm',col2:'',col3:'Normal',col4:''}];
+  if (!psRows.ie.length)   psRows.ie   = [{col1:'Import',col2:'',col3:'Ship Tank',col4:'',col5:''}];
+  if (!psRows.other.length)psRows.other= [{col1:'',col2:'',col3:'',col4:''}];
+  psRenderAll();
+}
+
+async function saveProductSummary() {
+  if (!currentReport) return;
+  const allRows = [];
+  ['main','by','ctu','tf','ie','other'].forEach(section => {
+    (psRows[section]||[]).forEach((r,i) => allRows.push({section,...r,sort_order:i}));
+  });
+  await api(`/api/reports/${currentReport.id}/productsummary`,'PUT',allRows);
+}
+
 // ── History ────────────────────────────────────────────────────────────────
 async function loadHistory() {
   try {
@@ -2130,12 +2395,13 @@ async function jumpToReport(date, shift) {
 
 // ── Tab switching ──────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['s1','s2','s3','s4','s4b','s5','hist'].forEach(t => {
+  ['s1','s2','s3','s4','s4b','s6','s5','hist'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===tab ? '' : 'none';
     document.querySelector(`.tab-btn[data-tab="${t}"]`).classList.toggle('active', t===tab);
   });
   if (tab==='hist') loadHistory();
   if (tab==='s5') syncSignoffNames();
+  if (tab==='s6') psRenderAll();
 }
 
 // ── API ────────────────────────────────────────────────────────────────────

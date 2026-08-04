@@ -107,6 +107,18 @@ async function initDB() {
       remark          TEXT,
       sort_order      INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS product_summary (
+      id          SERIAL PRIMARY KEY,
+      report_id   INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
+      section     VARCHAR(20) NOT NULL, -- main, by, ctu, tf, ie, other
+      sort_order  INTEGER DEFAULT 0,
+      col1        VARCHAR(200),  -- product/stream/type
+      col2        VARCHAR(200),  -- sample point / material
+      col3        VARCHAR(200),  -- status / quality / sampling_point
+      col4        TEXT,          -- remark / extra
+      col5        VARCHAR(200),  -- extra (ie: sampling_point)
+      col6        TEXT           -- extra (ie: remark)
+    );
     CREATE TABLE IF NOT EXISTS lims_issues (
       id          SERIAL PRIMARY KEY,
       report_id   INTEGER REFERENCES handover_reports(id) ON DELETE CASCADE,
@@ -173,10 +185,11 @@ async function loadFull(reportId) {
   const { rows: pending }    = await pool.query('SELECT * FROM pending_samples  WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: schedules }  = await pool.query('SELECT * FROM schedule_changes WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: reqsamples }   = await pool.query('SELECT * FROM requested_samples WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
+  const { rows: psRows }        = await pool.query('SELECT * FROM product_summary WHERE report_id=$1 ORDER BY section,sort_order,id',[reportId]);
   const { rows: limsRows }      = await pool.query('SELECT * FROM lims_issues    WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: remarksRows }   = await pool.query('SELECT * FROM general_remarks WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: impexpRows }    = await pool.query('SELECT * FROM import_export   WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows, impexpRows };
+  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows, impexpRows, psRows };
 }
 
 app.get('/api/reports', async (req, res) => {
@@ -488,6 +501,23 @@ app.put('/api/reports/:id/impexp', async (req, res) => {
       }
     }
     const {rows:saved} = await pool.query('SELECT * FROM import_export WHERE report_id=$1 ORDER BY sort_order,id',[req.params.id]);
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+// ── Product Summary rows ─────────────────────────────────────────────────────
+app.put('/api/reports/:id/productsummary', async (req, res) => {
+  const rows = req.body; // [{section,col1,col2,col3,col4,col5,col6,sort_order}]
+  try {
+    await pool.query('DELETE FROM product_summary WHERE report_id=$1',[req.params.id]);
+    for (let i=0;i<rows.length;i++) {
+      const r=rows[i];
+      await pool.query(
+        `INSERT INTO product_summary (report_id,section,sort_order,col1,col2,col3,col4,col5,col6) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [req.params.id,r.section||'',i,r.col1||'',r.col2||'',r.col3||'',r.col4||'',r.col5||'',r.col6||'']
+      );
+    }
+    const {rows:saved}=await pool.query('SELECT * FROM product_summary WHERE report_id=$1 ORDER BY section,sort_order,id',[req.params.id]);
     res.json(saved);
   } catch(e){ res.status(500).json({error:e.message}); }
 });
