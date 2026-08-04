@@ -2567,71 +2567,59 @@ async function psExportPPT() {
       return [...head, ...body];
     }
 
-    // LEFT column sections
-    let ly = 0.7;
-    const LX = 0.15, LW = 6.4;
+    const ROW_H = 0.27;  // taller rows = bigger font feels bigger
+    const HDR_H = 0.22;  // section title height
+    const GAP   = 0.12;  // gap between sections
+    const FONT  = 10.5;  // data cell font size
 
-    // Main Products
-    slide.addText('🟢 MAIN PRODUCTS', {x:LX,y:ly,w:LW,h:0.2,fontSize:9,bold:true,color:TEAL,fontFace:'Calibri'});
-    ly += 0.2;
-    const mainData = psRows.main.map((r,i)=>[(i+1).toString(),r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
-    if (mainData.length) {
-      slide.addTable(makeTable(['No.','Product','Sample Point','Status','Remark'], mainData, 3),
-        {x:LX,y:ly,w:LW,rowH:0.22,colW:[0.25,1.6,1.1,1.1,2.35]});
-      ly += 0.22*(mainData.length+1)+0.08;
+    // Rebuild makeTable with larger font
+    function makeTable2(headers, rows, statusColIdx) {
+      const head = [headers.map(h => ({
+        text: h,
+        options: { bold:true, color:WHITE, fill:{color:TEAL}, fontSize:10, fontFace:'Calibri', align:'center', valign:'middle' }
+      }))];
+      const body = rows.map(r => r.map((cell, ci) => ({
+        text: String(cell||'—'),
+        options: {
+          fontSize: FONT, fontFace:'Calibri', color:DARK, valign:'middle',
+          fill: { color: ci===statusColIdx ? statusFill(cell) : 'FFFFFF' },
+          border: [{pt:0.4,color:'cccccc'},{pt:0.4,color:'cccccc'},{pt:0.4,color:'cccccc'},{pt:0.4,color:'cccccc'}]
+        }
+      })));
+      return [...head, ...body];
     }
 
-    // By Products
-    slide.addText('🔵 BY PRODUCTS', {x:LX,y:ly,w:LW,h:0.2,fontSize:9,bold:true,color:TEAL,fontFace:'Calibri'});
-    ly += 0.2;
-    const byData = psRows.by.map((r,i)=>[(i+1).toString(),r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
-    if (byData.length) {
-      slide.addTable(makeTable(['No.','By Product','Sample Point','Status','Remark'], byData, 3),
-        {x:LX,y:ly,w:LW,rowH:0.22,colW:[0.25,1.6,1.1,1.1,2.35]});
-      ly += 0.22*(byData.length+1)+0.08;
+    function addSection(slide, x, y, w, title, headers, rows, statusColIdx, colW) {
+      slide.addText(title, {x, y, w, h:HDR_H, fontSize:10.5, bold:true, color:TEAL, fontFace:'Calibri'});
+      y += HDR_H;
+      if (!rows.length) {
+        slide.addText('No entries', {x, y, w, h:0.22, fontSize:9, color:'9e9e9e', italic:true, fontFace:'Calibri'});
+        return y + 0.22 + GAP;
+      }
+      const tableH = ROW_H * (rows.length + 1); // +1 for header row
+      slide.addTable(makeTable2(headers, rows, statusColIdx),
+        {x, y, w, rowH:ROW_H, colW});
+      return y + tableH + GAP;
     }
 
-    // Import/Export
-    slide.addText('⚓ IMPORT / EXPORT', {x:LX,y:ly,w:LW,h:0.2,fontSize:9,bold:true,color:TEAL,fontFace:'Calibri'});
-    ly += 0.2;
-    const ieData = psRows.ie.map((r,i)=>[(i+1).toString(),r.col1||'',r.col2||'',r.col3||'',r.col4||'',r.col5||'']);
-    if (ieData.length) {
-      slide.addTable(makeTable(['No.','Type','Material','Sampling Point','Quality','Remark'], ieData, 4),
-        {x:LX,y:ly,w:LW,rowH:0.22,colW:[0.25,0.7,1.3,1.5,1.1,1.55]});
-    }
+    // Prepare data
+    const mainData  = psRows.main.map((r,i)=>  [(i+1)+'',r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
+    const byData    = psRows.by.map((r,i)=>    [(i+1)+'',r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
+    const ieData    = psRows.ie.map((r,i)=>    [(i+1)+'',r.col1||'',r.col2||'',r.col3||'',r.col4||'',r.col5||'']);
+    const ctuData   = psRows.ctu.map((r,i)=>   [(i+1)+'',r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
+    const tfData    = psRows.tf.map((r,i)=>    [(i+1)+'',r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
+    const otherData = psRows.other.map((r,i)=> [(i+1)+'',r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
 
-    // RIGHT column sections
-    let ry = 0.7;
-    const RX = 6.75, RW = 6.4;
+    const LX=0.15, LW=6.4, RX=6.75, RW=6.4;
+    let ly=0.72, ry=0.72;
 
-    // CTU
-    slide.addText('🔷 CTU', {x:RX,y:ry,w:RW,h:0.2,fontSize:9,bold:true,color:TEAL,fontFace:'Calibri'});
-    ry += 0.2;
-    const ctuData = psRows.ctu.map((r,i)=>[(i+1).toString(),r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
-    if (ctuData.length) {
-      slide.addTable(makeTable(['No.','Stream/Sample','Sample Point','Status','Remark'], ctuData, 3),
-        {x:RX,y:ry,w:RW,rowH:0.22,colW:[0.25,1.55,1.1,1.1,2.4]});
-      ry += 0.22*(ctuData.length+1)+0.15;
-    }
+    ly = addSection(slide,LX,ly,LW,'🟢 MAIN PRODUCTS',   ['No.','Product','Sample Point','Status','Remark'],   mainData,  3, [0.28,1.65,1.1,1.15,2.22]);
+    ly = addSection(slide,LX,ly,LW,'🔵 BY PRODUCTS',     ['No.','By Product','Sample Point','Status','Remark'], byData,    3, [0.28,1.65,1.1,1.15,2.22]);
+         addSection(slide,LX,ly,LW,'⚓ IMPORT / EXPORT', ['No.','Type','Material','Sampling Point','Quality','Remark'], ieData, 4, [0.28,0.72,1.3,1.55,1.1,1.45]);
 
-    // Tank Farm
-    slide.addText('🛢 TANK FARM & PIPELINE', {x:RX,y:ry,w:RW,h:0.2,fontSize:9,bold:true,color:TEAL,fontFace:'Calibri'});
-    ry += 0.2;
-    const tfData = psRows.tf.map((r,i)=>[(i+1).toString(),r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
-    if (tfData.length) {
-      slide.addTable(makeTable(['No.','Raw Mat./Products','Sample Point','Status','Remark'], tfData, 3),
-        {x:RX,y:ry,w:RW,rowH:0.22,colW:[0.25,1.55,1.1,1.1,2.4]});
-      ry += 0.22*(tfData.length+1)+0.15;
-    }
-
-    // Other
-    slide.addText('🔬 OTHER SAMPLE POINTS', {x:RX,y:ry,w:RW,h:0.2,fontSize:9,bold:true,color:TEAL,fontFace:'Calibri'});
-    ry += 0.2;
-    const otherData = psRows.other.map((r,i)=>[(i+1).toString(),r.col1||'',r.col2||'',r.col3||'',r.col4||'']);
-    if (otherData.length) {
-      slide.addTable(makeTable(['No.','Sample Point','Type','Status','Remark'], otherData, 3),
-        {x:RX,y:ry,w:RW,rowH:0.22,colW:[0.25,1.55,1.1,1.1,2.4]});
-    }
+    ry = addSection(slide,RX,ry,RW,'🔷 CTU',                ['No.','Stream/Sample','Sample Point','Status','Remark'], ctuData,   3, [0.28,1.55,1.1,1.15,2.32]);
+    ry = addSection(slide,RX,ry,RW,'🛢 TANK FARM & PIPELINE',['No.','Raw Mat./Products','Sample Point','Status','Remark'], tfData, 3, [0.28,1.55,1.1,1.15,2.32]);
+         addSection(slide,RX,ry,RW,'🔬 OTHER SAMPLE POINTS', ['No.','Sample Point','Type','Status','Remark'], otherData, 3, [0.28,1.55,1.1,1.15,2.32]);
 
     const fname = 'product-summary-' + now.toISOString().slice(0,10) + '.pptx';
     await pptx.writeFile({fileName: fname});
