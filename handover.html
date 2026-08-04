@@ -537,16 +537,18 @@ html, body {
       <table class="etable">
         <thead><tr>
           <th style="width:28px">#</th>
-       <th style="width:68px">Lab</th>
-          <th style="width:125px">Equipment Name</th>
-          <th style="width:100px">ID</th>
-          <th style="width:115px">Issue</th>
-          <th style="width:130px">Details</th>
-          <th style="width:115px">Root Cause</th>
-          <th style="width:130px">Action Taken</th>
-          <th style="width:60px">OOS?</th>
-          <th style="width:105px">Status</th>
-        <th style="width:82px">Attach.</th>
+          <th style="width:65px">Lab</th>
+          <th style="width:140px">Equipment Name</th>
+          <th style="width:95px">ID</th>
+          <th style="width:90px">Start Date</th>
+          <th style="width:110px">Issue</th>
+          <th style="width:120px">Details</th>
+          <th style="width:110px">Root Cause</th>
+          <th style="width:120px">Action Taken</th>
+          <th style="width:55px">OOS?</th>
+          <th style="width:100px">Status</th>
+          <th style="width:90px">End Date</th>
+          <th style="width:80px">Attach.</th>
           <th style="width:28px"></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
@@ -1568,18 +1570,20 @@ function renderTrouble() {
           <option value="Other" ${row.owner==='Other'?'selected':''}>Other</option>
         </select>
       </td>
-     <td class="eq-name-cell">
-  <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
-        <textarea id="eqname-${rid}"
-  placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
-  ${!row.owner && !isOther ? 'readonly' : ''}
-  oninput="eqNameInput(${rid},this.value)"
-  onfocus="eqNameFocus(${rid})"
-  onblur="setTimeout(()=>eqDropClose(${rid}),200)">${esc(row.equip_name||'')}</textarea>
+      <td style="background:#f8f4ff">
+        <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
+          <textarea id="eqname-${rid}"
+            placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
+            ${!row.owner && !isOther ? 'readonly' : ''}
+            oninput="eqNameInput(${rid},this.value)"
+            onfocus="eqNameFocus(${rid})"
+            onblur="setTimeout(()=>eqDropClose(${rid}),200)"
+            style="font-weight:700;color:#4a148c;background:transparent;border:none;resize:none;padding:4px;width:100%;font-size:12px">${esc(row.equip_name||'')}</textarea>
           <div class="eq-drop" id="eq-drop-${rid}"></div>
         </div>
       </td>
-      <td><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="background:#f5f5f5;font-family:monospace;font-size:12px"/></td>
+      <td><input readonly id="eqcode-${rid}" value="${esc(row.equip_code||'')}" style="background:#f5f5f5;font-family:monospace;font-size:11px" title="${esc(row.equip_code||'')}"/></td>
+      <td><input type="date" value="${row.start_date?row.start_date.slice(0,10):''}" onchange="trField(${rid},'start_date',this.value)" style="font-size:11px;padding:3px 4px"/></td>
       <td>
         <select id="eqiss-${rid}" onchange="eqIssChange(${rid},this.value)">
           <option ${(row.issue_type||'Failed SQC')==='Failed SQC'?'selected':''}>Failed SQC</option>
@@ -1607,6 +1611,7 @@ function renderTrouble() {
           <option ${row.status==='Done'?'selected':''}>Done</option>
         </select>
       </td>
+      <td><input type="date" id="enddate-${rid}" value="${row.end_date?row.end_date.slice(0,10):''}" onchange="trField(${rid},'end_date',this.value)" style="font-size:11px;padding:3px 4px;background:${row.status==='Done'?'#e8f5e9':'#fff'}"/></td>
       <td>${attachmentCellHTML('trouble', rid)}</td>
       <td><button class="btn-red btn-xs del-btn" onclick="delTrouble(${rid})">🗑</button></td>
     `;
@@ -1616,7 +1621,17 @@ function renderTrouble() {
 
 function trField(id, field, value) {
   const row = troubleRows.find(r => r.id === id);
-  if (row) { row[field] = value; }
+  if (row) {
+    row[field] = value;
+    // Auto-set end_date when marked Done
+    if (field === 'status' && value === 'Done' && !row.end_date) {
+      row.end_date = new Date().toISOString().slice(0,10);
+    }
+    // Clear end_date if status changed away from Done
+    if (field === 'status' && value !== 'Done') {
+      row.end_date = '';
+    }
+  }
   if (field === 'status') renderTrouble();
   clearTimeout(trField._t); trField._t = setTimeout(() => saveTroubleRow(id), 700);
 }
@@ -1636,7 +1651,9 @@ async function addTroubleRow() {
       equip_code:'', equip_name:'', owner:'',
       issue_type:'Failed SQC', issue_other:'',
       details:'', root_cause:'', action_taken:'',
-      out_of_service:'No', status:'Investigating'
+      out_of_service:'No', status:'Investigating',
+      start_date: new Date().toISOString().slice(0,10),
+      end_date:''
     });
     troubleRows.push(r);
     renderTrouble();
@@ -1978,6 +1995,82 @@ async function saveImpExp(skipRender=false) {
   }
 }
 
+
+// ── Export Equipment Trouble ──────────────────────────────────────────────────
+function getTroubleExportData() {
+  const from = document.getElementById('export-from')?.value;
+  const to   = document.getElementById('export-to')?.value;
+  // Fetch all reports to get all trouble rows across shifts
+  return api('/api/reports?limit=200').then(async reports => {
+    let allRows = [];
+    for (const r of reports) {
+      // Filter by date range if set
+      const d = r.shift_date.slice(0,10);
+      if (from && d < from) continue;
+      if (to   && d > to)   continue;
+      const full = await api(`/api/reports/${r.id}`);
+      if (!full.trouble?.length) continue;
+      full.trouble.forEach(t => {
+        allRows.push({
+          'Shift Date':     d,
+          'Shift':          r.shift_type,
+          'Lab':            t.owner,
+          'Equipment Name': t.equip_name,
+          'Equipment ID':   t.equip_code,
+          'Issue':          t.issue_type === 'Others' ? t.issue_other : t.issue_type,
+          'Details':        t.details,
+          'Root Cause':     t.root_cause,
+          'Action Taken':   t.action_taken,
+          'OOS':            t.out_of_service,
+          'Status':         t.status,
+          'Start Date':     t.start_date || '',
+          'End Date':       t.end_date || '',
+        });
+      });
+    }
+    return allRows;
+  });
+}
+
+async function exportTroubleCSV() {
+  toast('⏳ Preparing CSV…', 3000);
+  try {
+    const rows = await getTroubleExportData();
+    if (!rows.length) { toast('No data in selected range'); return; }
+    const headers = Object.keys(rows[0]);
+    const csv = [headers.join(','),
+      ...rows.map(r => headers.map(h => '"' + String(r[h]||'').replace(/"/g,'""') + '"').join(','))
+    ].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `equipment-trouble-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    toast('✅ CSV downloaded');
+  } catch(e) { toast('❌ ' + e.message, 4000); }
+}
+
+async function exportTroubleExcel() {
+  toast('⏳ Preparing Excel…', 3000);
+  try {
+    const rows = await getTroubleExportData();
+    if (!rows.length) { toast('No data in selected range'); return; }
+    const headers = Object.keys(rows[0]);
+    // Build simple HTML table that Excel can open
+    let tbl = '<table><tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
+    rows.forEach(r => {
+      tbl += '<tr>' + headers.map(h=>`<td>${String(r[h]||'').replace(/</g,'&lt;')}</td>`).join('') + '</tr>';
+    });
+    tbl += '</table>';
+    const xls = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"/></head><body>${tbl}</body></html>`;
+    const blob = new Blob([xls], {type:'application/vnd.ms-excel'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `equipment-trouble-${new Date().toISOString().slice(0,10)}.xls`;
+    a.click();
+    toast('✅ Excel downloaded');
+  } catch(e) { toast('❌ ' + e.message, 4000); }
+}
 
 // ── History ────────────────────────────────────────────────────────────────
 async function loadHistory() {

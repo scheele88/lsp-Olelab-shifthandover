@@ -135,6 +135,8 @@ async function initDB() {
   // Migration: add missing columns to existing handover_reports table (safe — IF NOT EXISTS)
   const migrations = [
     `ALTER TABLE pending_samples ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'In-progress'`,
+    `ALTER TABLE equip_trouble ADD COLUMN IF NOT EXISTS start_date DATE`,
+    `ALTER TABLE equip_trouble ADD COLUMN IF NOT EXISTS end_date DATE`,
     `ALTER TABLE schedule_changes ADD COLUMN IF NOT EXISTS sampling_point VARCHAR(200) DEFAULT ''`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS logged_by VARCHAR(50)`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS current_shift_team VARCHAR(5)`,
@@ -248,23 +250,24 @@ app.patch('/api/reports/:id/signoff', async (req, res) => {
 
 app.post('/api/reports/:id/trouble', async (req, res) => {
   const { equip_code,equip_name,owner,issue_type,issue_other,
-          details,root_cause,action_taken,out_of_service,status } = req.body;
+          details,root_cause,action_taken,out_of_service,status,start_date,end_date } = req.body;
   try {
     const { rows:[r] } = await pool.query(`
       INSERT INTO equip_trouble
         (report_id,equip_code,equip_name,owner,issue_type,issue_other,
-         details,root_cause,action_taken,out_of_service,status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+         details,root_cause,action_taken,out_of_service,status,start_date,end_date)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [req.params.id,equip_code||'',equip_name||'',owner||'',
        issue_type||'Failed SQC',issue_other||'',details||'',
-       root_cause||'',action_taken||'',out_of_service||'No',status||'Investigating']);
+       root_cause||'',action_taken||'',out_of_service||'No',status||'Investigating',
+       start_date||null,end_date||null]);
     res.json(r);
   } catch(e){ res.status(500).json({error:e.message}); }
 });
 
 app.patch('/api/trouble/:id', async (req, res) => {
   const f = ['equip_code','equip_name','owner','issue_type','issue_other',
-             'details','root_cause','action_taken','out_of_service','status'];
+             'details','root_cause','action_taken','out_of_service','status','start_date','end_date'];
   try {
     const { rows:[r] } = await pool.query(
       `UPDATE equip_trouble SET ${f.map((x,i)=>`${x}=$${i+1}`).join(',')} WHERE id=$${f.length+1} RETURNING *`,
