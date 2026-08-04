@@ -50,7 +50,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0
 .etable input:focus,.etable select:focus,.etable textarea:focus{border-color:var(--border2)!important;box-shadow:none!important}
 .etable input:focus-visible,.etable select:focus-visible{outline:none!important}
 input[readonly]{background:#fafafa;color:var(--gray-lt);border-color:var(--border)}
-textarea{resize:none;min-height:58px;line-height:1.5}
+textarea{resize:none!important;min-height:58px;line-height:1.5}
 label{font-size:11px;color:var(--gray-lt);font-weight:600;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
 
 /* ── Gate ── */
@@ -159,7 +159,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .etable tbody tr:nth-child(even) td{background:#fafafa}
 .etable tbody tr:hover td{background:var(--green-bg)}
 .etable select,.etable input[type=text],.etable input:not([type]){font-size:11px;padding:3px 5px;border-radius:3px;width:100%;box-sizing:border-box;min-width:0}
-.etable textarea{font-size:12px;padding:4px 6px;min-height:34px;border-radius:3px;resize:none}
+.etable textarea{font-size:12px;padding:4px 6px;min-height:34px;border-radius:3px;resize:none!important}
 .done-row td{opacity:.4;background:#fafafa!important;text-decoration:line-through;color:var(--gray-lt)}
 
 /* Status pills */
