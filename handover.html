@@ -2567,10 +2567,10 @@ async function psExportPPT() {
       return [...head, ...body];
     }
 
-    const ROW_H = 0.27;  // taller rows = bigger font feels bigger
-    const HDR_H = 0.22;  // section title height
-    const GAP   = 0.12;  // gap between sections
-    const FONT  = 10.5;  // data cell font size
+    const ROW_H = 0.30;  // row height in inches
+    const HDR_H = 0.24;  // section title height
+    const GAP   = 0.10;  // gap between sections
+    const FONT  = 10;    // data cell font size
 
     // Rebuild makeTable with larger font
     function makeTable2(headers, rows, statusColIdx) {
@@ -2598,7 +2598,7 @@ async function psExportPPT() {
       }
       const tableH = ROW_H * (rows.length + 1); // +1 for header row
       slide.addTable(makeTable2(headers, rows, statusColIdx),
-        {x, y, w, rowH:ROW_H, colW});
+        {x, y, w, h:tableH, rowH:ROW_H, colW, autoPage:false});
       return y + tableH + GAP;
     }
 
@@ -2613,13 +2613,13 @@ async function psExportPPT() {
     const LX=0.15, LW=6.4, RX=6.75, RW=6.4;
     let ly=0.72, ry=0.72;
 
-    ly = addSection(slide,LX,ly,LW,'🟢 MAIN PRODUCTS',   ['No.','Product','Sample Point','Status','Remark'],   mainData,  3, [0.28,1.65,1.1,1.15,2.22]);
-    ly = addSection(slide,LX,ly,LW,'🔵 BY PRODUCTS',     ['No.','By Product','Sample Point','Status','Remark'], byData,    3, [0.28,1.65,1.1,1.15,2.22]);
-         addSection(slide,LX,ly,LW,'⚓ IMPORT / EXPORT', ['No.','Type','Material','Sampling Point','Quality','Remark'], ieData, 4, [0.28,0.72,1.3,1.55,1.1,1.45]);
+    ly = addSection(slide,LX,ly,LW,'🟢 MAIN PRODUCTS',   ['No.','Product','Sample Point','Status','Remark'],   mainData,  3, [0.28,1.65,1.10,1.15,2.22]);
+    ly = addSection(slide,LX,ly,LW,'🔵 BY PRODUCTS',     ['No.','By Product','Sample Point','Status','Remark'], byData,    3, [0.28,1.65,1.10,1.15,2.22]);
+         addSection(slide,LX,ly,LW,'⚓ IMPORT / EXPORT', ['No.','Type','Material','Sampling Point','Quality','Remark'], ieData, 4, [0.28,0.72,1.30,1.55,1.10,1.45]);
 
-    ry = addSection(slide,RX,ry,RW,'🔷 CTU',                ['No.','Stream/Sample','Sample Point','Status','Remark'], ctuData,   3, [0.28,1.55,1.1,1.15,2.32]);
-    ry = addSection(slide,RX,ry,RW,'🛢 TANK FARM & PIPELINE',['No.','Raw Mat./Products','Sample Point','Status','Remark'], tfData, 3, [0.28,1.55,1.1,1.15,2.32]);
-         addSection(slide,RX,ry,RW,'🔬 OTHER SAMPLE POINTS', ['No.','Sample Point','Type','Status','Remark'], otherData, 3, [0.28,1.55,1.1,1.15,2.32]);
+    ry = addSection(slide,RX,ry,RW,'🔷 CTU',                 ['No.','Stream/Sample','Sample Point','Status','Remark'],      ctuData,   3, [0.28,1.55,1.10,1.15,2.32]);
+    ry = addSection(slide,RX,ry,RW,'🛢 TANK FARM & PIPELINE', ['No.','Raw Mat./Products','Sample Point','Status','Remark'], tfData,    3, [0.28,1.55,1.10,1.15,2.32]);
+         addSection(slide,RX,ry,RW,'🔬 OTHER SAMPLE POINTS',  ['No.','Sample Point','Type','Status','Remark'],              otherData, 3, [0.28,1.55,1.10,1.15,2.32]);
 
     const fname = 'product-summary-' + now.toISOString().slice(0,10) + '.pptx';
     await pptx.writeFile({fileName: fname});
