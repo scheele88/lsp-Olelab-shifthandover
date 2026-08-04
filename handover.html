@@ -152,7 +152,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .locked-banner{background:var(--green-bg);border:1.5px solid var(--green-lt);border-left:5px solid var(--green);border-radius:var(--radius-lg);padding:12px 18px;margin-bottom:14px;color:var(--green2);font-weight:700;font-size:13px;display:flex;align-items:center;gap:10px}
 
 /* ── Equipment table ── */
-.etable{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.etable{width:100%;border-collapse:collapse;font-size:12px}
 .etable th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
 .etable td{padding:4px 6px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden}
 .etable td:has(textarea){vertical-align:top;white-space:normal;overflow:visible}
@@ -214,6 +214,11 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 #toast.show{opacity:1}
 
 /* Print */
+/* Hide ugly horizontal scrollbar tracks */
+.card-body::-webkit-scrollbar { height: 4px; }
+.card-body::-webkit-scrollbar-track { background: transparent; }
+.card-body::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
+
 @media print{
   header,#gate,#shift-bar,.tabs,.btn-navy,.btn-green,.btn-ghost,.btn-red,.btn-amber,.btn-blue,.del-btn,#save-bar,#hist-viewer{display:none!important}
   .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid;border-radius:0}
@@ -400,8 +405,8 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
         <button class="btn-blue btn-sm" id="add-trouble-btn" onclick="addTroubleRow()">➕ Add Row</button>
       </div>
     </div>
-    <div class="card-body" style="padding:8px;overflow-x:auto">
-      <table class="etable" style="min-width:900px;table-layout:fixed">
+    <div class="card-body" style="padding:8px">
+      <table class="etable" style="width:100%;table-layout:auto">
         <thead><tr>
           <th style="width:28px">#</th>
           <th style="width:80px">Lab</th>
@@ -430,7 +435,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <h2>§3 — Pending / Carry-over Samples</h2>
       <button class="btn-blue btn-sm" onclick="addPendingRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:8px;overflow-x:auto">
+    <div class="card-body" style="padding:8px">
       <p style="color:var(--gray-lt);font-size:12px;padding:6px 6px 10px">Samples received this shift but not yet completed — carry over to next shift.</p>
       <table class="etable">
               <thead><tr><th style="width:26px">#</th><th style="width:190px">Sample Point / Description</th><th style="width:190px">Reason for Pending</th><th style="width:190px">Action Needed</th><th style="width:100px">Status</th><th style="width:110px">Attach.</th><th style="width:30px"></th></tr></thead>
@@ -448,7 +453,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <h2>§4a — Schedule Changes from Plants</h2>
       <button class="btn-blue btn-sm" onclick="addScheduleRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:8px;overflow-x:auto">
+    <div class="card-body" style="padding:8px">
       <table class="etable">
         <thead><tr>
           <th style="width:36px">#</th>
@@ -469,7 +474,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <h2>§4b — Requested Samples for Upcoming Period</h2>
       <button class="btn-blue btn-sm" onclick="addReqRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:8px;overflow-x:auto">
+    <div class="card-body" style="padding:8px">
       <table class="etable">
         <thead><tr>
           <th style="width:36px">#</th>
@@ -495,7 +500,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
       <h2>§5 — Import / Export</h2>
       <button class="btn-blue btn-sm" onclick="addImpExpRow()">➕ Add Row</button>
     </div>
-    <div class="card-body" style="padding:8px;overflow-x:auto">
+    <div class="card-body" style="padding:8px">
       <table class="etable" id="impexp-table">
         <thead><tr>
           <th style="width:36px">#</th>
