@@ -750,7 +750,14 @@ html, body {
 <!-- §6 Product Summary -->
 <div id="tab-s6" style="display:none">
   <div class="card">
-    <div class="card-hdr"><h2>§6 — Product Summary</h2></div>
+    <div class="card-hdr">
+      <h2>§6 — Product Summary</h2>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="psExportImage()" style="padding:4px 12px;font-size:11px;background:#1565c0;color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:600">🖼 Image</button>
+        <button onclick="psExportPDF()" style="padding:4px 12px;font-size:11px;background:#c62828;color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:600">📄 PDF</button>
+        <button onclick="psExportPPT()" style="padding:4px 12px;font-size:11px;background:#d84315;color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:600">📊 PPT</button>
+      </div>
+    </div>
     <div class="card-body" style="padding:12px">
       <div style="display:grid;grid-template-columns:2fr 1.6fr;gap:14px;min-width:0">
 
