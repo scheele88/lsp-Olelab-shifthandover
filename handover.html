@@ -170,6 +170,13 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .etable select,.etable input[type=text],.etable input:not([type]){font-size:11px;padding:3px 5px;border-radius:3px;width:100%;box-sizing:border-box;min-width:0}
 .etable textarea{font-size:12px;padding:4px 6px;min-height:34px;border-radius:3px;resize:none!important}
 .done-row td{opacity:.4;background:#fafafa!important;text-decoration:line-through;color:var(--gray-lt)}
+  .eq-name-cell input {
+  white-space: normal;
+  line-height: 1.25;
+  height: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Status pills */
 .sp-pill{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
@@ -278,11 +285,32 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 
 /* Attachments */
 .att-cell{display:flex;flex-direction:column;gap:3px;width:100%;overflow:hidden}
-.att-chip{display:flex;align-items:center;gap:4px;background:var(--green-bg);border:1px solid var(--green-lt);border-radius:3px;padding:3px 6px;font-size:11px;max-width:100%}
+.att-chip{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  background:var(--green-bg);
+  border:1px solid var(--green-lt);
+  border-radius:3px;
+  padding:2px 4px;
+  font-size:10px;
+  max-width:100%;
+}
 .att-chip span.att-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;color:var(--green2);font-weight:600;min-width:0}
 .att-chip span.att-name:hover{text-decoration:underline}
 .att-chip button{background:none;border:none;color:var(--red);font-size:12px;padding:0 2px;cursor:pointer;flex-shrink:0}
-.att-upload-btn{font-size:11px;padding:3px 8px;background:var(--green);color:#fff;border-radius:3px;cursor:pointer;display:inline-block;text-align:center;white-space:nowrap;font-weight:600}
+.att-upload-btn{
+  font-size:10px;
+  padding:2px 6px;
+  background:var(--green);
+  color:#fff;
+  border-radius:3px;
+  cursor:pointer;
+  display:inline-block;
+  text-align:center;
+  white-space:nowrap;
+  font-weight:600;
+}
 .att-upload-btn input{display:none}
 .att-locked-note{font-size:10px;color:var(--gray-xl);font-style:italic}
 
@@ -498,8 +526,8 @@ html, body {
       <table class="etable">
         <thead><tr>
           <th style="width:28px">#</th>
-          <th style="width:80px">Lab</th>
-          <th style="width:155px">Equipment Name</th>
+       <th style="width:68px">Lab</th>
+          <th style="width:125px">Equipment Name</th>
           <th style="width:100px">ID</th>
           <th style="width:115px">Issue</th>
           <th style="width:130px">Details</th>
@@ -507,7 +535,7 @@ html, body {
           <th style="width:130px">Action Taken</th>
           <th style="width:60px">OOS?</th>
           <th style="width:105px">Status</th>
-          <th style="width:130px">Attach.</th>
+         <th style="width:95px">Attach.</th>
           <th style="width:28px"></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
@@ -1523,14 +1551,14 @@ function renderTrouble() {
       <td>
         <select id="eqlab-${rid}" onchange="eqLabChange(${rid},this.value)" style="font-size:11px;font-weight:700;color:${row.owner==='Gas'?'#1b5e20':row.owner==='Oil'?'#0d47a1':row.owner==='Uti'?'#4a148c':'#424242'};background:${row.owner==='Gas'?'#e8f5e9':row.owner==='Oil'?'#bbdefb':row.owner==='Uti'?'#f3e5f5':'#f5f5f5'}">
           <option value="">— Select —</option>
-          <option value="Gas" ${row.owner==='Gas'?'selected':''}>Gas Lab</option>
-          <option value="Oil" ${row.owner==='Oil'?'selected':''}>Oil Lab</option>
-          <option value="Uti" ${row.owner==='Uti'?'selected':''}>Utility Lab</option>
-          <option value="Other" ${row.owner==='Other'?'selected':''}>Others</option>
+          <option value="Gas" ${row.owner==='Gas'?'selected':''}>Gas</option>
+          <option value="Oil" ${row.owner==='Oil'?'selected':''}>Oil</option>
+          <option value="Uti" ${row.owner==='Uti'?'selected':''}>UT</option>
+          <option value="Other" ${row.owner==='Other'?'selected':''}>Other</option>
         </select>
       </td>
-      <td>
-        <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
+     <td class="eq-name-cell">
+  <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
           <input id="eqname-${rid}" value="${esc(row.equip_name||'')}"
             placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
             autocomplete="off" ${!row.owner && !isOther ? 'readonly' : ''}
