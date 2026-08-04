@@ -177,7 +177,17 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+.eq-name-cell textarea {
+  min-height: 40px !important;
+  height: 40px !important;
+  line-height: 1.2;
+  resize: none !important;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+  padding: 4px 6px;
+}
+  
 /* Status pills */
 .sp-pill{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
 .sp-investigating{background:#fff9c4;color:#f57f17;border:1px solid #fff176}
@@ -288,20 +298,20 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .att-chip{
   display:flex;
   align-items:center;
-  gap:3px;
+  gap:2px;
   background:var(--green-bg);
   border:1px solid var(--green-lt);
   border-radius:3px;
-  padding:2px 4px;
-  font-size:10px;
+  padding:1px 3px;
+  font-size:9px;
   max-width:100%;
 }
 .att-chip span.att-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;color:var(--green2);font-weight:600;min-width:0}
 .att-chip span.att-name:hover{text-decoration:underline}
 .att-chip button{background:none;border:none;color:var(--red);font-size:12px;padding:0 2px;cursor:pointer;flex-shrink:0}
 .att-upload-btn{
-  font-size:10px;
-  padding:2px 6px;
+  font-size:9px;
+  padding:1px 5px;
   background:var(--green);
   color:#fff;
   border-radius:3px;
@@ -310,6 +320,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
   text-align:center;
   white-space:nowrap;
   font-weight:600;
+  line-height:1.2;
 }
 .att-upload-btn input{display:none}
 .att-locked-note{font-size:10px;color:var(--gray-xl);font-style:italic}
@@ -535,7 +546,7 @@ html, body {
           <th style="width:130px">Action Taken</th>
           <th style="width:60px">OOS?</th>
           <th style="width:105px">Status</th>
-         <th style="width:95px">Attach.</th>
+        <th style="width:82px">Attach.</th>
           <th style="width:28px"></th>
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
@@ -1559,12 +1570,12 @@ function renderTrouble() {
       </td>
      <td class="eq-name-cell">
   <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
-          <input id="eqname-${rid}" value="${esc(row.equip_name||'')}"
-            placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
-            autocomplete="off" ${!row.owner && !isOther ? 'readonly' : ''}
-            oninput="eqNameInput(${rid},this.value)"
-            onfocus="eqNameFocus(${rid})"
-            onblur="setTimeout(()=>eqDropClose(${rid}),200)"/>
+        <textarea id="eqname-${rid}"
+  placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
+  ${!row.owner && !isOther ? 'readonly' : ''}
+  oninput="eqNameInput(${rid},this.value)"
+  onfocus="eqNameFocus(${rid})"
+  onblur="setTimeout(()=>eqDropClose(${rid}),200)">${esc(row.equip_name||'')}</textarea>
           <div class="eq-drop" id="eq-drop-${rid}"></div>
         </div>
       </td>
