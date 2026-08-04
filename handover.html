@@ -279,13 +279,11 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .ie-export td { background:#e3f2fd !important; }
 .ie-export td:first-child { border-left-color: #1565c0 !important; }
 .ie-complete td { opacity:.5; text-decoration:line-through; }
-/* --- Fix: card-body was the real scroll container, not section-box/panel --- */
+/* --- Fix: cap card-body height so scrollbar stays attached to the box --- */
 .card-body {
-  overflow-x: visible !important;
-  max-height: none !important;
-}
-body, html {
-  overflow-x: auto;
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
 }
 </style>
 
