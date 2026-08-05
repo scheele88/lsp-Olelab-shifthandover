@@ -2230,13 +2230,14 @@ function renderPm() {
   if (!tbody) return;
   if (!pmRows.length) { tbody.innerHTML = ''; if (noMsg) noMsg.style.display=''; return; }
   if (noMsg) noMsg.style.display = 'none';
-  const LABS     = ['Gas','Oil','UT','Other'];
+  const LABS     = ['Gas','Oil','Uti','Other'];
+  const LAB_LABELS = { Gas:'Gas', Oil:'Oil', Uti:'UT', Other:'Other' };
   const EVENTS   = ['PM','CM','Calibration','Verification'];
   const SCOPES   = ['Internal','External'];
   const STATUSES = ['In-progress','Investigating','Done'];
   tbody.innerHTML = pmRows.map((row,i) => {
     const rid     = row.id;
-    const labOpts = LABS.map(l    => `<option value="${l}"${row.owner===l?' selected':''}>${l}</option>`).join('');
+    const labOpts = LABS.map(l => `<option value="${l}"${row.owner===l?' selected':''}>${LAB_LABELS[l]}</option>`).join('');
     const evOpts  = EVENTS.map(e  => `<option${row.event_type===e?' selected':''}>${e}</option>`).join('');
     const scOpts  = SCOPES.map(s  => `<option${row.scope_type===s?' selected':''}>${s}</option>`).join('');
     const stOpts  = STATUSES.map(s => `<option${row.status===s?' selected':''}>${s}</option>`).join('');
