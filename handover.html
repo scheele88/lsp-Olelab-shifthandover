@@ -2623,7 +2623,40 @@ async function psExportPPT() {
 }
 
 async function psDownloadImage() {
-  toast('📸 Use Ctrl+P → Save as PDF, or take a screenshot of this view', 5000);
+  const el = document.getElementById('ps-report-content');
+  if (!el) { toast('No report content'); return; }
+  toast('⏳ Generating image…', 4000);
+  try {
+    // Load html2canvas if not already loaded
+    if (!window.html2canvas) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = res;
+        s.onerror = () => rej(new Error('Failed to load html2canvas'));
+        document.head.appendChild(s);
+      });
+    }
+    const canvas = await html2canvas(el, {
+      scale: 2,           // 2× resolution for crisp image
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0,
+      width: el.scrollWidth,
+      height: el.scrollHeight,
+      windowWidth: el.scrollWidth,
+      windowHeight: el.scrollHeight
+    });
+    const link = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    link.download = `Product-Quality-Summary-${date}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('✅ Image downloaded');
+  } catch(e) {
+    toast('❌ ' + e.message, 4000);
+  }
 }
 
 // ── History ────────────────────────────────────────────────────────────────
