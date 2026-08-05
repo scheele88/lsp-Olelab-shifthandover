@@ -970,6 +970,59 @@ let reqRows = [];
 let limsRows = [];
 let remarksRows = [];
 let impexpRows    = [];
+
+// ── Undo / Redo ───────────────────────────────────────────────────────────
+const UNDO_LIMIT = 30;
+let undoStack = [];   // array of snapshots (oldest → newest)
+let redoStack = [];   // array of snapshots for redo
+let _undoSuppressed = false; // prevent snapshot during undo/redo restore
+
+function snapshotState() {
+  return JSON.stringify({
+    troubleRows, pendingRows, schedRows,
+    reqRows, limsRows, remarksRows, impexpRows
+  });
+}
+
+function pushUndo() {
+  if (_undoSuppressed) return;
+  redoStack = []; // any new action clears redo
+  undoStack.push(snapshotState());
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+}
+
+async function applySnapshot(snap) {
+  _undoSuppressed = true;
+  const s = JSON.parse(snap);
+  troubleRows  = s.troubleRows;
+  pendingRows  = s.pendingRows;
+  schedRows    = s.schedRows;
+  reqRows      = s.reqRows;
+  limsRows     = s.limsRows;
+  remarksRows  = s.remarksRows;
+  impexpRows   = s.impexpRows;
+  renderTrouble(); renderPending(); renderSched(); renderReq();
+  renderLims(); renderRemarks(); renderImpExp();
+  _undoSuppressed = false;
+  // Persist to DB and sync to next shift
+  await saveAll();
+}
+
+async function undoAction() {
+  if (isLocked || !undoStack.length) { toast('Nothing to undo'); return; }
+  redoStack.push(snapshotState());
+  const snap = undoStack.pop();
+  toast('↩ Undo');
+  await applySnapshot(snap);
+}
+
+async function redoAction() {
+  if (isLocked || !redoStack.length) { toast('Nothing to redo'); return; }
+  undoStack.push(snapshotState());
+  const snap = redoStack.pop();
+  toast('↪ Redo');
+  await applySnapshot(snap);
+}
 let shiftDate = ''; // clock-determined current shift date
 let shiftType = ''; // clock-determined current shift type
 let activeDate = ''; // currently active/editing shift date (may differ from clock)
@@ -1332,6 +1385,7 @@ function syncSignoffNames() {
 // ── Save ───────────────────────────────────────────────────────────────────
 async function saveAll() {
   if (isLocked) { toast('🔒 Locked — read-only'); return; }
+  _undoSuppressed = true; // prevent sub-saves from pushing snapshots
   setSaveStatus('Saving…');
   try {
     await saveHeader();
@@ -1354,8 +1408,9 @@ async function saveAll() {
     renderLims(); renderRemarks(); renderImpExp(); renderImpExp();
     setSaveStatus('✅ Saved ' + new Date().toLocaleTimeString('en-GB'));
     toast('✅ Saved');
+    _undoSuppressed = false;
     syncToNextShift();
-  } catch(e) { toast('❌ ' + e.message, 4000); setSaveStatus('❌ Save failed'); }
+  } catch(e) { _undoSuppressed = false; toast('❌ ' + e.message, 4000); setSaveStatus('❌ Save failed'); }
 }
 
 async function saveHeader() {
@@ -1416,7 +1471,7 @@ function calcNextShift(dateStr, shiftType) {
   }
 }
 
-// ── Shared: get-or-create next shift report ──────────────────────────────
+// ── get-or-create next shift report ─────────────────────────────────────
 async function getOrCreateNextReport() {
   if (!currentReport) return null;
   const next = calcNextShift(currentReport.shift_date.slice(0,10), currentReport.shift_type);
@@ -1432,20 +1487,17 @@ async function getOrCreateNextReport() {
   return (nr && nr.id) ? nr : null;
 }
 
-// ── copyAtts: copy attachments old→new row ids ────────────────────────────
 async function copyAtts(section, rowMap, fromId, toId) {
   if (!rowMap.length) return;
   await api('/api/attachments/copy', 'POST', {
-    from_report_id: fromId,
-    to_report_id:   toId,
+    from_report_id: fromId, to_report_id: toId,
     row_map: rowMap.map(m => ({ ...m, section }))
   });
 }
 
 // ── syncToNextShift ───────────────────────────────────────────────────────
-// Called after every save/delete. Always overwrites the next shift's copy
-// of each section with the exact current state — including deletions.
-// Silent, debounced 800ms so rapid edits don't flood the server.
+// Runs after every save/delete. Always overwrites next shift sections with
+// current state — so adds, edits AND deletes all propagate automatically.
 let _syncQueued = false;
 async function syncToNextShift() {
   if (!currentReport || isLocked) return;
@@ -1456,14 +1508,11 @@ async function syncToNextShift() {
   try {
     const nr = await getOrCreateNextReport();
     if (!nr) return;
-    const src = await api(`/api/reports/${currentReport.id}`);
+    const src      = await api(`/api/reports/${currentReport.id}`);
     const nextFull = await api(`/api/reports/${nr.id}`);
 
-    // §2 Equipment trouble — non-Done rows.
-    // DELETE all existing in next shift first so removals propagate correctly.
-    for (const t of (nextFull.trouble || [])) {
-      await api(`/api/trouble/${t.id}`, 'DELETE');
-    }
+    // §2 Equipment trouble — DELETE all in next shift first, then re-insert non-Done
+    for (const t of (nextFull.trouble || [])) await api(`/api/trouble/${t.id}`, 'DELETE');
     const notDoneTrouble = (src.trouble || []).filter(t => t.status !== 'Done');
     const troubleMap = [];
     for (const t of notDoneTrouble) {
@@ -1474,60 +1523,50 @@ async function syncToNextShift() {
         action_taken: t.action_taken || '',
         out_of_service: t.out_of_service || 'No',
         status: t.status || 'Investigating',
-        start_date: t.start_date || null,
-        end_date: t.end_date || null
+        start_date: t.start_date || null, end_date: t.end_date || null
       });
       troubleMap.push({ old_row_id: t.id, new_row_id: r.id });
     }
     await copyAtts('trouble', troubleMap, currentReport.id, nr.id);
 
-    // §3 Pending samples — non-Done rows.
-    // PUT replaces entire list, so deletions propagate automatically.
+    // §3 Pending — non-Done (PUT replaces list, deletions propagate)
     const notDonePending = (src.pending || []).filter(p => p.status !== 'Done');
     const savedPending = await api(`/api/reports/${nr.id}/pending`, 'PUT',
       notDonePending.map(p => ({ sample_point: p.sample_point, reason: p.reason,
         action_needed: p.action_needed, status: p.status || 'In-progress' })));
-    const pendingMap = notDonePending.map((p,i) => ({ old_row_id: p.id, new_row_id: savedPending[i]?.id })).filter(m=>m.new_row_id);
-    await copyAtts('pending', pendingMap, currentReport.id, nr.id);
+    await copyAtts('pending', notDonePending.map((p,i) => ({ old_row_id: p.id, new_row_id: savedPending[i]?.id })).filter(m=>m.new_row_id), currentReport.id, nr.id);
 
-    // §4A Schedule changes — all rows (PUT replaces list)
+    // §4A Schedules — all rows
     await api(`/api/reports/${nr.id}/schedules`, 'PUT',
       (src.schedules || []).map(s => ({ plant: s.plant, sampling_point: s.sampling_point || '',
         change_desc: s.change_desc, effective_date: s.effective_date, requested_by: s.requested_by })));
 
-    // §4B Requested samples — all rows (PUT replaces list)
+    // §4B Requested samples — all rows
     await api(`/api/reports/${nr.id}/reqsamples`, 'PUT',
       (src.reqsamples || []).map(r => ({ plant: r.plant, product_stream: r.product_stream,
         test_items: r.test_items, requested_by: r.requested_by,
         target_date: r.target_date, priority: r.priority || 'Normal' })));
 
-    // §5 Import/Export — non-Complete rows (PUT replaces list)
+    // §5 Import/Export — non-Complete
     const notDoneIE = (src.impexpRows || []).filter(r => r.status !== 'Complete');
     const savedIE = await api(`/api/reports/${nr.id}/impexp`, 'PUT',
       notDoneIE.map(r => ({ direction:r.direction, material:r.material, etb:r.etb,
-        num_tanks:r.num_tanks, num_samples:r.num_samples,
-        status:r.status, quality:r.quality, remark:r.remark })));
-    const ieMap = notDoneIE.map((r,i) => ({ old_row_id: r.id, new_row_id: savedIE[i]?.id })).filter(m=>m.new_row_id);
-    await copyAtts('impexp', ieMap, currentReport.id, nr.id);
+        num_tanks:r.num_tanks, num_samples:r.num_samples, status:r.status, quality:r.quality, remark:r.remark })));
+    await copyAtts('impexp', notDoneIE.map((r,i) => ({ old_row_id: r.id, new_row_id: savedIE[i]?.id })).filter(m=>m.new_row_id), currentReport.id, nr.id);
 
-    // §7A LIMS Issues — all rows (PUT replaces list)
+    // §7A LIMS — all rows
     const savedLims = await api(`/api/reports/${nr.id}/lims`, 'PUT',
       (src.limsRows || []).map(r => ({ description: r.description })));
-    const limsMap = (src.limsRows || []).map((r,i) => ({ old_row_id: r.id, new_row_id: savedLims[i]?.id })).filter(m=>m.new_row_id);
-    await copyAtts('lims', limsMap, currentReport.id, nr.id);
+    await copyAtts('lims', (src.limsRows || []).map((r,i) => ({ old_row_id: r.id, new_row_id: savedLims[i]?.id })).filter(m=>m.new_row_id), currentReport.id, nr.id);
 
-    // §7B General Remarks — all rows (PUT replaces list)
+    // §7B Remarks — all rows
     const savedRemarks = await api(`/api/reports/${nr.id}/remarks`, 'PUT',
       (src.remarksRows || []).map(r => ({ description: r.description })));
-    const remarksMap = (src.remarksRows || []).map((r,i) => ({ old_row_id: r.id, new_row_id: savedRemarks[i]?.id })).filter(m=>m.new_row_id);
-    await copyAtts('remarks', remarksMap, currentReport.id, nr.id);
+    await copyAtts('remarks', (src.remarksRows || []).map((r,i) => ({ old_row_id: r.id, new_row_id: savedRemarks[i]?.id })).filter(m=>m.new_row_id), currentReport.id, nr.id);
 
-  } catch(e) {
-    console.warn('syncToNextShift error:', e.message);
-  }
+  } catch(e) { console.warn('syncToNextShift error:', e.message); }
 }
 
-// ── pushToNextShift: called at sign-off lock (shows toast) ───────────────
 async function pushToNextShift() {
   try {
     await syncToNextShift();
@@ -1942,7 +1981,7 @@ async function addPendingRow(){
   pendingRows.push({sample_point:'',reason:'',action_needed:'',status:'In-progress'});
   await savePending();
 }
-async function savePending(skipRender=false){
+async function savePending(skipRender=false){ pushUndo();
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows);
   pendingRows = saved;
@@ -1972,7 +2011,7 @@ function renderSched() {
   });
 }
 function addScheduleRow(){ schedRows.push({plant:'Hot',sampling_point:'',change_desc:'',effective_date:'',requested_by:''}); renderSched(); }
-async function saveSchedules(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/schedules`,'PUT',schedRows); }
+async function saveSchedules(){ pushUndo(); if(!currentReport)return; await api(`/api/reports/${currentReport.id}/schedules`,'PUT',schedRows); }
 
 // ── Requested samples ──────────────────────────────────────────────────────
 function renderReq() {
@@ -1997,7 +2036,7 @@ function renderReq() {
   });
 }
 function addReqRow(){ reqRows.push({plant:'Hot',product_stream:'',test_items:'',requested_by:'',target_date:'',priority:'Normal'}); renderReq(); }
-async function saveReqSamples(){ if(!currentReport)return; await api(`/api/reports/${currentReport.id}/reqsamples`,'PUT',reqRows); }
+async function saveReqSamples(){ pushUndo(); if(!currentReport)return; await api(`/api/reports/${currentReport.id}/reqsamples`,'PUT',reqRows); }
 
 // ── LIMS Issues ────────────────────────────────────────────────────────────
 function renderLims() {
@@ -2017,12 +2056,13 @@ function renderLims() {
   });
 }
 async function addLimsRow() {
+  pushUndo();
   if(!currentReport){ await saveAll(); }
   if(!currentReport) return;
   limsRows.push({description:''});
   await saveLims();
 }
-async function saveLims(skipRender=false) {
+async function saveLims(skipRender=false) { pushUndo();
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/lims`,'PUT',limsRows);
   limsRows = saved;
@@ -2049,12 +2089,13 @@ function renderRemarks() {
   });
 }
 async function addRemarkRow() {
+  pushUndo();
   if(!currentReport){ await saveAll(); }
   if(!currentReport) return;
   remarksRows.push({description:''});
   await saveRemarks();
 }
-async function saveRemarks(skipRender=false) {
+async function saveRemarks(skipRender=false) { pushUndo();
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/remarks`,'PUT',remarksRows);
   remarksRows = saved;
@@ -2127,13 +2168,14 @@ function renderImpExp() {
 }
 
 async function addImpExpRow() {
+  pushUndo();
   if(!currentReport){ await saveAll(); }
   if(!currentReport) return;
   impexpRows.push({direction:'Import',material:'',etb:'',num_tanks:'',num_samples:'',status:'Initial',quality:'',remark:''});
   await saveImpExp();
 }
 
-async function saveImpExp(skipRender=false) {
+async function saveImpExp(skipRender=false) { pushUndo();
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/impexp`,'PUT',impexpRows);
   impexpRows = saved;
@@ -2731,6 +2773,23 @@ document.addEventListener('DOMContentLoaded', () => {
   if (pw) pw.addEventListener('keydown', e => { if (e.key === 'Enter') doUnlock(); });
   document.getElementById('unlock-modal').addEventListener('click', function(e) {
     if (e.target === this) closeUnlockModal();
+  });
+
+  // ── Ctrl+Z / Ctrl+Y: Undo / Redo ────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    // Only fire when Ctrl is held and the user is NOT typing in a text field
+    if (!e.ctrlKey && !e.metaKey) return;
+    const tag = document.activeElement?.tagName;
+    const isTextField = tag === 'INPUT' || tag === 'TEXTAREA';
+    if (e.key === 'z' || e.key === 'Z') {
+      if (isTextField) return; // let browser handle native undo in inputs
+      e.preventDefault();
+      undoAction();
+    } else if (e.key === 'y' || e.key === 'Y') {
+      if (isTextField) return;
+      e.preventDefault();
+      redoAction();
+    }
   });
 
   // ── Silent login from localStorage ──────────────────────────────────────
