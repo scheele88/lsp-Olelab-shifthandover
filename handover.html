@@ -624,16 +624,16 @@ html, body {
       <table class="etable" style="width:auto;min-width:100%">
         <thead><tr>
           <th style="width:28px">#</th>
-          <th style="width:65px">Lab</th>
+          <th style="width:75px">Lab</th>
           <th style="width:200px">Equipment Name</th>
           <th style="display:none"></th>
           <th style="width:68px">Start</th>
-          <th style="width:110px">Issue</th>
+          <th style="min-width:130px;width:150px">Issue</th>
           <th style="min-width:180px;width:220px">Details</th>
           <th style="min-width:160px;width:180px">Root Cause</th>
           <th style="min-width:180px;width:220px">Action Taken</th>
-          <th style="width:55px">OOS?</th>
-          <th style="width:100px">Status</th>
+          <th style="width:65px">OOS?</th>
+          <th style="min-width:110px;width:120px">Status</th>
           <th style="width:68px">End</th>
           <th style="width:80px">Attach.</th>
           <th style="width:28px"></th>
@@ -657,7 +657,7 @@ html, body {
       <p style="color:var(--gray-lt);font-size:12px;padding:6px 6px 10px">Samples received this shift but not yet completed — carry over to next shift.</p>
      <div class="table-scroll-x">
       <table class="etable">
-              <thead><tr><th style="width:26px">#</th><th style="width:190px">Sample Point / Description</th><th style="width:190px">Reason for Pending</th><th style="width:190px">Action Needed</th><th style="width:100px">Status</th><th style="width:110px">Attach.</th><th style="width:30px"></th></tr></thead>
+              <thead><tr><th style="width:26px">#</th><th style="width:190px">Sample Point / Description</th><th style="width:190px">Reason for Pending</th><th style="width:190px">Action Needed</th><th style="min-width:110px;width:120px">Status</th><th style="width:110px">Attach.</th><th style="width:30px"></th></tr></thead>
               <tbody id="pending-tbody"></tbody>
             </table>
        </div>
@@ -795,7 +795,7 @@ html, body {
           <div class="ps-section-title">🔷 CTU</div>
           <table class="ps-table"><thead><tr>
             <th style="width:24px">No.</th><th style="width:100px">Stream / Sample</th><th style="width:80px">Sample Point</th>
-            <th style="width:100px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="min-width:110px;width:120px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-ctu-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:24px;font-size:11px" onclick="psAddRow('ctu')">➕ Add Row</button>
 
@@ -803,7 +803,7 @@ html, body {
           <div class="ps-section-title">🛢 Tank Farm & Pipeline</div>
           <table class="ps-table"><thead><tr>
             <th style="width:24px">No.</th><th style="width:100px">Raw Mat. / Products</th><th style="width:80px">Sample Point</th>
-            <th style="width:100px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="min-width:110px;width:120px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-tf-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;margin-bottom:24px;font-size:11px" onclick="psAddRow('tf')">➕ Add Row</button>
 
@@ -811,7 +811,7 @@ html, body {
           <div class="ps-section-title">🔬 Other Sample Points</div>
           <table class="ps-table"><thead><tr>
             <th style="width:24px">No.</th><th style="width:100px">Sample Point</th><th style="width:80px">Type</th>
-            <th style="width:100px">Status</th><th>Remark</th><th style="width:24px"></th>
+            <th style="min-width:110px;width:120px">Status</th><th>Remark</th><th style="width:24px"></th>
           </tr></thead><tbody id="ps-other-tbody"></tbody></table>
           <button class="btn-sm" style="background:#0097a7;color:#fff;font-size:11px" onclick="psAddRow('other')">➕ Add Row</button>
         </div></div>
@@ -1714,13 +1714,13 @@ function renderTrouble() {
       </td>
       <td style="background:#f8f4ff">
         <div class="eq-drop-wrap" id="eqname-wrap-${rid}">
-          <textarea id="eqname-${rid}"
+          <textarea id="eqname-${rid}" class="auto-resize"
             placeholder="${isOther ? 'Type name manually…' : row.owner ? 'Click or type to search…' : 'Select lab first…'}"
             ${!row.owner && !isOther ? 'readonly' : ''}
-            oninput="eqNameInput(${rid},this.value)"
+            oninput="eqNameInput(${rid},this.value);autoResizeTA(this)"
             onfocus="eqNameFocus(${rid})"
             onblur="setTimeout(()=>eqDropClose(${rid}),200)"
-            style="font-weight:700;color:#4a148c;background:transparent;border:none;resize:none;padding:4px;width:100%;font-size:12px">${esc(row.equip_name||'')}</textarea>
+            style="font-weight:700;color:#4a148c;background:transparent;border:none;resize:none;padding:4px;width:100%;font-size:12px;min-height:28px">${esc(row.equip_name||'')}</textarea>
           <div class="eq-drop" id="eq-drop-${rid}"></div>
         </div>
       </td>
@@ -1741,13 +1741,13 @@ function renderTrouble() {
       <td><textarea class="auto-resize" style="resize:none;min-height:28px;font-size:11px" onchange="trField(${rid},'action_taken',this.value)" oninput="autoResizeTA(this)">${esc(row.action_taken||'')}</textarea></td>
       <td style="background:${oos?'#ffebee':'#f1f8f1'}!important;text-align:center;padding:3px">
         <select onchange="trField(${rid},'out_of_service',this.value)"
-          style="background:transparent;border:none;font-weight:800;font-size:12px;color:${oos?'#b71c1c':'#2e7d32'};width:100%;cursor:pointer;text-align:center">
+          style="background:transparent;border:none;font-weight:800;font-size:11px;color:${oos?'#b71c1c':'#2e7d32'};width:100%;cursor:pointer;text-align:center;padding:2px 1px">
           <option ${(row.out_of_service||'No')==='No'?'selected':''}>No</option>
           <option ${row.out_of_service==='Yes'?'selected':''}>Yes</option>
         </select>
       </td>
       <td>
-        <select onchange="trField(${rid},'status',this.value)" style="font-size:11px;font-weight:700;color:${(row.status||'Investigating')==='Investigating'?'#e65100':row.status==='In-progress'?'#0d47a1':row.status==='Done'?'#1b5e20':'#424242'}">
+        <select onchange="trField(${rid},'status',this.value)" style="font-size:11px;font-weight:700;color:${(row.status||'Investigating')==='Investigating'?'#e65100':row.status==='In-progress'?'#0d47a1':row.status==='Done'?'#1b5e20':'#424242'};width:100%;padding:2px 2px">
           <option ${(row.status||'Investigating')==='Investigating'?'selected':''}>Investigating</option>
           <option ${row.status==='In-progress'?'selected':''}>In-progress</option>
           <option ${row.status==='Done'?'selected':''}>Done</option>
