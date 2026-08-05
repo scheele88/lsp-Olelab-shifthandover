@@ -629,9 +629,9 @@ html, body {
           <th style="display:none"></th>
           <th style="width:68px">Start</th>
           <th style="width:110px">Issue</th>
-          <th style="width:140px">Details</th>
-          <th style="width:120px">Root Cause</th>
-          <th style="width:140px">Action Taken</th>
+          <th style="min-width:160px">Details</th>
+          <th style="min-width:140px">Root Cause</th>
+          <th style="min-width:160px">Action Taken</th>
           <th style="width:55px">OOS?</th>
           <th style="width:100px">Status</th>
           <th style="width:68px">End</th>
@@ -1736,9 +1736,9 @@ function renderTrouble() {
           style="margin-top:3px;display:${row.issue_type==='Others'?'':'none'}"
           oninput="trField(${rid},'issue_other',this.value)"/>
       </td>
-      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'details',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.details||'')}</textarea></td>
-      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'root_cause',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.root_cause||'')}</textarea></td>
-      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'action_taken',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.action_taken||'')}</textarea></td>
+      <td><textarea class="auto-resize" style="resize:none;min-height:28px;font-size:11px" onchange="trField(${rid},'details',this.value)" oninput="autoResizeTA(this)">${esc(row.details||'')}</textarea></td>
+      <td><textarea class="auto-resize" style="resize:none;min-height:28px;font-size:11px" onchange="trField(${rid},'root_cause',this.value)" oninput="autoResizeTA(this)">${esc(row.root_cause||'')}</textarea></td>
+      <td><textarea class="auto-resize" style="resize:none;min-height:28px;font-size:11px" onchange="trField(${rid},'action_taken',this.value)" oninput="autoResizeTA(this)">${esc(row.action_taken||'')}</textarea></td>
       <td style="background:${oos?'#ffebee':'#f1f8f1'}!important;text-align:center;padding:3px">
         <select onchange="trField(${rid},'out_of_service',this.value)"
           style="background:transparent;border:none;font-weight:800;font-size:12px;color:${oos?'#b71c1c':'#2e7d32'};width:100%;cursor:pointer;text-align:center">
@@ -1759,6 +1759,15 @@ function renderTrouble() {
     `;
     tbody.appendChild(tr);
   });
+  // Auto-size all textareas now that they're in the DOM
+  requestAnimationFrame(() => {
+    tbody.querySelectorAll('textarea.auto-resize').forEach(autoResizeTA);
+  });
+}
+
+function autoResizeTA(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 function trField(id, field, value) {
