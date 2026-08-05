@@ -826,7 +826,7 @@ html, body {
   <!-- §5a LIMS Issues -->
   <div class="card" style="margin-bottom:12px">
     <div class="card-hdr">
-      <h2>§7a — LIMS Issues</h2>
+      <h2>§6a — LIMS Issues</h2>
       <button class="btn-blue btn-sm" onclick="addLimsRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
@@ -848,7 +848,7 @@ html, body {
   <!-- §5b General Remarks -->
   <div class="card" style="margin-bottom:12px">
     <div class="card-hdr">
-      <h2>§7b — General Remarks</h2>
+      <h2>§6b — General Remarks</h2>
       <button class="btn-blue btn-sm" onclick="addRemarkRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
@@ -1190,7 +1190,8 @@ function applyLock() {
     if (b.closest('#tab-hist')) return; // never disable history buttons
     if (b.onclick && b.onclick.toString().includes('openUnlockModal')) return;
     if (b.onclick && b.onclick.toString().includes('returnToCurrentShift')) return;
-    if (b.onclick && b.onclick.toString().includes('exportTrouble')) return; // always allow export
+    if (b.onclick && b.onclick.toString().includes('exportTrouble')) return; // §2 export always active
+    if (b.onclick && b.onclick.toString().includes('psExport')) return;      // §6 export always active
     b.disabled = lock;
   });
   document.getElementById('save-bar').style.display = lock ? 'none' : '';
@@ -1355,7 +1356,6 @@ async function saveAll() {
     renderLims(); renderRemarks(); renderImpExp(); renderImpExp();
     setSaveStatus('✅ Saved ' + new Date().toLocaleTimeString('en-GB'));
     toast('✅ Saved');
-    syncToNextShift(); // mirror changes to next shift (silent, debounced)
   } catch(e) { toast('❌ ' + e.message, 4000); setSaveStatus('❌ Save failed'); }
 }
 
@@ -1417,133 +1417,150 @@ function calcNextShift(dateStr, shiftType) {
   }
 }
 
-// ── Shared: get-or-create next shift report ──────────────────────────────
-async function getOrCreateNextReport() {
-  if (!currentReport) return null;
-  const next = calcNextShift(currentReport.shift_date.slice(0,10), currentReport.shift_type);
-  let nr = await api(`/api/reports/by-shift?date=${next.date}&shift=${next.shift}`);
-  if (!nr) {
-    nr = await api('/api/reports', 'POST', {
-      shift_date: next.date, shift_type: next.shift,
-      logged_by: '', current_shift_team: '', current_supervisor: '',
-      handover_shift_team: '', handover_supervisor: '',
-      pending_samples_note: '', lims_issues: '', general_remarks: ''
-    });
-  }
-  return (nr && nr.id) ? nr : null;
-}
-
-// ── Helper: copy attachments old→new row ids ──────────────────────────────
-async function copyAtts(section, rowMap, fromId, toId) {
-  if (!rowMap.length) return;
-  await api('/api/attachments/copy', 'POST', {
-    from_report_id: fromId,
-    to_report_id:   toId,
-    row_map: rowMap.map(m => ({ ...m, section }))
-  });
-}
-
-// ── syncToNextShift: called after every save/delete ───────────────────────
-// Always overwrites the next shift's copy of each section with the current
-// state from the DB (non-Done rows only for §2/§3/§5; all rows for §4/§7).
-// Silent — no toast unless something goes wrong.
-let _syncQueued = false;
-async function syncToNextShift() {
-  if (!currentReport || isLocked) return;
-  // Debounce: if already queued, skip — the queued call will pick up latest state
-  if (_syncQueued) return;
-  _syncQueued = true;
-  await new Promise(r => setTimeout(r, 800)); // brief wait for DB writes to settle
-  _syncQueued = false;
+async function pushToNextShift() {
   try {
-    const nr = await getOrCreateNextReport();
-    if (!nr) return;
-    const src = await api(`/api/reports/${currentReport.id}`);
+    const srcDate  = currentReport.shift_date.slice(0,10);
+    const srcShift = currentReport.shift_type;
+    const next = calcNextShift(srcDate, srcShift);
 
-    // §2 Equipment trouble — non-Done rows (always overwrite next shift's copy)
-    {
-      const notDone = (src.trouble || []).filter(t => t.status !== 'Done');
-      // Clear next shift's trouble rows first, then re-insert
-      const nextFull = await api(`/api/reports/${nr.id}`);
-      for (const t of (nextFull.trouble || [])) {
-        await api(`/api/trouble/${t.id}`, 'DELETE');
-      }
+    // Ensure next shift report exists (create if not)
+    let nextReport = await api(`/api/reports/by-shift?date=${next.date}&shift=${next.shift}`);
+    if (!nextReport) {
+      nextReport = await api('/api/reports', 'POST', {
+        shift_date: next.date, shift_type: next.shift,
+        logged_by: '', current_shift_team: '', current_supervisor: '',
+        handover_shift_team: '', handover_supervisor: '',
+        pending_samples_note: '', lims_issues: '', general_remarks: ''
+      });
+    }
+    if (!nextReport || !nextReport.id) return;
+
+    // Only push if next shift is still empty (don't overwrite if already filled)
+    // Always fetch full next shift report to check all sections
+    const nextFull = await api(`/api/reports/${nextReport.id}`);
+    // Only skip if structural sections already have data (§2/§3/§4)
+    // §5A/§5B always get pushed regardless
+    const hasStructuralData = !!(nextFull.trouble?.length || nextFull.pending?.length ||
+                                 nextFull.schedules?.length || nextFull.reqsamples?.length ||
+                                 nextFull.impexpRows?.length);
+    if (hasStructuralData) {
+      // Structural data exists — skip §2/§3/§4 but still push §5
+      console.log('Next shift has structural data — only pushing §5A/§5B');
+    }
+
+    // Load current shift's full data fresh
+    const src = await api(`/api/reports/${currentReport.id}`);
+    let carried = [];
+
+    // Helper: copy attachments for a section using old→new row_id map
+    async function copyAtts(section, rowMap) {
+      if (!rowMap.length) return;
+      await api('/api/attachments/copy', 'POST', {
+        from_report_id: currentReport.id,
+        to_report_id: nextReport.id,
+        row_map: rowMap.map(m => ({ ...m, section }))
+      });
+    }
+
+    if (!hasStructuralData) {
+    // 1. Equipment trouble — non-Done
+    if (src.trouble?.length) {
+      const notDone = src.trouble.filter(t => t.status !== 'Done');
       const troubleMap = [];
       for (const t of notDone) {
-        const r = await api(`/api/reports/${nr.id}/trouble`, 'POST', {
+        const r = await api(`/api/reports/${nextReport.id}/trouble`, 'POST', {
           equip_code: t.equip_code, equip_name: t.equip_name, owner: t.owner,
           issue_type: t.issue_type, issue_other: t.issue_other || '',
           details: t.details || '', root_cause: t.root_cause || '',
           action_taken: t.action_taken || '',
           out_of_service: t.out_of_service || 'No',
-          status: t.status || 'Investigating',
-          start_date: t.start_date || null,
-          end_date: t.end_date || null
+          status: t.status || 'Investigating'
         });
         troubleMap.push({ old_row_id: t.id, new_row_id: r.id });
       }
-      await copyAtts('trouble', troubleMap, currentReport.id, nr.id);
+      if (notDone.length) {
+        await copyAtts('trouble', troubleMap);
+        carried.push(`${notDone.length} equipment issue(s)`);
+      }
     }
 
-    // §3 Pending samples — non-Done rows
-    {
-      const notDone = (src.pending || []).filter(p => p.status !== 'Done');
-      const saved = await api(`/api/reports/${nr.id}/pending`, 'PUT',
-        notDone.map(p => ({ sample_point: p.sample_point, reason: p.reason,
-          action_needed: p.action_needed, status: p.status || 'In-progress' })));
-      const pm = notDone.map((p,i) => ({ old_row_id: p.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
-      await copyAtts('pending', pm, currentReport.id, nr.id);
+    // 2. Pending samples — non-Done
+    if (src.pending?.length) {
+      const notDone = src.pending.filter(p => p.status !== 'Done');
+      if (notDone.length) {
+        const payload = notDone.map(p => ({
+          sample_point: p.sample_point, reason: p.reason,
+          action_needed: p.action_needed, status: p.status || 'In-progress'
+        }));
+        const saved = await api(`/api/reports/${nextReport.id}/pending`, 'PUT', payload);
+        // Match old→new IDs by position
+        const pendingMap = notDone.map((p, i) => ({ old_row_id: p.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
+        await copyAtts('pending', pendingMap);
+        carried.push(`${notDone.length} pending sample(s)`);
+      }
     }
 
-    // §4A Schedule changes — all rows
-    await api(`/api/reports/${nr.id}/schedules`, 'PUT',
-      (src.schedules || []).map(s => ({ plant: s.plant, sampling_point: s.sampling_point || '',
-        change_desc: s.change_desc, effective_date: s.effective_date, requested_by: s.requested_by })));
+    // 3. Schedule changes — all (no attachments)
+    if (src.schedules?.length) {
+      const rows = src.schedules.map(s => ({
+        plant: s.plant, sampling_point: s.sampling_point || '',
+        change_desc: s.change_desc, effective_date: s.effective_date,
+        requested_by: s.requested_by
+      }));
+      await api(`/api/reports/${nextReport.id}/schedules`, 'PUT', rows);
+      carried.push(`${rows.length} schedule change(s)`);
+    }
 
-    // §4B Requested samples — all rows
-    await api(`/api/reports/${nr.id}/reqsamples`, 'PUT',
-      (src.reqsamples || []).map(r => ({ plant: r.plant, product_stream: r.product_stream,
+    // 4. Requested samples — all (no attachments)
+    if (src.reqsamples?.length) {
+      const rows = src.reqsamples.map(r => ({
+        plant: r.plant, product_stream: r.product_stream,
         test_items: r.test_items, requested_by: r.requested_by,
-        target_date: r.target_date, priority: r.priority || 'Normal' })));
+        target_date: r.target_date, priority: r.priority || 'Normal'
+      }));
+      await api(`/api/reports/${nextReport.id}/reqsamples`, 'PUT', rows);
+      carried.push(`${rows.length} requested sample(s)`);
+    }
 
-    // §5 Import/Export — non-Complete rows
-    {
-      const notDone = (src.impexpRows || []).filter(r => r.status !== 'Complete');
-      const saved = await api(`/api/reports/${nr.id}/impexp`, 'PUT',
-        notDone.map(r => ({ direction:r.direction, material:r.material, etb:r.etb,
+    } // end !hasStructuralData
+
+    // 5. Import/Export — always push non-Complete rows (like §5A/§5B)
+    if (src.impexpRows?.length) {
+      const notDone = src.impexpRows.filter(r => r.status !== 'Complete');
+      if (notDone.length) {
+        const payload = notDone.map(r => ({
+          direction:r.direction, material:r.material, etb:r.etb,
           num_tanks:r.num_tanks, num_samples:r.num_samples,
-          status:r.status, quality:r.quality, remark:r.remark })));
-      const im = notDone.map((r,i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
-      await copyAtts('impexp', im, currentReport.id, nr.id);
+          status:r.status, quality:r.quality, remark:r.remark
+        }));
+        const saved = await api(`/api/reports/${nextReport.id}/impexp`,'PUT',payload);
+        const ieMap = notDone.map((r,i)=>({old_row_id:r.id,new_row_id:saved[i]?.id})).filter(m=>m.new_row_id);
+        await copyAtts('impexp', ieMap);
+        carried.push(`${notDone.length} import/export row(s)`);
+      }
     }
 
-    // §7A LIMS Issues — all rows
-    {
-      const saved = await api(`/api/reports/${nr.id}/lims`, 'PUT',
-        (src.limsRows || []).map(r => ({ description: r.description })));
-      const lm = (src.limsRows || []).map((r,i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
-      await copyAtts('lims', lm, currentReport.id, nr.id);
+    // 6. LIMS Issues — always push with attachments
+    if (src.limsRows?.length) {
+      const payload = src.limsRows.map(r => ({ description: r.description }));
+      const saved = await api(`/api/reports/${nextReport.id}/lims`, 'PUT', payload);
+      const limsMap = src.limsRows.map((r, i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
+      await copyAtts('lims', limsMap);
+      carried.push(`${src.limsRows.length} LIMS issue(s)`);
     }
 
-    // §7B General Remarks — all rows
-    {
-      const saved = await api(`/api/reports/${nr.id}/remarks`, 'PUT',
-        (src.remarksRows || []).map(r => ({ description: r.description })));
-      const rm = (src.remarksRows || []).map((r,i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
-      await copyAtts('remarks', rm, currentReport.id, nr.id);
+    // 6. General Remarks — always push with attachments
+    if (src.remarksRows?.length) {
+      const payload = src.remarksRows.map(r => ({ description: r.description }));
+      const saved = await api(`/api/reports/${nextReport.id}/remarks`, 'PUT', payload);
+      const remarksMap = src.remarksRows.map((r, i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
+      await copyAtts('remarks', remarksMap);
+      carried.push(`${src.remarksRows.length} remark(s)`);
     }
 
-  } catch(e) {
-    console.warn('syncToNextShift error:', e.message);
-  }
-}
-
-// ── pushToNextShift: called at sign-off lock (one-time, with toast) ───────
-async function pushToNextShift() {
-  try {
-    await syncToNextShift(); // reuse sync logic
-    const next = calcNextShift(currentReport.shift_date.slice(0,10), currentReport.shift_type);
-    toast(`📋 Carried forward to ${next.shift} shift (${fmtDateOnly(next.date)})`, 5000);
+    if (carried.length) {
+      toast(`📋 Pushed to ${next.shift} shift (${fmtDateOnly(next.date)}): ${carried.join(', ')}`, 6000);
+    }
   } catch(e) {
     console.error('pushToNextShift error:', e);
     toast('⚠ Carry-forward error: ' + e.message, 4000);
@@ -1793,10 +1810,7 @@ async function saveTroubleRow(id) {
   if (!currentReport || isLocked) return;
   const row = troubleRows.find(r => r.id === id);
   if (!row) return;
-  try {
-    await api(`/api/trouble/${id}`, 'PATCH', row);
-    syncToNextShift();
-  } catch(e) { console.error('patch trouble:', e); }
+  try { await api(`/api/trouble/${id}`, 'PATCH', row); } catch(e) { console.error('patch trouble:', e); }
 }
 
 async function addTroubleRow() {
@@ -1814,7 +1828,6 @@ async function addTroubleRow() {
     troubleRows.push(r);
     renderTrouble();
     toast('Row added');
-    syncToNextShift();
   } catch(e) { toast('❌ '+e.message, 4000); }
 }
 
@@ -1825,7 +1838,6 @@ async function delTrouble(id) {
     troubleRows = troubleRows.filter(r => r.id !== id);
     renderTrouble();
     toast('🗑 Deleted');
-    syncToNextShift();
   } catch(e) { toast('❌ '+e.message, 4000); }
 }
 
@@ -1942,7 +1954,7 @@ function renderPending() {
         </select>
       </td>
       <td>${attachmentCellHTML('pending', row.id)}</td>
-      <td><button class="btn-red btn-xs del-btn" onclick="pendingRows.splice(${i},1);renderPending();savePending();syncToNextShift()">🗑</button></td>`;
+      <td><button class="btn-red btn-xs del-btn" onclick="pendingRows.splice(${i},1);renderPending()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -1977,7 +1989,7 @@ function renderSched() {
       <td><textarea oninput="schedRows[${i}].change_desc=this.value" style="resize:none;min-height:38px">${esc(row.change_desc||'')}</textarea></td>
       <td><input type="date" value="${row.effective_date?row.effective_date.slice(0,10):''}" onchange="schedRows[${i}].effective_date=this.value"/></td>
       <td><input value="${esc(row.requested_by||'')}" oninput="schedRows[${i}].requested_by=this.value" placeholder="Name"/></td>
-      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="schedRows.splice(${i},1);renderSched();saveSchedules();syncToNextShift()">🗑</button></td>`;
+      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="schedRows.splice(${i},1);renderSched()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -2002,7 +2014,7 @@ function renderReq() {
         <option ${(row.priority||'Normal')==='Normal'?'selected':''}>Normal</option>
         <option ${row.priority==='High'?'selected':''}>High</option>
       </select></td>
-      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="reqRows.splice(${i},1);renderReq();saveReqSamples();syncToNextShift()">🗑</button></td>`;
+      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="reqRows.splice(${i},1);renderReq()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -2022,7 +2034,7 @@ function renderLims() {
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
       <td><textarea oninput="limsRows[${i}].description=this.value" style="resize:none;min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
       <td>${row.id ? attachmentCellHTML('lims', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
-      <td><button class="btn-red btn-xs del-btn" onclick="limsRows.splice(${i},1);renderLims();saveLims();syncToNextShift()">🗑</button></td>`;
+      <td><button class="btn-red btn-xs del-btn" onclick="limsRows.splice(${i},1);renderLims()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -2054,7 +2066,7 @@ function renderRemarks() {
       <td style="color:var(--gray-lt);font-size:11px;white-space:nowrap">${i+1}</td>
       <td><textarea oninput="remarksRows[${i}].description=this.value" style="resize:none;min-height:50px;width:100%">${esc(row.description||'')}</textarea></td>
       <td>${row.id ? attachmentCellHTML('remarks', row.id) : '<span style="color:var(--gray-lt);font-size:11px">Save first to attach</span>'}</td>
-      <td><button class="btn-red btn-xs del-btn" onclick="remarksRows.splice(${i},1);renderRemarks();saveRemarks();syncToNextShift()">🗑</button></td>`;
+      <td><button class="btn-red btn-xs del-btn" onclick="remarksRows.splice(${i},1);renderRemarks()">🗑</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -2130,7 +2142,7 @@ function renderImpExp() {
         </select>
       </td>
       <td><textarea oninput="impexpRows[${i}].remark=this.value" style="resize:none;min-height:36px">${esc(row.remark||'')}</textarea></td>
-      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="impexpRows.splice(${i},1);renderImpExp();saveImpExp();syncToNextShift()">🗑</button></td>
+      <td style="text-align:center"><button class="btn-red btn-xs del-btn" onclick="impexpRows.splice(${i},1);renderImpExp()">🗑</button></td>
     `;
     tbody.appendChild(tr);
   });
