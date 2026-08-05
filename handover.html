@@ -2490,10 +2490,44 @@ function psExportPDF() {
   setTimeout(() => window.print(), 400);
 }
 
-function psExportImage() {
-  document.getElementById('ps-report-content').innerHTML = psBuildReportHTML();
-  document.getElementById('ps-report-overlay').style.display = 'block';
-  toast('📸 Use browser Print → Save as PDF, or screenshot the report', 5000);
+async function psExportImage() {
+  toast('⏳ Rendering image…', 5000);
+  // Build HTML in a hidden off-screen container so layout is correct
+  const hidden = document.createElement('div');
+  hidden.style.cssText = 'position:fixed;left:-9999px;top:0;z-index:-1;background:#fff';
+  hidden.innerHTML = psBuildReportHTML();
+  document.body.appendChild(hidden);
+  // Wait one frame for layout
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  try {
+    if (!window.html2canvas) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = res; s.onerror = () => rej(new Error('Failed to load html2canvas'));
+        document.head.appendChild(s);
+      });
+    }
+    const canvas = await html2canvas(hidden, {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff',
+      width: hidden.scrollWidth, height: hidden.scrollHeight,
+      windowWidth: hidden.scrollWidth, windowHeight: hidden.scrollHeight
+    });
+    document.body.removeChild(hidden);
+    // Show image in overlay
+    const img = document.createElement('img');
+    img.src = canvas.toDataURL('image/png');
+    img.style.cssText = 'max-width:100%;display:block;margin:0 auto;border-radius:4px';
+    img.title = 'Right-click → Save image as…';
+    const content = document.getElementById('ps-report-content');
+    content.innerHTML = '';
+    content.appendChild(img);
+    document.getElementById('ps-report-overlay').style.display = 'block';
+    toast('✅ Right-click the image to save, or click ⬇ Download', 4000);
+  } catch(e) {
+    document.body.removeChild(hidden);
+    toast('❌ ' + e.message, 4000);
+  }
 }
 
 async function psExportPPT() {
@@ -2622,41 +2656,15 @@ async function psExportPPT() {
   }
 }
 
-async function psDownloadImage() {
-  const el = document.getElementById('ps-report-content');
-  if (!el) { toast('No report content'); return; }
-  toast('⏳ Generating image…', 4000);
-  try {
-    // Load html2canvas if not already loaded
-    if (!window.html2canvas) {
-      await new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload = res;
-        s.onerror = () => rej(new Error('Failed to load html2canvas'));
-        document.head.appendChild(s);
-      });
-    }
-    const canvas = await html2canvas(el, {
-      scale: 2,           // 2× resolution for crisp image
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      scrollX: 0,
-      scrollY: 0,
-      width: el.scrollWidth,
-      height: el.scrollHeight,
-      windowWidth: el.scrollWidth,
-      windowHeight: el.scrollHeight
-    });
-    const link = document.createElement('a');
-    const date = new Date().toISOString().slice(0, 10);
-    link.download = `Product-Quality-Summary-${date}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    toast('✅ Image downloaded');
-  } catch(e) {
-    toast('❌ ' + e.message, 4000);
-  }
+function psDownloadImage() {
+  const img = document.querySelector('#ps-report-content img');
+  if (!img) { toast('Open Image view first'); return; }
+  const link = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  link.download = `Product-Quality-Summary-${date}.png`;
+  link.href = img.src;
+  link.click();
+  toast('✅ Downloaded');
 }
 
 // ── History ────────────────────────────────────────────────────────────────
@@ -2850,8 +2858,8 @@ setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
 <div id="ps-report-overlay">
   <button class="ps-report-close-btn" onclick="document.getElementById('ps-report-overlay').style.display='none'">✕ Close</button>
   <div class="ps-report-actions">
-    <button onclick="window.print()" style="padding:6px 14px;background:#c62828;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer">📄 Print / Save PDF</button>
-    <button onclick="psDownloadImage()" style="padding:6px 14px;background:#1565c0;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer">🖼 Save as Image</button>
+    <button onclick="psDownloadImage()" style="padding:6px 14px;background:#1565c0;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer">⬇ Download PNG</button>
+    <span style="font-size:11px;color:#546e7a;margin-left:6px">or right-click the image → Save image as…</span>
   </div>
   <div class="ps-report" id="ps-report-content"></div>
 </div>
