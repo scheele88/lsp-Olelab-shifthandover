@@ -144,6 +144,22 @@ async function initDB() {
     );
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS equip_pm (
+      id          SERIAL PRIMARY KEY,
+      report_id   INTEGER NOT NULL REFERENCES handover_reports(id) ON DELETE CASCADE,
+      equip_code  VARCHAR(50)  DEFAULT '',
+      equip_name  VARCHAR(200) DEFAULT '',
+      owner       VARCHAR(20)  DEFAULT '',
+      start_date  DATE,
+      event_type  VARCHAR(30)  DEFAULT 'PM',
+      scope_type  VARCHAR(20)  DEFAULT 'Internal',
+      performed_by VARCHAR(100) DEFAULT '',
+      end_date    DATE,
+      status      VARCHAR(30)  DEFAULT 'In-progress'
+    )
+  `);
+
   // Migration: add missing columns to existing handover_reports table (safe — IF NOT EXISTS)
   const migrations = [
     `ALTER TABLE pending_samples ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'In-progress'`,
@@ -189,7 +205,8 @@ async function loadFull(reportId) {
   const { rows: limsRows }      = await pool.query('SELECT * FROM lims_issues    WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: remarksRows }   = await pool.query('SELECT * FROM general_remarks WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: impexpRows }    = await pool.query('SELECT * FROM import_export   WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows, impexpRows, psRows };
+  const { rows: pmRows } = await pool.query('SELECT * FROM equip_pm WHERE report_id=$1 ORDER BY id',[reportId]);
+  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows, impexpRows, psRows, pmRows };
 }
 
 app.get('/api/reports', async (req, res) => {
@@ -291,6 +308,53 @@ app.patch('/api/trouble/:id', async (req, res) => {
 
 app.delete('/api/trouble/:id', async (req, res) => {
   try { await pool.query('DELETE FROM equip_trouble WHERE id=$1',[req.params.id]); res.json({ok:true}); }
+  catch(e){ res.status(500).json({error:e.message}); }
+});
+
+// ── §2.2 Equipment PM / Calib ──────────────────────────────────────────────
+app.post('/api/reports/:id/pm', async (req, res) => {
+  const { equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status } = req.body;
+  try {
+    const { rows:[r] } = await pool.query(`
+      INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [req.params.id,equip_code||'',equip_name||'',owner||'',
+       start_date||null,event_type||'PM',scope_type||'Internal',
+       performed_by||'',end_date||null,status||'In-progress']);
+    res.json(r);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.patch('/api/pm/:id', async (req, res) => {
+  const f = ['equip_code','equip_name','owner','start_date','event_type','scope_type','performed_by','end_date','status'];
+  try {
+    const { rows:[r] } = await pool.query(
+      `UPDATE equip_pm SET ${f.map((x,i)=>`${x}=$${i+1}`).join(',')} WHERE id=$${f.length+1} RETURNING *`,
+      [...f.map(x => { const v = req.body[x]; return (v===''||v===undefined||v===null)?null:v; }), req.params.id]);
+    res.json(r);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.put('/api/reports/:id/pm', async (req, res) => {
+  const rows = req.body.rows || [];
+  try {
+    await pool.query('DELETE FROM equip_pm WHERE report_id=$1',[req.params.id]);
+    const saved = [];
+    for (const row of rows) {
+      const { rows:[r] } = await pool.query(`
+        INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+        [req.params.id,row.equip_code||'',row.equip_name||'',row.owner||'',
+         row.start_date||null,row.event_type||'PM',row.scope_type||'Internal',
+         row.performed_by||'',row.end_date||null,row.status||'In-progress']);
+      saved.push(r);
+    }
+    res.json(saved);
+  } catch(e){ res.status(500).json({error:e.message}); }
+});
+
+app.delete('/api/pm/:id', async (req, res) => {
+  try { await pool.query('DELETE FROM equip_pm WHERE id=$1',[req.params.id]); res.json({ok:true}); }
   catch(e){ res.status(500).json({error:e.message}); }
 });
 
