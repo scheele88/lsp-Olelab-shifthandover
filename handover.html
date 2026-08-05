@@ -645,6 +645,31 @@ html, body {
       </table>
         </div>
       <p id="no-trouble" style="text-align:center;padding:24px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
+
+      <!-- §2.2 PM / Calib Schedule -->
+      <div style="font-size:11px;font-weight:800;color:#1565c0;text-transform:uppercase;letter-spacing:.8px;padding:4px 2px 6px;border-bottom:2px solid #bbdefb;margin-bottom:8px;margin-top:20px;display:flex;align-items:center;gap:10px">
+        <span>§2.2 — Equipment PM / Calibration Schedule</span>
+        <button class="btn-blue btn-sm" id="add-pm-btn" onclick="addPmRow()" style="font-size:10px;font-weight:700">➕ Add Row</button>
+      </div>
+      <div class="table-scroll-x">
+        <table class="etable" style="width:100%;table-layout:fixed">
+          <thead><tr>
+            <th style="width:28px">#</th>
+            <th style="width:70px">Lab</th>
+            <th style="width:180px">Equipment Name</th>
+            <th style="width:100px">Start Date</th>
+            <th style="width:115px">Event</th>
+            <th style="width:100px">Scope</th>
+            <th style="width:15%">Performed By</th>
+            <th style="width:100px">End Date</th>
+            <th style="width:115px">Status</th>
+            <th style="width:28px"></th>
+          </tr></thead>
+          <tbody id="pm-tbody"></tbody>
+        </table>
+      </div>
+      <p id="no-pm" style="text-align:center;padding:20px;color:var(--gray-lt)">No PM / calibration events this shift.</p>
+
     </div>
   </div>
 </div>
