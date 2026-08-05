@@ -1226,12 +1226,16 @@ function applyLock() {
   // Lock everything EXCEPT the history tab and unlock button
   document.querySelectorAll('.main input,.main select,.main textarea').forEach(el => {
     if (el.closest('#tab-hist')) return; // never disable history controls
+    if (el.id === 'export-from' || el.id === 'export-to') return; // always allow export date range
     el.disabled = lock;
   });
   document.querySelectorAll('.main button').forEach(b => {
     if (b.closest('#tab-hist')) return; // never disable history buttons
     if (b.onclick && b.onclick.toString().includes('openUnlockModal')) return;
     if (b.onclick && b.onclick.toString().includes('returnToCurrentShift')) return;
+    if (b.onclick && b.onclick.toString().includes('exportTrouble')) return;
+    if (b.onclick && b.onclick.toString().includes('psExport')) return;
+    if (b.onclick && b.onclick.toString().includes('psDownload')) return;
     b.disabled = lock;
   });
   document.getElementById('save-bar').style.display = lock ? 'none' : '';
