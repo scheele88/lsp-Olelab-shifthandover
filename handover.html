@@ -165,7 +165,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .etable{width:100%;border-collapse:collapse;font-size:12px;word-break:break-word}
 .etable th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
 .etable td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden}
-.etable td:has(textarea){vertical-align:top;white-space:normal;overflow:visible}
+.etable td:has(textarea.auto-resize){vertical-align:top;white-space:normal;overflow:visible;word-break:break-word}
 .etable tbody tr:nth-child(even) td{background:#fafafa}
 .etable tbody tr:hover td{background:var(--green-bg)}
 .etable select,.etable input[type=text],.etable input:not([type]){font-size:11px;padding:3px 5px;border-radius:3px;width:100%;box-sizing:border-box;min-width:0}
@@ -621,7 +621,7 @@ html, body {
     </div>
     <div class="card-body" style="padding:8px">
       <div class="table-scroll-x">
-      <table class="etable">
+      <table class="etable" style="width:auto;min-width:100%">
         <thead><tr>
           <th style="width:28px">#</th>
           <th style="width:65px">Lab</th>
@@ -629,9 +629,9 @@ html, body {
           <th style="display:none"></th>
           <th style="width:68px">Start</th>
           <th style="width:110px">Issue</th>
-          <th style="min-width:160px">Details</th>
-          <th style="min-width:140px">Root Cause</th>
-          <th style="min-width:160px">Action Taken</th>
+          <th style="min-width:180px;width:220px">Details</th>
+          <th style="min-width:160px;width:180px">Root Cause</th>
+          <th style="min-width:180px;width:220px">Action Taken</th>
           <th style="width:55px">OOS?</th>
           <th style="width:100px">Status</th>
           <th style="width:68px">End</th>
