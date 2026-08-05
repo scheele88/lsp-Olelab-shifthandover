@@ -2288,11 +2288,11 @@ function pmEqInput(rid, val) {
   if (!row) return;
   if (row.owner === 'Other') {
     row.equip_name = val; row.equip_code = '';
-    debouncePm(); return;
+    debouncePm(rid); return;
   }
   row.equip_name = val;
   pmDropOpen(rid, val);
-  debouncePm();
+  debouncePm(rid);
 }
 
 function pmDropOpen(rid, query) {
@@ -2334,7 +2334,7 @@ function pmPick(evt, rid, code, name) {
   pmDropClose(rid);
   const row = pmRows.find(r => r.id == rid);
   if (row) { row.equip_name = name; row.equip_code = code; }
-  debouncePm();
+  debouncePm(rid);
 }
 
 function pmEndDate(rid, val) {
@@ -2342,25 +2342,30 @@ function pmEndDate(rid, val) {
   row.end_date = val || null;
   if (val) row.status = 'Done';
   else if (row.status === 'Done') row.status = 'In-progress';
-  debouncePm(); renderPm();
+  savePmRow(rid); renderPm();
 }
 
 function pmField(rid, field, val) {
   const row = pmRows.find(r => r.id == rid); if (!row) return;
   row[field] = val || null;
   if (field === 'owner') { row.equip_name = ''; row.equip_code = ''; renderPm(); }
-  debouncePm();
+  debouncePm(rid);
 }
 
 
-async function savePm() {
-  if (!currentReport) return;
+function debouncePm(rid) {
+  clearTimeout(debouncePm._t);
+  debouncePm._t = setTimeout(() => savePmRow(rid), 700);
+}
+
+async function savePmRow(id) {
+  if (!currentReport || isLocked) return;
+  const row = pmRows.find(r => r.id == id);
+  if (!row) return;
   try {
-    const saved = await api(`/api/reports/${currentReport.id}/pm`, 'PUT', { rows: pmRows });
-    pmRows = saved;
-    renderPm();
+    await api(`/api/pm/${id}`, 'PATCH', row);
     syncToNextShift();
-  } catch(e) { toast('PM save error: ' + e.message, 3000); }
+  } catch(e) { console.error('patch pm:', e); }
 }
 
 async function addPmRow() {
