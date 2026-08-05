@@ -1541,6 +1541,9 @@ async function syncToNextShift() {
       troubleMap.push({ old_row_id: t.id, new_row_id: r.id });
     }
     await copyAtts('trouble', troubleMap, currentReport.id, nr.id);
+    // §2.2 PM — carry non-Done rows only
+    const pmNotDone = (src.pmRows || []).filter(r => r.status !== 'Done');
+    await api(`/api/reports/${nr.id}/pm`, 'PUT', { rows: pmNotDone });
     const notDonePending = (src.pending || []).filter(p => p.status !== 'Done');
     const savedPending = await api(`/api/reports/${nr.id}/pending`, 'PUT',
       notDonePending.map(p => ({ sample_point: p.sample_point, reason: p.reason,
@@ -2355,6 +2358,7 @@ async function savePm() {
   try {
     const saved = await api(`/api/reports/${currentReport.id}/pm`, 'PUT', { rows: pmRows });
     pmRows = saved;
+    renderPm();
     syncToNextShift();
   } catch(e) { toast('PM save error: ' + e.message, 3000); }
 }
