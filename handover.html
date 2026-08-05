@@ -164,7 +164,8 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 /* ── Equipment table ── */
 .etable{width:100%;border-collapse:collapse;font-size:12px;word-break:break-word}
 .etable th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
-.etable td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:middle;overflow:hidden}
+.etable td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;overflow:hidden}
+.ta-grow{width:100%;box-sizing:border-box;min-height:32px;height:32px;overflow-y:hidden}
 .etable td:has(textarea){vertical-align:top;white-space:normal;overflow:visible}
 .etable tbody tr:nth-child(even) td{background:#fafafa}
 .etable tbody tr:hover td{background:var(--green-bg)}
@@ -1736,9 +1737,9 @@ function renderTrouble() {
           style="margin-top:3px;display:${row.issue_type==='Others'?'':'none'}"
           oninput="trField(${rid},'issue_other',this.value)"/>
       </td>
-      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'details',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.details||'')}</textarea></td>
-      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'root_cause',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.root_cause||'')}</textarea></td>
-      <td><textarea style="resize:none;min-height:28px;height:28px;font-size:11px" onchange="trField(${rid},'action_taken',this.value)" onfocus="this.style.height='auto'" onblur="this.style.height='28px'">${esc(row.action_taken||'')}</textarea></td>
+      <td><textarea class="ta-grow" style="resize:none;font-size:11px" onchange="trField(${rid},'details',this.value)" oninput="taGrow(this)">${esc(row.details||'')}</textarea></td>
+      <td><textarea class="ta-grow" style="resize:none;font-size:11px" onchange="trField(${rid},'root_cause',this.value)" oninput="taGrow(this)">${esc(row.root_cause||'')}</textarea></td>
+      <td><textarea class="ta-grow" style="resize:none;font-size:11px" onchange="trField(${rid},'action_taken',this.value)" oninput="taGrow(this)">${esc(row.action_taken||'')}</textarea></td>
       <td style="background:${oos?'#ffebee':'#f1f8f1'}!important;text-align:center;padding:3px">
         <select onchange="trField(${rid},'out_of_service',this.value)"
           style="background:transparent;border:none;font-weight:800;font-size:12px;color:${oos?'#b71c1c':'#2e7d32'};width:100%;cursor:pointer;text-align:center">
@@ -1759,6 +1760,7 @@ function renderTrouble() {
     `;
     tbody.appendChild(tr);
   });
+  requestAnimationFrame(() => { tbody.querySelectorAll('textarea.ta-grow').forEach(taGrow); });
 }
 
 function trField(id, field, value) {
@@ -2785,6 +2787,14 @@ document.addEventListener('paste', function(evt) {
 });
 
 // Auto-save every 2 min
+
+function taGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+function taGrowAll() {
+  document.querySelectorAll('textarea.ta-grow').forEach(taGrow);
+}
 setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
 </script>
 
