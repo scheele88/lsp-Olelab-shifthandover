@@ -2252,7 +2252,7 @@ function renderPm() {
             placeholder="${isOther?'Type name manually…':row.owner?'Click or type to search…':'Select lab first…'}"
             ${!row.owner&&!isOther?'readonly':''}
             oninput="pmEqInput(${rid},this.value)"
-            onfocus="pmDropOpen(${rid},this.value)"
+            onfocus="pmEqNameFocus(${rid})"
             onblur="setTimeout(()=>pmDropClose(${rid}),200)"
             style="font-weight:700;color:#4a148c;background:transparent;border:none;resize:none;padding:4px;width:100%;font-size:12px;min-height:28px">${esc(row.equip_name||'')}</textarea>
           <div class="eq-drop" id="pm-eq-drop-${rid}"></div>
@@ -2277,9 +2277,16 @@ function pmEqInput(rid, val) {
   const row = pmRows.find(r => String(r.id) === String(rid)); if (!row) return;
   row.equip_name = val;
   const eq = equipMaster.find(e => e.name === val);
-  if (eq) row.equip_code = eq.code;
-  pmDropOpen(rid, val);
+  if (eq) { row.equip_code = eq.code; }
+  if (row.owner && row.owner !== 'Other') pmDropOpen(rid, val);
   debouncePm();
+}
+
+function pmEqNameFocus(rid) {
+  const row = pmRows.find(r => String(r.id) === String(rid));
+  if (!row || !row.owner || row.owner === 'Other') return;
+  document.querySelectorAll('.eq-drop').forEach(d => d.style.display = 'none');
+  pmDropOpen(rid, '');
 }
 
 function pmDropOpen(rid, query) {
