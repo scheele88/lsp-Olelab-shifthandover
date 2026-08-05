@@ -545,7 +545,7 @@ html, body {
 
 <div class="tabs">
   <button class="tab-btn active" data-tab="s1" onclick="switchTab('s1')">§1 General</button>
-  <button class="tab-btn" data-tab="s2" onclick="switchTab('s2')">§2 Equipment Trouble</button>
+  <button class="tab-btn" data-tab="s2" onclick="switchTab('s2')">§2 Equipment Mgmt</button>
   <button class="tab-btn" data-tab="s3" onclick="switchTab('s3')">§3 Pending Samples</button>
   <button class="tab-btn" data-tab="s4" onclick="switchTab('s4')">§4 Plant Samples</button>
   <button class="tab-btn" data-tab="s4b" onclick="switchTab('s4b')">§5 Import/Export</button>
@@ -606,11 +606,11 @@ html, body {
   </div>
 </div>
 
-<!-- §2 Equipment Trouble -->
+<!-- §2 Equipment Management -->
 <div id="tab-s2" style="display:none">
   <div class="card">
     <div class="card-hdr">
-      <h2>§2 — Equipment Trouble Log</h2>
+      <h2>§2 — Equipment Management</h2>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <span style="font-size:10px;color:var(--gray-lt);font-weight:600">Export:</span>
         <input type="date" id="export-from" style="width:115px;font-size:11px;padding:2px 5px;border:1px solid var(--border2);border-radius:3px" title="From date"/>
@@ -623,6 +623,12 @@ html, body {
       </div>
     </div>
     <div class="card-body" style="padding:8px">
+
+      <!-- §2.1 sub-header -->
+      <div style="font-size:11px;font-weight:800;color:#1565c0;text-transform:uppercase;letter-spacing:.8px;padding:4px 2px 6px;border-bottom:2px solid #bbdefb;margin-bottom:8px">
+        §2.1 — Equipment Trouble Log
+      </div>
+
       <div class="table-scroll-x">
       <table class="etable">
         <thead><tr>
@@ -643,8 +649,33 @@ html, body {
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
       </table>
-        </div>
-      <p id="no-trouble" style="text-align:center;padding:24px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
+      </div>
+      <p id="no-trouble" style="text-align:center;padding:20px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
+
+      <!-- §2.2 PM / Calib Schedule -->
+      <div style="font-size:11px;font-weight:800;color:#1565c0;text-transform:uppercase;letter-spacing:.8px;padding:4px 2px 6px;border-bottom:2px solid #bbdefb;margin-bottom:8px;margin-top:20px;display:flex;align-items:center;gap:10px">
+        <span>§2.2 — Equipment PM / Calibration Schedule</span>
+        <button class="btn-blue btn-sm" id="add-pm-btn" onclick="addPmRow()" style="font-size:10px;font-weight:700">➕ Add Row</button>
+      </div>
+      <div class="table-scroll-x">
+        <table class="etable" style="width:100%;table-layout:fixed">
+          <thead><tr>
+            <th style="width:28px">#</th>
+            <th style="width:70px">Lab</th>
+            <th style="width:180px">Equipment Name</th>
+            <th style="width:100px">Start Date</th>
+            <th style="width:115px">Event</th>
+            <th style="width:100px">Scope</th>
+            <th style="width:15%">Performed By</th>
+            <th style="width:100px">End Date</th>
+            <th style="width:115px">Status</th>
+            <th style="width:28px"></th>
+          </tr></thead>
+          <tbody id="pm-tbody"></tbody>
+        </table>
+      </div>
+      <p id="no-pm" style="text-align:center;padding:20px;color:var(--gray-lt)">No PM / calibration events this shift.</p>
+
     </div>
   </div>
 </div>
