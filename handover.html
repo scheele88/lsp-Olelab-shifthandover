@@ -1472,9 +1472,7 @@ async function pushToNextShift() {
           details: t.details || '', root_cause: t.root_cause || '',
           action_taken: t.action_taken || '',
           out_of_service: t.out_of_service || 'No',
-          status: t.status || 'Investigating',
-          start_date: t.start_date || null,
-          end_date: t.end_date || null
+          status: t.status || 'Investigating'
         });
         troubleMap.push({ old_row_id: t.id, new_row_id: r.id });
       }
@@ -2172,16 +2170,27 @@ function getTroubleExportData() {
   const to   = document.getElementById('export-to')?.value;
   // Fetch all reports to get all trouble rows across shifts
   return api('/api/reports?limit=200').then(async reports => {
-    let allRows = [];
-    for (const r of reports) {
-      // Filter by date range if set
+    // Map: dedup key → {row, shift_date} — keeps the LATEST shift's version of each event
+    // Dedup key = equip_code + start_date (unique per incident).
+    // Falls back to equip_code + details if start_date is blank (old data).
+    const dedupMap = new Map();
+
+    // Process reports oldest→newest so the last write wins (most recent shift)
+    const sorted = [...reports].sort((a,b) => {
+      const da = a.shift_date.slice(0,10), db = b.shift_date.slice(0,10);
+      if (da !== db) return da < db ? -1 : 1;
+      return a.shift_type === 'Day' ? -1 : 1; // Day before Night
+    });
+
+    for (const r of sorted) {
       const d = r.shift_date.slice(0,10);
-      if (from && d < from) continue;
-      if (to   && d > to)   continue;
       const full = await api(`/api/reports/${r.id}`);
       if (!full.trouble?.length) continue;
       full.trouble.forEach(t => {
-        allRows.push({
+        const key = t.equip_code
+          ? (t.start_date ? `${t.equip_code}||${t.start_date}` : `${t.equip_code}||${t.details}`)
+          : `${t.equip_name}||${t.start_date}||${t.details}`;
+        dedupMap.set(key, {
           'Shift Date':     d,
           'Shift':          r.shift_type,
           'Lab':            t.owner,
@@ -2198,6 +2207,23 @@ function getTroubleExportData() {
         });
       });
     }
+
+    // Convert map to array, then apply date range filter on Start Date (or Shift Date as fallback)
+    let allRows = [...dedupMap.values()];
+    if (from || to) {
+      allRows = allRows.filter(row => {
+        const d = row['Start Date'] || row['Shift Date'];
+        if (from && d < from) return false;
+        if (to   && d > to)   return false;
+        return true;
+      });
+    }
+    // Sort final output by Start Date desc, then Shift Date desc
+    allRows.sort((a,b) => {
+      const ka = a['Start Date'] || a['Shift Date'];
+      const kb = b['Start Date'] || b['Shift Date'];
+      return ka < kb ? 1 : ka > kb ? -1 : 0;
+    });
     return allRows;
   });
 }
