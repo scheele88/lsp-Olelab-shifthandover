@@ -826,7 +826,7 @@ html, body {
   <!-- §5a LIMS Issues -->
   <div class="card" style="margin-bottom:12px">
     <div class="card-hdr">
-      <h2>§6a — LIMS Issues</h2>
+      <h2>§7a — LIMS Issues</h2>
       <button class="btn-blue btn-sm" onclick="addLimsRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
@@ -848,7 +848,7 @@ html, body {
   <!-- §5b General Remarks -->
   <div class="card" style="margin-bottom:12px">
     <div class="card-hdr">
-      <h2>§6b — General Remarks</h2>
+      <h2>§7b — General Remarks</h2>
       <button class="btn-blue btn-sm" onclick="addRemarkRow()">➕ Add Row</button>
     </div>
     <div class="card-body" style="padding:8px">
@@ -1190,6 +1190,7 @@ function applyLock() {
     if (b.closest('#tab-hist')) return; // never disable history buttons
     if (b.onclick && b.onclick.toString().includes('openUnlockModal')) return;
     if (b.onclick && b.onclick.toString().includes('returnToCurrentShift')) return;
+    if (b.onclick && b.onclick.toString().includes('exportTrouble')) return; // always allow export
     b.disabled = lock;
   });
   document.getElementById('save-bar').style.display = lock ? 'none' : '';
@@ -1433,21 +1434,9 @@ async function pushToNextShift() {
     }
     if (!nextReport || !nextReport.id) return;
 
-    // Only push if next shift is still empty (don't overwrite if already filled)
-    // Always fetch full next shift report to check all sections
+    // Fetch next shift's existing data and current shift's full data
     const nextFull = await api(`/api/reports/${nextReport.id}`);
-    // Only skip if structural sections already have data (§2/§3/§4)
-    // §5A/§5B always get pushed regardless
-    const hasStructuralData = !!(nextFull.trouble?.length || nextFull.pending?.length ||
-                                 nextFull.schedules?.length || nextFull.reqsamples?.length ||
-                                 nextFull.impexpRows?.length);
-    if (hasStructuralData) {
-      // Structural data exists — skip §2/§3/§4 but still push §5
-      console.log('Next shift has structural data — only pushing §5A/§5B');
-    }
-
-    // Load current shift's full data fresh
-    const src = await api(`/api/reports/${currentReport.id}`);
+    const src      = await api(`/api/reports/${currentReport.id}`);
     let carried = [];
 
     // Helper: copy attachments for a section using old→new row_id map
@@ -1460,9 +1449,8 @@ async function pushToNextShift() {
       });
     }
 
-    if (!hasStructuralData) {
-    // 1. Equipment trouble — non-Done
-    if (src.trouble?.length) {
+    // §2 Equipment trouble — push non-Done if next shift has none yet
+    if (src.trouble?.length && !nextFull.trouble?.length) {
       const notDone = src.trouble.filter(t => t.status !== 'Done');
       const troubleMap = [];
       for (const t of notDone) {
@@ -1472,7 +1460,9 @@ async function pushToNextShift() {
           details: t.details || '', root_cause: t.root_cause || '',
           action_taken: t.action_taken || '',
           out_of_service: t.out_of_service || 'No',
-          status: t.status || 'Investigating'
+          status: t.status || 'Investigating',
+          start_date: t.start_date || null,
+          end_date: t.end_date || null
         });
         troubleMap.push({ old_row_id: t.id, new_row_id: r.id });
       }
@@ -1482,8 +1472,8 @@ async function pushToNextShift() {
       }
     }
 
-    // 2. Pending samples — non-Done
-    if (src.pending?.length) {
+    // §3 Pending samples — push non-Done if next shift has none yet
+    if (src.pending?.length && !nextFull.pending?.length) {
       const notDone = src.pending.filter(p => p.status !== 'Done');
       if (notDone.length) {
         const payload = notDone.map(p => ({
@@ -1491,15 +1481,14 @@ async function pushToNextShift() {
           action_needed: p.action_needed, status: p.status || 'In-progress'
         }));
         const saved = await api(`/api/reports/${nextReport.id}/pending`, 'PUT', payload);
-        // Match old→new IDs by position
         const pendingMap = notDone.map((p, i) => ({ old_row_id: p.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
         await copyAtts('pending', pendingMap);
         carried.push(`${notDone.length} pending sample(s)`);
       }
     }
 
-    // 3. Schedule changes — all (no attachments)
-    if (src.schedules?.length) {
+    // §4A Schedule changes — push all if next shift has none yet
+    if (src.schedules?.length && !nextFull.schedules?.length) {
       const rows = src.schedules.map(s => ({
         plant: s.plant, sampling_point: s.sampling_point || '',
         change_desc: s.change_desc, effective_date: s.effective_date,
@@ -1509,8 +1498,8 @@ async function pushToNextShift() {
       carried.push(`${rows.length} schedule change(s)`);
     }
 
-    // 4. Requested samples — all (no attachments)
-    if (src.reqsamples?.length) {
+    // §4B Requested samples — push all if next shift has none yet
+    if (src.reqsamples?.length && !nextFull.reqsamples?.length) {
       const rows = src.reqsamples.map(r => ({
         plant: r.plant, product_stream: r.product_stream,
         test_items: r.test_items, requested_by: r.requested_by,
@@ -1520,10 +1509,8 @@ async function pushToNextShift() {
       carried.push(`${rows.length} requested sample(s)`);
     }
 
-    } // end !hasStructuralData
-
-    // 5. Import/Export — always push non-Complete rows (like §5A/§5B)
-    if (src.impexpRows?.length) {
+    // §5 Import/Export — push non-Complete if next shift has none yet
+    if (src.impexpRows?.length && !nextFull.impexpRows?.length) {
       const notDone = src.impexpRows.filter(r => r.status !== 'Complete');
       if (notDone.length) {
         const payload = notDone.map(r => ({
@@ -1538,8 +1525,8 @@ async function pushToNextShift() {
       }
     }
 
-    // 6. LIMS Issues — always push with attachments
-    if (src.limsRows?.length) {
+    // §7A LIMS Issues — push if next shift has none yet
+    if (src.limsRows?.length && !nextFull.limsRows?.length) {
       const payload = src.limsRows.map(r => ({ description: r.description }));
       const saved = await api(`/api/reports/${nextReport.id}/lims`, 'PUT', payload);
       const limsMap = src.limsRows.map((r, i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
@@ -1547,8 +1534,8 @@ async function pushToNextShift() {
       carried.push(`${src.limsRows.length} LIMS issue(s)`);
     }
 
-    // 6. General Remarks — always push with attachments
-    if (src.remarksRows?.length) {
+    // §7B General Remarks — push if next shift has none yet
+    if (src.remarksRows?.length && !nextFull.remarksRows?.length) {
       const payload = src.remarksRows.map(r => ({ description: r.description }));
       const saved = await api(`/api/reports/${nextReport.id}/remarks`, 'PUT', payload);
       const remarksMap = src.remarksRows.map((r, i) => ({ old_row_id: r.id, new_row_id: saved[i]?.id })).filter(m=>m.new_row_id);
@@ -2170,27 +2157,16 @@ function getTroubleExportData() {
   const to   = document.getElementById('export-to')?.value;
   // Fetch all reports to get all trouble rows across shifts
   return api('/api/reports?limit=200').then(async reports => {
-    // Map: dedup key → {row, shift_date} — keeps the LATEST shift's version of each event
-    // Dedup key = equip_code + start_date (unique per incident).
-    // Falls back to equip_code + details if start_date is blank (old data).
-    const dedupMap = new Map();
-
-    // Process reports oldest→newest so the last write wins (most recent shift)
-    const sorted = [...reports].sort((a,b) => {
-      const da = a.shift_date.slice(0,10), db = b.shift_date.slice(0,10);
-      if (da !== db) return da < db ? -1 : 1;
-      return a.shift_type === 'Day' ? -1 : 1; // Day before Night
-    });
-
-    for (const r of sorted) {
+    let allRows = [];
+    for (const r of reports) {
+      // Filter by date range if set
       const d = r.shift_date.slice(0,10);
+      if (from && d < from) continue;
+      if (to   && d > to)   continue;
       const full = await api(`/api/reports/${r.id}`);
       if (!full.trouble?.length) continue;
       full.trouble.forEach(t => {
-        const key = t.equip_code
-          ? (t.start_date ? `${t.equip_code}||${t.start_date}` : `${t.equip_code}||${t.details}`)
-          : `${t.equip_name}||${t.start_date}||${t.details}`;
-        dedupMap.set(key, {
+        allRows.push({
           'Shift Date':     d,
           'Shift':          r.shift_type,
           'Lab':            t.owner,
@@ -2207,23 +2183,6 @@ function getTroubleExportData() {
         });
       });
     }
-
-    // Convert map to array, then apply date range filter on Start Date (or Shift Date as fallback)
-    let allRows = [...dedupMap.values()];
-    if (from || to) {
-      allRows = allRows.filter(row => {
-        const d = row['Start Date'] || row['Shift Date'];
-        if (from && d < from) return false;
-        if (to   && d > to)   return false;
-        return true;
-      });
-    }
-    // Sort final output by Start Date desc, then Shift Date desc
-    allRows.sort((a,b) => {
-      const ka = a['Start Date'] || a['Shift Date'];
-      const kb = b['Start Date'] || b['Shift Date'];
-      return ka < kb ? 1 : ka > kb ? -1 : 0;
-    });
     return allRows;
   });
 }
