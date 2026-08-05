@@ -970,7 +970,46 @@ let reqRows = [];
 let limsRows = [];
 let remarksRows = [];
 let impexpRows    = [];
-let shiftDate = ''; // clock-determined current shift date
+
+// ── Undo / Redo ───────────────────────────────────────────────────────────
+const UNDO_LIMIT = 30;
+let undoStack = [];
+let redoStack = [];
+let _undoSuppressed = false;
+
+function snapshotState() {
+  return JSON.stringify({ troubleRows, pendingRows, schedRows, reqRows, limsRows, remarksRows, impexpRows });
+}
+function pushUndo() {
+  if (_undoSuppressed) return;
+  redoStack = [];
+  undoStack.push(snapshotState());
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+}
+async function applySnapshot(snap) {
+  _undoSuppressed = true;
+  const s = JSON.parse(snap);
+  troubleRows = s.troubleRows; pendingRows = s.pendingRows; schedRows = s.schedRows;
+  reqRows = s.reqRows; limsRows = s.limsRows; remarksRows = s.remarksRows; impexpRows = s.impexpRows;
+  renderTrouble(); renderPending(); renderSched(); renderReq();
+  renderLims(); renderRemarks(); renderImpExp();
+  _undoSuppressed = false;
+  await saveAll();
+}
+async function undoAction() {
+  if (isLocked || !undoStack.length) { toast('Nothing to undo'); return; }
+  redoStack.push(snapshotState());
+  toast('↩ Undo');
+  await applySnapshot(undoStack.pop());
+}
+async function redoAction() {
+  if (isLocked || !redoStack.length) { toast('Nothing to redo'); return; }
+  undoStack.push(snapshotState());
+  toast('↪ Redo');
+  await applySnapshot(redoStack.pop());
+}
+
+
 let shiftType = ''; // clock-determined current shift type
 let activeDate = ''; // currently active/editing shift date (may differ from clock)
 let activeShift = ''; // currently active/editing shift type
