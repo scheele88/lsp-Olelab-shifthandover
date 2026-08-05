@@ -2274,7 +2274,7 @@ function renderPm() {
 }
 
 function pmEqInput(rid, val) {
-  const row = pmRows.find(r => r.id === rid); if (!row) return;
+  const row = pmRows.find(r => String(r.id) === String(rid)); if (!row) return;
   row.equip_name = val;
   const eq = equipMaster.find(e => e.name === val);
   if (eq) row.equip_code = eq.code;
@@ -2283,7 +2283,9 @@ function pmEqInput(rid, val) {
 }
 
 function pmDropOpen(rid, query) {
-  const row = pmRows.find(r => r.id === rid);
+  // Close all other eq-drops first
+  document.querySelectorAll('.eq-drop').forEach(d => d.style.display = 'none');
+  const row = pmRows.find(r => String(r.id) === String(rid));
   if (!row || !row.owner || row.owner === 'Other') return;
   const q = (query||'').toLowerCase().trim();
   const pool = equipMaster.filter(e => e.owner === row.owner);
@@ -2306,6 +2308,7 @@ function pmDropOpen(rid, query) {
     drop.style.width = width + 'px';
   }
   drop.style.display = 'block';
+  drop.style.zIndex = '9999';
 }
 
 function pmDropClose(rid) {
@@ -2318,13 +2321,13 @@ function pmPick(evt, rid, code, name) {
   const inp = document.getElementById('pm-eqname-' + rid);
   if (inp) inp.value = name;
   pmDropClose(rid);
-  const row = pmRows.find(r => r.id === rid);
+  const row = pmRows.find(r => String(r.id) === String(rid));
   if (row) { row.equip_name = name; row.equip_code = code; }
   debouncePm();
 }
 
 function pmEndDate(rid, val) {
-  const row = pmRows.find(r => r.id === rid); if (!row) return;
+  const row = pmRows.find(r => String(r.id) === String(rid)); if (!row) return;
   row.end_date = val || null;
   if (val) row.status = 'Done';
   else if (row.status === 'Done') row.status = 'In-progress';
@@ -2333,7 +2336,7 @@ function pmEndDate(rid, val) {
 }
 
 function pmField(rid, field, val) {
-  const row = pmRows.find(r => r.id === rid); if (!row) return;
+  const row = pmRows.find(r => String(r.id) === String(rid)); if (!row) return;
   row[field] = val || null;
   if (field === 'owner') { row.equip_name = ''; row.equip_code = ''; renderPm(); }
   debouncePm();
@@ -2369,7 +2372,7 @@ async function delPm(rid) {
   if (!currentReport) return;
   pushUndo();
   await api(`/api/pm/${rid}`, 'DELETE');
-  pmRows = pmRows.filter(r => r.id !== rid);
+  pmRows = pmRows.filter(r => String(r.id) !== String(rid));
   renderPm();
   syncToNextShift();
 }
