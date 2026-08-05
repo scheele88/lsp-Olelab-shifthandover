@@ -2422,11 +2422,11 @@ function psBuildReportHTML() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
   const timeStr = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-  // Use the actual browsed shift date, not today
-  const reportDate  = activeDate  || shiftDate;
-  const reportShift = activeShift || shiftType;
-  const shift     = reportShift === 'Day' ? '\u2605 Day (08:00\u201320:00)' : reportShift === 'Night' ? '\u2605 Night (20:00\u201308:00)' : (document.getElementById('shift-chip')?.textContent || '');
-  const shiftDateLabel = reportDate ? fmtDateOnly(reportDate) : (document.getElementById('shift-date-disp')?.textContent || '');
+  // Use currentReport for the exact browsed shift date
+  const reportDate  = (currentReport && currentReport.shift_date) ? currentReport.shift_date.slice(0,10) : (activeDate || shiftDate);
+  const reportShift = (currentReport && currentReport.shift_type) ? currentReport.shift_type : (activeShift || shiftType);
+  const shift = reportShift === 'Day' ? '★ Day (08:00–20:00)' : reportShift === 'Night' ? '★ Night (20:00–08:00)' : '';
+  const shiftDateLabel = reportDate ? fmtDateOnly(reportDate) : '';
 
   function simpleTable(rows, col1Label) {
     if (!rows.length) return '<p style="color:#9e9e9e;font-size:11px;padding:4px 0">No entries</p>';
