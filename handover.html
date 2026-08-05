@@ -2273,87 +2273,82 @@ function renderPm() {
   }).join('');
 }
 
-function pmEqInput(rid, val) {
-  const row = pmRows.find(r => String(r.id) === String(rid)); if (!row) return;
-  row.equip_name = val;
-  const eq = equipMaster.find(e => e.name === val);
-  if (eq) { row.equip_code = eq.code; }
-  if (row.owner && row.owner !== 'Other') pmDropOpen(rid, val);
-  debouncePm();
-}
-
 function pmEqNameFocus(rid) {
-  const row = pmRows.find(r => String(r.id) === String(rid));
+  const row = pmRows.find(r => r.id == rid);
   if (!row || !row.owner || row.owner === 'Other') return;
-  document.querySelectorAll('.eq-drop').forEach(d => d.style.display = 'none');
+  document.querySelectorAll('.eq-drop').forEach(d => d.style.display='none');
   pmDropOpen(rid, '');
 }
 
+function pmEqInput(rid, val) {
+  const row = pmRows.find(r => r.id == rid);
+  if (!row) return;
+  if (row.owner === 'Other') {
+    row.equip_name = val; row.equip_code = '';
+    debouncePm(); return;
+  }
+  row.equip_name = val;
+  pmDropOpen(rid, val);
+  debouncePm();
+}
+
 function pmDropOpen(rid, query) {
-  // Close all other eq-drops first
-  document.querySelectorAll('.eq-drop').forEach(d => d.style.display = 'none');
-  const row = pmRows.find(r => String(r.id) === String(rid));
+  const row = pmRows.find(r => r.id == rid);
   if (!row || !row.owner || row.owner === 'Other') return;
   const q = (query||'').toLowerCase().trim();
   const pool = equipMaster.filter(e => e.owner === row.owner);
   const hits = q ? pool.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)) : pool;
-  const drop = document.getElementById('pm-eq-drop-' + rid);
-  if (!drop) return;
-  drop.innerHTML = !hits.length
-    ? '<div style="padding:10px 14px;color:var(--gray-lt);font-size:12px">No matches found</div>'
-    : hits.slice(0,60).map(e =>
-        `<div class="eq-drop-item" onmousedown="pmPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}')">
-           <span>${esc(e.name)}</span><span class="eq-drop-code">${esc(e.code)}</span>
-         </div>`).join('');
-  const inp = document.getElementById('pm-eqname-' + rid);
+  const drop = document.getElementById('pm-eq-drop-'+rid);
+  if (!hits.length) { drop.innerHTML='<div style="padding:10px 14px;color:var(--gray-lt);font-size:12px">No matches found</div>'; }
+  else {
+    drop.innerHTML = hits.slice(0,60).map(e =>
+      `<div class="eq-drop-item" onmousedown="pmPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}')">
+         <span>${esc(e.name)}</span>
+         <span class="eq-drop-code">${esc(e.code)}</span>
+       </div>`).join('');
+  }
+  const inp = document.getElementById('pm-eqname-'+rid);
   if (inp) {
     const rect = inp.getBoundingClientRect();
     const left = Math.max(8, rect.left);
     const width = Math.min(Math.max(rect.width, 340), window.innerWidth - left - 12);
-    drop.style.top   = (rect.bottom + 2) + 'px';
-    drop.style.left  = left + 'px';
+    drop.style.top = (rect.bottom + 2) + 'px';
+    drop.style.left = left + 'px';
     drop.style.width = width + 'px';
   }
   drop.style.display = 'block';
-  drop.style.zIndex = '9999';
 }
 
 function pmDropClose(rid) {
-  const drop = document.getElementById('pm-eq-drop-' + rid);
+  const drop = document.getElementById('pm-eq-drop-'+rid);
   if (drop) drop.style.display = 'none';
 }
 
 function pmPick(evt, rid, code, name) {
   evt.preventDefault();
-  const inp = document.getElementById('pm-eqname-' + rid);
+  const inp = document.getElementById('pm-eqname-'+rid);
   if (inp) inp.value = name;
   pmDropClose(rid);
-  const row = pmRows.find(r => String(r.id) === String(rid));
+  const row = pmRows.find(r => r.id == rid);
   if (row) { row.equip_name = name; row.equip_code = code; }
   debouncePm();
 }
 
 function pmEndDate(rid, val) {
-  const row = pmRows.find(r => String(r.id) === String(rid)); if (!row) return;
+  const row = pmRows.find(r => r.id == rid); if (!row) return;
   row.end_date = val || null;
   if (val) row.status = 'Done';
   else if (row.status === 'Done') row.status = 'In-progress';
-  debouncePm();
-  renderPm();
+  debouncePm(); renderPm();
 }
 
 function pmField(rid, field, val) {
-  const row = pmRows.find(r => String(r.id) === String(rid)); if (!row) return;
+  const row = pmRows.find(r => r.id == rid); if (!row) return;
   row[field] = val || null;
   if (field === 'owner') { row.equip_name = ''; row.equip_code = ''; renderPm(); }
   debouncePm();
 }
 
-let _pmTimer = null;
-function debouncePm() {
-  clearTimeout(_pmTimer);
-  _pmTimer = setTimeout(savePm, 600);
-}
 
 async function savePm() {
   if (!currentReport) return;
