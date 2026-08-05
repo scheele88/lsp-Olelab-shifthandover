@@ -291,7 +291,7 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
   background:#fff;
   z-index:9999;
   overflow:auto;
-  padding:20px;
+  padding:72px 20px 20px;  /* top padding clears the fixed button bar */
   font-family:'Inter','Segoe UI',Arial,sans-serif;
 }
 .ps-report { max-width:1100px; margin:0 auto; }
@@ -302,11 +302,11 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
 .ps-report-header h1 { font-size:18px; font-weight:800; color:#212121; }
 .ps-report-header .ps-report-meta { font-size:12px; color:#757575; text-align:right; }
 .ps-report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.ps-report-section { margin-bottom:12px; }
+.ps-report-section { margin-bottom:22px; }
 .ps-report-title {
-  font-size:11px; font-weight:800; color:#0097a7;
+  font-size:11px; font-weight:800; color:#c62828;
   text-transform:uppercase; letter-spacing:.8px;
-  border-bottom:2px solid #b2ebf2; padding-bottom:3px; margin-bottom:5px;
+  border-bottom:2px solid #ef9a9a; padding-bottom:3px; margin-bottom:5px;
 }
 .ps-report table { width:100%; border-collapse:collapse; font-size:11px; }
 .ps-report th {
@@ -327,8 +327,10 @@ header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-
   padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; z-index:10000;
 }
 .ps-report-actions {
-  position:fixed; top:16px; right:120px;
+  position:fixed; top:16px; left:50%; transform:translateX(-50%);
   display:flex; gap:8px; z-index:10000;
+  background:rgba(255,255,255,.95); padding:6px 12px; border-radius:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
 }
 @media print {
   .ps-report-close-btn, .ps-report-actions { display:none !important; }
