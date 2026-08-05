@@ -545,7 +545,7 @@ html, body {
 
 <div class="tabs">
   <button class="tab-btn active" data-tab="s1" onclick="switchTab('s1')">§1 General</button>
-  <button class="tab-btn" data-tab="s2" onclick="switchTab('s2')">§2 Equipment Mgmt</button>
+  <button class="tab-btn" data-tab="s2" onclick="switchTab('s2')">§2 Equipment Trouble</button>
   <button class="tab-btn" data-tab="s3" onclick="switchTab('s3')">§3 Pending Samples</button>
   <button class="tab-btn" data-tab="s4" onclick="switchTab('s4')">§4 Plant Samples</button>
   <button class="tab-btn" data-tab="s4b" onclick="switchTab('s4b')">§5 Import/Export</button>
@@ -606,11 +606,11 @@ html, body {
   </div>
 </div>
 
-<!-- §2 Equipment Management -->
+<!-- §2 Equipment Trouble -->
 <div id="tab-s2" style="display:none">
   <div class="card">
     <div class="card-hdr">
-      <h2>§2 — Equipment Management</h2>
+      <h2>§2 — Equipment Trouble Log</h2>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <span style="font-size:10px;color:var(--gray-lt);font-weight:600">Export:</span>
         <input type="date" id="export-from" style="width:115px;font-size:11px;padding:2px 5px;border:1px solid var(--border2);border-radius:3px" title="From date"/>
@@ -623,12 +623,6 @@ html, body {
       </div>
     </div>
     <div class="card-body" style="padding:8px">
-
-      <!-- §2.1 sub-header -->
-      <div style="font-size:11px;font-weight:800;color:#1565c0;text-transform:uppercase;letter-spacing:.8px;padding:4px 2px 6px;border-bottom:2px solid #bbdefb;margin-bottom:8px">
-        §2.1 — Equipment Trouble Log
-      </div>
-
       <div class="table-scroll-x">
       <table class="etable">
         <thead><tr>
@@ -649,33 +643,8 @@ html, body {
         </tr></thead>
         <tbody id="trouble-tbody"></tbody>
       </table>
-      </div>
-      <p id="no-trouble" style="text-align:center;padding:20px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
-
-      <!-- §2.2 PM / Calib Schedule -->
-      <div style="font-size:11px;font-weight:800;color:#1565c0;text-transform:uppercase;letter-spacing:.8px;padding:4px 2px 6px;border-bottom:2px solid #bbdefb;margin-bottom:8px;margin-top:20px;display:flex;align-items:center;gap:10px">
-        <span>§2.2 — Equipment PM / Calibration Schedule</span>
-        <button class="btn-blue btn-sm" id="add-pm-btn" onclick="addPmRow()" style="font-size:10px;font-weight:700">➕ Add Row</button>
-      </div>
-      <div class="table-scroll-x">
-        <table class="etable" style="width:100%;table-layout:fixed">
-          <thead><tr>
-            <th style="width:28px">#</th>
-            <th style="width:70px">Lab</th>
-            <th style="width:180px">Equipment Name</th>
-            <th style="width:100px">Start Date</th>
-            <th style="width:115px">Event</th>
-            <th style="width:100px">Scope</th>
-            <th style="width:15%">Performed By</th>
-            <th style="width:100px">End Date</th>
-            <th style="width:115px">Status</th>
-            <th style="width:28px"></th>
-          </tr></thead>
-          <tbody id="pm-tbody"></tbody>
-        </table>
-      </div>
-      <p id="no-pm" style="text-align:center;padding:20px;color:var(--gray-lt)">No PM / calibration events this shift.</p>
-
+        </div>
+      <p id="no-trouble" style="text-align:center;padding:24px;color:var(--gray-lt)">No equipment trouble logged this shift.</p>
     </div>
   </div>
 </div>
@@ -1269,7 +1238,6 @@ function applyLock() {
     if (b.onclick && b.onclick.toString().includes('exportTrouble')) return;
     if (b.onclick && b.onclick.toString().includes('psExport')) return;
     if (b.onclick && b.onclick.toString().includes('psDownload')) return;
-    if (b.onclick && b.onclick.toString().includes('addPmRow')) return;
     b.disabled = lock;
   });
   document.getElementById('save-bar').style.display = lock ? 'none' : '';
@@ -1548,9 +1516,6 @@ async function syncToNextShift() {
       troubleMap.push({ old_row_id: t.id, new_row_id: r.id });
     }
     await copyAtts('trouble', troubleMap, currentReport.id, nr.id);
-    // §2.2 PM — carry non-Done rows only
-    const pmNotDone = (src.pmRows || []).filter(r => r.status !== 'Done');
-    await api(`/api/reports/${nr.id}/pm`, 'PUT', { rows: pmNotDone });
     const notDonePending = (src.pending || []).filter(p => p.status !== 'Done');
     const savedPending = await api(`/api/reports/${nr.id}/pending`, 'PUT',
       notDonePending.map(p => ({ sample_point: p.sample_point, reason: p.reason,
@@ -2233,69 +2198,104 @@ function getTroubleExportData() {
 }
 
 
-// ── §2.2 Equipment PM / Calib Schedule ────────────────────────────────────
+// ── §2.2 Equipment PM / Calibration Schedule ──────────────────────────────
 function renderPm() {
   const tbody = document.getElementById('pm-tbody');
   const noMsg = document.getElementById('no-pm');
   if (!tbody) return;
-  if (!pmRows.length) {
-    tbody.innerHTML = '';
-    if (noMsg) noMsg.style.display = '';
-    return;
-  }
+  if (!pmRows.length) { tbody.innerHTML = ''; if (noMsg) noMsg.style.display=''; return; }
   if (noMsg) noMsg.style.display = 'none';
-  const LABS = ['Gas','Oil','UT','Other'];
-  const EVENTS = ['PM','CM','Calibration','Verification'];
-  const SCOPES = ['Internal','External'];
+  const LABS     = ['Gas','Oil','UT','Other'];
+  const EVENTS   = ['PM','CM','Calibration','Verification'];
+  const SCOPES   = ['Internal','External'];
   const STATUSES = ['In-progress','Investigating','Done'];
   tbody.innerHTML = pmRows.map((row,i) => {
-    const rid = row.id;
-    const labOpts  = LABS.map(l    => `<option${row.owner===l?' selected':''}>${l}</option>`).join('');
-    const evOpts   = EVENTS.map(e  => `<option${row.event_type===e?' selected':''}>${e}</option>`).join('');
-    const scOpts   = SCOPES.map(s  => `<option${row.scope_type===s?' selected':''}>${s}</option>`).join('');
-    const stOpts   = STATUSES.map(s => `<option${row.status===s?' selected':''}>${s}</option>`).join('');
-    const stColor  = row.status==='Done'?'#1b5e20':row.status==='In-progress'?'#0d47a1':'#e65100';
+    const rid     = row.id;
+    const labOpts = LABS.map(l    => `<option value="${l}"${row.owner===l?' selected':''}>${l}</option>`).join('');
+    const evOpts  = EVENTS.map(e  => `<option${row.event_type===e?' selected':''}>${e}</option>`).join('');
+    const scOpts  = SCOPES.map(s  => `<option${row.scope_type===s?' selected':''}>${s}</option>`).join('');
+    const stOpts  = STATUSES.map(s => `<option${row.status===s?' selected':''}>${s}</option>`).join('');
+    const stColor = row.status==='Done'?'#1b5e20':row.status==='In-progress'?'#0d47a1':'#e65100';
+    const isOther = row.owner === 'Other';
     return `<tr id="pm-row-${rid}">
       <td style="text-align:center;color:var(--gray-lt);font-size:11px">${i+1}</td>
       <td><select onchange="pmField(${rid},'owner',this.value)" style="width:100%;font-size:11px">${labOpts}</select></td>
-      <td>
-        <input list="eqlist-pm-${rid}" value="${esc(row.equip_name||'')}" placeholder="Search equipment…"
-          style="width:100%;font-size:11px;border:1px solid var(--border2);border-radius:3px;padding:3px 4px"
-          oninput="pmEqInput(${rid},this.value)" onchange="pmEqChange(${rid},this.value)">
-        <datalist id="eqlist-pm-${rid}"></datalist>
+      <td style="background:#f8f4ff">
+        <div class="eq-drop-wrap" id="pm-eqname-wrap-${rid}">
+          <textarea id="pm-eqname-${rid}"
+            placeholder="${isOther?'Type name manually…':row.owner?'Click or type to search…':'Select lab first…'}"
+            ${!row.owner&&!isOther?'readonly':''}
+            oninput="pmEqInput(${rid},this.value)"
+            onfocus="pmDropOpen(${rid},this.value)"
+            onblur="setTimeout(()=>pmDropClose(${rid}),200)"
+            style="font-weight:700;color:#4a148c;background:transparent;border:none;resize:none;padding:4px;width:100%;font-size:12px;min-height:28px">${esc(row.equip_name||'')}</textarea>
+          <div class="eq-drop" id="pm-eq-drop-${rid}"></div>
+        </div>
       </td>
-      <td><input type="date" value="${row.start_date||''}" style="width:100%;font-size:11px" onchange="pmField(${rid},'start_date',this.value)"></td>
+      <td><input type="date" value="${row.start_date?row.start_date.slice(0,10):''}" style="width:100%;font-size:11px" onchange="pmField(${rid},'start_date',this.value)"></td>
       <td><select onchange="pmField(${rid},'event_type',this.value)" style="width:100%;font-size:11px">${evOpts}</select></td>
       <td><select onchange="pmField(${rid},'scope_type',this.value)" style="width:100%;font-size:11px">${scOpts}</select></td>
       <td><input type="text" value="${esc(row.performed_by||'')}" placeholder="Person / vendor…"
           style="width:100%;font-size:11px;border:1px solid var(--border2);border-radius:3px;padding:3px 4px"
           onchange="pmField(${rid},'performed_by',this.value)"></td>
-      <td><input type="date" value="${row.end_date||''}" style="width:100%;font-size:11px" onchange="pmEndDate(${rid},this.value)"></td>
+      <td><input type="date" value="${row.end_date?row.end_date.slice(0,10):''}" style="width:100%;font-size:11px" onchange="pmEndDate(${rid},this.value)"></td>
       <td><select onchange="pmField(${rid},'status',this.value)"
           style="width:100%;font-size:11px;font-weight:700;color:${stColor}">${stOpts}</select></td>
       <td><button onclick="delPm(${rid})"
           style="background:#e53935;color:#fff;border:none;border-radius:3px;padding:2px 6px;cursor:pointer;font-size:13px">🗑</button></td>
     </tr>`;
   }).join('');
-  // Populate equipment datalists filtered by lab
-  pmRows.forEach(row => {
-    const dl = document.getElementById(`eqlist-pm-${row.id}`);
-    if (!dl) return;
-    const equips = row.owner && row.owner !== 'Other'
-      ? EQUIPMENT.filter(e => e.lab === row.owner)
-      : EQUIPMENT;
-    dl.innerHTML = equips.map(e => `<option value="${esc(e.name)}" data-code="${e.code}">`).join('');
-  });
 }
 
 function pmEqInput(rid, val) {
   const row = pmRows.find(r => r.id === rid); if (!row) return;
   row.equip_name = val;
-  const eq = EQUIPMENT.find(e => e.name === val);
+  const eq = equipMaster.find(e => e.name === val);
   if (eq) row.equip_code = eq.code;
+  pmDropOpen(rid, val);
   debouncePm();
 }
-function pmEqChange(rid, val) { pmEqInput(rid, val); }
+
+function pmDropOpen(rid, query) {
+  const row = pmRows.find(r => r.id === rid);
+  if (!row || !row.owner || row.owner === 'Other') return;
+  const q = (query||'').toLowerCase().trim();
+  const pool = equipMaster.filter(e => e.owner === row.owner);
+  const hits = q ? pool.filter(e => e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)) : pool;
+  const drop = document.getElementById('pm-eq-drop-' + rid);
+  if (!drop) return;
+  drop.innerHTML = !hits.length
+    ? '<div style="padding:10px 14px;color:var(--gray-lt);font-size:12px">No matches found</div>'
+    : hits.slice(0,60).map(e =>
+        `<div class="eq-drop-item" onmousedown="pmPick(event,${rid},'${e.code.replace(/'/g,"\'")}','${e.name.replace(/'/g,"\'")}')">
+           <span>${esc(e.name)}</span><span class="eq-drop-code">${esc(e.code)}</span>
+         </div>`).join('');
+  const inp = document.getElementById('pm-eqname-' + rid);
+  if (inp) {
+    const rect = inp.getBoundingClientRect();
+    const left = Math.max(8, rect.left);
+    const width = Math.min(Math.max(rect.width, 340), window.innerWidth - left - 12);
+    drop.style.top   = (rect.bottom + 2) + 'px';
+    drop.style.left  = left + 'px';
+    drop.style.width = width + 'px';
+  }
+  drop.style.display = 'block';
+}
+
+function pmDropClose(rid) {
+  const drop = document.getElementById('pm-eq-drop-' + rid);
+  if (drop) drop.style.display = 'none';
+}
+
+function pmPick(evt, rid, code, name) {
+  evt.preventDefault();
+  const inp = document.getElementById('pm-eqname-' + rid);
+  if (inp) inp.value = name;
+  pmDropClose(rid);
+  const row = pmRows.find(r => r.id === rid);
+  if (row) { row.equip_name = name; row.equip_code = code; }
+  debouncePm();
+}
 
 function pmEndDate(rid, val) {
   const row = pmRows.find(r => r.id === rid); if (!row) return;
@@ -2309,6 +2309,7 @@ function pmEndDate(rid, val) {
 function pmField(rid, field, val) {
   const row = pmRows.find(r => r.id === rid); if (!row) return;
   row[field] = val || null;
+  if (field === 'owner') { row.equip_name = ''; row.equip_code = ''; renderPm(); }
   debouncePm();
 }
 
@@ -2323,7 +2324,6 @@ async function savePm() {
   try {
     const saved = await api(`/api/reports/${currentReport.id}/pm`, 'PUT', { rows: pmRows });
     pmRows = saved;
-    renderPm();
     syncToNextShift();
   } catch(e) { toast('PM save error: ' + e.message, 3000); }
 }
