@@ -1115,6 +1115,10 @@ async function loadCurrentShift() {
 
 async function carryForwardPending() {
   if (!currentReport || !currentReport.id) return;
+  // Skip carry-forward if current shift already has data (synced by previous shift)
+  const alreadyHasData = troubleRows.length || pendingRows.length ||
+    schedRows.length || reqRows.length || pmRows.length;
+  if (alreadyHasData) return;
   try {
     // Get recent reports list — find the most recent shift that is NOT this one
     const reports = await api('/api/reports?limit=10');
@@ -1812,9 +1816,8 @@ function trField(id, field, value) {
       row.end_date = '';
     }
   }
-  if (field === 'status') {
+  if (field === 'status' || field === 'out_of_service') {
     renderTrouble();
-    // Save immediately on status change (no debounce) to ensure end_date is persisted
     saveTroubleRow(id);
     return;
   }
@@ -1866,13 +1869,9 @@ async function delTrouble(id) {
 function eqLabChange(rid, labVal) {
   const row = troubleRows.find(r => r.id === rid);
   if (row) { row.owner = labVal; row.equip_name = ''; row.equip_code = ''; }
-  // Reset name and code fields
-  const nameInput = document.getElementById('eqname-'+rid);
-  const codeInput = document.getElementById('eqcode-'+rid);
-  if (nameInput) { nameInput.value = ''; nameInput.readOnly = (!labVal); nameInput.placeholder = labVal === 'Other' ? 'Type name manually…' : labVal ? 'Click or type to search…' : 'Select lab first…'; }
-  if (codeInput) codeInput.value = '';
   eqDropClose(rid);
-  debounceTrouble(rid);
+  renderTrouble();         // re-render so Lab select color updates immediately
+  saveTroubleRow(rid);     // save immediately — lab change is discrete
 }
 
 function eqNameFocus(rid) {
