@@ -1543,7 +1543,7 @@ async function syncToNextShift() {
     await copyAtts('trouble', troubleMap, currentReport.id, nr.id);
     // §2.2 PM — carry non-Done rows only
     const pmNotDone = (src.pmRows || []).filter(r => r.status !== 'Done');
-    await api(`/api/reports/${nr.id}/pm`, 'PUT', { rows: pmNotDone });
+    try { await api(`/api/reports/${nr.id}/pm`, 'PUT', { rows: pmNotDone }); } catch(e) { console.warn('pm sync skipped:', e.message); }
     const notDonePending = (src.pending || []).filter(p => p.status !== 'Done');
     const savedPending = await api(`/api/reports/${nr.id}/pending`, 'PUT',
       notDonePending.map(p => ({ sample_point: p.sample_point, reason: p.reason,
@@ -2373,7 +2373,7 @@ async function savePmRow(id) {
   try {
     await api(`/api/pm/${id}`, 'PATCH', row);
     syncToNextShift();
-  } catch(e) { console.error('patch pm:', e); }
+  } catch(e) { console.warn('savePmRow:', e.message); }
 }
 
 async function addPmRow() {

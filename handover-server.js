@@ -146,17 +146,17 @@ async function initDB() {
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS equip_pm (
-      id          SERIAL PRIMARY KEY,
-      report_id   INTEGER NOT NULL REFERENCES handover_reports(id) ON DELETE CASCADE,
-      equip_code  VARCHAR(50)  DEFAULT '',
-      equip_name  VARCHAR(200) DEFAULT '',
-      owner       VARCHAR(20)  DEFAULT '',
-      start_date  DATE,
-      event_type  VARCHAR(30)  DEFAULT 'PM',
-      scope_type  VARCHAR(20)  DEFAULT 'Internal',
+      id           SERIAL PRIMARY KEY,
+      report_id    INTEGER NOT NULL REFERENCES handover_reports(id) ON DELETE CASCADE,
+      equip_code   VARCHAR(50)  DEFAULT '',
+      equip_name   VARCHAR(200) DEFAULT '',
+      owner        VARCHAR(20)  DEFAULT '',
+      start_date   DATE,
+      event_type   VARCHAR(30)  DEFAULT 'PM',
+      scope_type   VARCHAR(20)  DEFAULT 'Internal',
       performed_by VARCHAR(100) DEFAULT '',
-      end_date    DATE,
-      status      VARCHAR(30)  DEFAULT 'In-progress'
+      end_date     DATE,
+      status       VARCHAR(30)  DEFAULT 'In-progress'
     )
   `);
 
@@ -311,13 +311,13 @@ app.delete('/api/trouble/:id', async (req, res) => {
   catch(e){ res.status(500).json({error:e.message}); }
 });
 
-// ── §2.2 Equipment PM / Calib ──────────────────────────────────────────────
+// ── §2.2 Equipment PM ──────────────────────────────────────────────────────
 app.post('/api/reports/:id/pm', async (req, res) => {
   const { equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status } = req.body;
   try {
-    const { rows:[r] } = await pool.query(`
-      INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+    const { rows:[r] } = await pool.query(
+      `INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [req.params.id,equip_code||'',equip_name||'',owner||'',
        start_date||null,event_type||'PM',scope_type||'Internal',
        performed_by||'',end_date||null,status||'In-progress']);
@@ -326,11 +326,12 @@ app.post('/api/reports/:id/pm', async (req, res) => {
 });
 
 app.patch('/api/pm/:id', async (req, res) => {
-  const f = ['equip_code','equip_name','owner','start_date','event_type','scope_type','performed_by','end_date','status'];
+  const fields = ['equip_code','equip_name','owner','start_date','event_type','scope_type','performed_by','end_date','status'];
   try {
+    const vals = fields.map(f => { const v = req.body[f]; return (v===''||v===undefined||v===null)?null:v; });
     const { rows:[r] } = await pool.query(
-      `UPDATE equip_pm SET ${f.map((x,i)=>`${x}=$${i+1}`).join(',')} WHERE id=$${f.length+1} RETURNING *`,
-      [...f.map(x => { const v = req.body[x]; return (v===''||v===undefined||v===null)?null:v; }), req.params.id]);
+      `UPDATE equip_pm SET ${fields.map((f,i)=>`${f}=$${i+1}`).join(',')} WHERE id=$${fields.length+1} RETURNING *`,
+      [...vals, req.params.id]);
     res.json(r);
   } catch(e){ res.status(500).json({error:e.message}); }
 });
@@ -341,9 +342,9 @@ app.put('/api/reports/:id/pm', async (req, res) => {
     await pool.query('DELETE FROM equip_pm WHERE report_id=$1',[req.params.id]);
     const saved = [];
     for (const row of rows) {
-      const { rows:[r] } = await pool.query(`
-        INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      const { rows:[r] } = await pool.query(
+        `INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
         [req.params.id,row.equip_code||'',row.equip_name||'',row.owner||'',
          row.start_date||null,row.event_type||'PM',row.scope_type||'Internal',
          row.performed_by||'',row.end_date||null,row.status||'In-progress']);
