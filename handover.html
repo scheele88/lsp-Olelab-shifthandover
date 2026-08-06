@@ -1986,12 +1986,12 @@ async function addPendingRow(){
 }
 
 // ── Per-section debounced saves ────────────────────────────────────────────
-function debouncePending() { clearTimeout(debouncePending._t); debouncePending._t = setTimeout(()=>savePending(), 700); }
-function debounceSchedules() { clearTimeout(debounceSchedules._t); debounceSchedules._t = setTimeout(()=>saveSchedules(), 700); }
-function debounceReqSamples() { clearTimeout(debounceReqSamples._t); debounceReqSamples._t = setTimeout(()=>saveReqSamples(), 700); }
-function debounceLims() { clearTimeout(debounceLims._t); debounceLims._t = setTimeout(()=>saveLims(), 700); }
-function debounceRemarks() { clearTimeout(debounceRemarks._t); debounceRemarks._t = setTimeout(()=>saveRemarks(), 700); }
-function debounceImpExp() { clearTimeout(debounceImpExp._t); debounceImpExp._t = setTimeout(()=>saveImpExp(), 700); }
+function debouncePending() { clearTimeout(debouncePending._t); debouncePending._t = setTimeout(()=>savePending(true), 700); }
+function debounceSchedules() { clearTimeout(debounceSchedules._t); debounceSchedules._t = setTimeout(()=>saveSchedules(true), 700); }
+function debounceReqSamples() { clearTimeout(debounceReqSamples._t); debounceReqSamples._t = setTimeout(()=>saveReqSamples(true), 700); }
+function debounceLims() { clearTimeout(debounceLims._t); debounceLims._t = setTimeout(()=>saveLims(true), 700); }
+function debounceRemarks() { clearTimeout(debounceRemarks._t); debounceRemarks._t = setTimeout(()=>saveRemarks(true), 700); }
+function debounceImpExp() { clearTimeout(debounceImpExp._t); debounceImpExp._t = setTimeout(()=>saveImpExp(true), 700); }
 async function savePending(skipRender=false){ pushUndo();
   if(!currentReport)return;
   const saved = await api(`/api/reports/${currentReport.id}/pending`,'PUT',pendingRows);
@@ -2022,7 +2022,7 @@ function renderSched() {
   });
 }
 function addScheduleRow(){ schedRows.push({plant:'Hot',sampling_point:'',change_desc:'',effective_date:'',requested_by:''}); renderSched(); }
-async function saveSchedules(){ pushUndo(); if(!currentReport)return; await api(`/api/reports/${currentReport.id}/schedules`,'PUT',schedRows); }
+async function saveSchedules(skipRender=false){ pushUndo(); if(!currentReport)return; await api(`/api/reports/${currentReport.id}/schedules`,'PUT',schedRows); if(!skipRender) renderSched(); }
 
 // ── Requested samples ──────────────────────────────────────────────────────
 function renderReq() {
@@ -2047,7 +2047,7 @@ function renderReq() {
   });
 }
 function addReqRow(){ reqRows.push({plant:'Hot',product_stream:'',test_items:'',requested_by:'',target_date:'',priority:'Normal'}); renderReq(); }
-async function saveReqSamples(){ pushUndo(); if(!currentReport)return; await api(`/api/reports/${currentReport.id}/reqsamples`,'PUT',reqRows); }
+async function saveReqSamples(skipRender=false){ pushUndo(); if(!currentReport)return; await api(`/api/reports/${currentReport.id}/reqsamples`,'PUT',reqRows); if(!skipRender) renderReq(); }
 
 // ── LIMS Issues ────────────────────────────────────────────────────────────
 function renderLims() {
