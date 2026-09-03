@@ -144,22 +144,6 @@ async function initDB() {
     );
   `);
 
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS equip_pm (
-      id           SERIAL PRIMARY KEY,
-      report_id    INTEGER NOT NULL REFERENCES handover_reports(id) ON DELETE CASCADE,
-      equip_code   VARCHAR(50)  DEFAULT '',
-      equip_name   VARCHAR(200) DEFAULT '',
-      owner        VARCHAR(20)  DEFAULT '',
-      start_date   DATE,
-      event_type   VARCHAR(30)  DEFAULT 'PM',
-      scope_type   VARCHAR(20)  DEFAULT 'Internal',
-      performed_by VARCHAR(100) DEFAULT '',
-      end_date     DATE,
-      status       VARCHAR(30)  DEFAULT 'In-progress'
-    )
-  `);
-
   // Migration: add missing columns to existing handover_reports table (safe — IF NOT EXISTS)
   const migrations = [
     `ALTER TABLE pending_samples ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'In-progress'`,
@@ -192,6 +176,87 @@ app.use(express.json());
 app.use(express.static(__dirname));
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'handover.html')));
 
+
+// ── Dashboard aggregation endpoint ─────────────────────────────────────────
+app.get('/api/dashboard', async (req, res) => {
+  const range = req.query.range || '7';
+  try {
+    // Determine date filter
+    let dateFilter = '';
+    const params = [];
+    if (range !== 'all') {
+      const days = parseInt(range) || 7;
+      dateFilter = `WHERE hr.shift_date >= NOW() - INTERVAL '${days} days'`;
+    }
+
+    // Get report IDs in range (max 60)
+    const { rows: reports } = await pool.query(
+      `SELECT id, shift_date, shift_type FROM handover_reports ${dateFilter} ORDER BY shift_date DESC, shift_type DESC LIMIT 60`
+    );
+
+    if (!reports.length) return res.json({ shifts:0, trouble:[], pmRows:[], pending:[], impexp:[], psRows:null });
+
+    const ids = reports.map(r => r.id);
+    const idList = ids.join(',');
+
+    // Fetch all section data in parallel — ONE query per section, not per report
+    const [troubleRes, pmRes, pendRes, impexpRes] = await Promise.all([
+      pool.query(`SELECT et.*, hr.shift_date, hr.shift_type FROM equip_trouble et JOIN handover_reports hr ON et.report_id=hr.id WHERE et.report_id IN (${idList}) ORDER BY et.start_date DESC`),
+      pool.query(`SELECT ep.*, hr.shift_date FROM equip_pm ep JOIN handover_reports hr ON ep.report_id=hr.id WHERE ep.report_id IN (${idList}) ORDER BY ep.start_date DESC`),
+      pool.query(`SELECT ps.*, hr.shift_date FROM pending_samples ps JOIN handover_reports hr ON ps.report_id=hr.id WHERE ps.report_id IN (${idList}) ORDER BY hr.shift_date DESC`),
+      pool.query(`SELECT ie.*, hr.shift_date FROM import_export ie JOIN handover_reports hr ON ie.report_id=hr.id WHERE ie.report_id IN (${idList}) ORDER BY hr.shift_date DESC`),
+    ]);
+
+    // Deduplicate trouble by equip_code+start_date (keep latest shift's version)
+    const troubleMap = new Map();
+    troubleRes.rows.forEach(t => {
+      const key = (t.equip_code || t.equip_name || '') + '|' + (t.start_date || '');
+      if (!troubleMap.has(key) || t.shift_date > troubleMap.get(key).shift_date) troubleMap.set(key, t);
+    });
+
+    // Deduplicate PM
+    const pmMap = new Map();
+    pmRes.rows.forEach(t => {
+      const key = (t.equip_code || t.equip_name || '') + '|' + (t.start_date || '') + '|' + (t.event_type || '');
+      if (!pmMap.has(key)) pmMap.set(key, t);
+    });
+
+    // Deduplicate pending
+    const pendMap = new Map();
+    pendRes.rows.forEach(t => {
+      const key = t.sample_point || t.reason || '';
+      if (!pendMap.has(key)) pendMap.set(key, t);
+    });
+
+    // Deduplicate impexp
+    const impMap = new Map();
+    impexpRes.rows.forEach(t => {
+      const key = (t.material || '') + '|' + (t.direction || '');
+      if (!impMap.has(key)) impMap.set(key, t);
+    });
+
+    // Get PS from most recent report
+    const latestId = ids[0];
+    const { rows: psRows } = await pool.query('SELECT ps_rows FROM handover_reports WHERE id=$1', [latestId]);
+    const ps = psRows[0]?.ps_rows || null;
+    const latest = reports[0];
+    const shiftLabel = `${latest.shift_type} ${latest.shift_date.toISOString().slice(0,10)}`;
+
+    res.json({
+      shifts:   reports.length,
+      trouble:  [...troubleMap.values()],
+      pmRows:   [...pmMap.values()],
+      pending:  [...pendMap.values()],
+      impexp:   [...impMap.values()],
+      psRows:   ps,
+      shiftLabel
+    });
+  } catch(e) {
+    console.error('Dashboard error:', e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/equipment', (_req, res) => res.json(EQUIPMENT));
 
 async function loadFull(reportId) {
@@ -205,8 +270,7 @@ async function loadFull(reportId) {
   const { rows: limsRows }      = await pool.query('SELECT * FROM lims_issues    WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: remarksRows }   = await pool.query('SELECT * FROM general_remarks WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
   const { rows: impexpRows }    = await pool.query('SELECT * FROM import_export   WHERE report_id=$1 ORDER BY sort_order,id',[reportId]);
-  const { rows: pmRows } = await pool.query('SELECT * FROM equip_pm WHERE report_id=$1 ORDER BY id',[reportId]);
-  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows, impexpRows, psRows, pmRows };
+  return { ...r, trouble, pending, schedules, reqsamples, limsRows, remarksRows, impexpRows, psRows };
 }
 
 app.get('/api/reports', async (req, res) => {
@@ -308,54 +372,6 @@ app.patch('/api/trouble/:id', async (req, res) => {
 
 app.delete('/api/trouble/:id', async (req, res) => {
   try { await pool.query('DELETE FROM equip_trouble WHERE id=$1',[req.params.id]); res.json({ok:true}); }
-  catch(e){ res.status(500).json({error:e.message}); }
-});
-
-// ── §2.2 Equipment PM ──────────────────────────────────────────────────────
-app.post('/api/reports/:id/pm', async (req, res) => {
-  const { equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status } = req.body;
-  try {
-    const { rows:[r] } = await pool.query(
-      `INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [req.params.id,equip_code||'',equip_name||'',owner||'',
-       start_date||null,event_type||'PM',scope_type||'Internal',
-       performed_by||'',end_date||null,status||'In-progress']);
-    res.json(r);
-  } catch(e){ res.status(500).json({error:e.message}); }
-});
-
-app.patch('/api/pm/:id', async (req, res) => {
-  const fields = ['equip_code','equip_name','owner','start_date','event_type','scope_type','performed_by','end_date','status'];
-  try {
-    const vals = fields.map(f => { const v = req.body[f]; return (v===''||v===undefined||v===null)?null:v; });
-    const { rows:[r] } = await pool.query(
-      `UPDATE equip_pm SET ${fields.map((f,i)=>`${f}=$${i+1}`).join(',')} WHERE id=$${fields.length+1} RETURNING *`,
-      [...vals, req.params.id]);
-    res.json(r);
-  } catch(e){ res.status(500).json({error:e.message}); }
-});
-
-app.put('/api/reports/:id/pm', async (req, res) => {
-  const rows = req.body.rows || [];
-  try {
-    await pool.query('DELETE FROM equip_pm WHERE report_id=$1',[req.params.id]);
-    const saved = [];
-    for (const row of rows) {
-      const { rows:[r] } = await pool.query(
-        `INSERT INTO equip_pm (report_id,equip_code,equip_name,owner,start_date,event_type,scope_type,performed_by,end_date,status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-        [req.params.id,row.equip_code||'',row.equip_name||'',row.owner||'',
-         row.start_date||null,row.event_type||'PM',row.scope_type||'Internal',
-         row.performed_by||'',row.end_date||null,row.status||'In-progress']);
-      saved.push(r);
-    }
-    res.json(saved);
-  } catch(e){ res.status(500).json({error:e.message}); }
-});
-
-app.delete('/api/pm/:id', async (req, res) => {
-  try { await pool.query('DELETE FROM equip_pm WHERE id=$1',[req.params.id]); res.json({ok:true}); }
   catch(e){ res.status(500).json({error:e.message}); }
 });
 
