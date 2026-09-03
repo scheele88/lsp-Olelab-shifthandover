@@ -163,6 +163,7 @@ async function initDB() {
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS incoming_name VARCHAR(50)`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS incoming_ts TIMESTAMPTZ`,
     `ALTER TABLE handover_reports ADD COLUMN IF NOT EXISTS locked BOOLEAN DEFAULT FALSE`,
+    `ALTER TABLE import_export ADD COLUMN IF NOT EXISTS vessel_name VARCHAR(100) DEFAULT ''`,
   ];
   for (const sql of migrations) {
     try { await pool.query(sql); } catch(e) { console.warn('Migration skipped:', e.message); }
@@ -558,12 +559,12 @@ app.put('/api/reports/:id/impexp', async (req, res) => {
       const r = rows[i];
       if (r.id) {
         await pool.query(
-          `UPDATE import_export SET direction=$1,material=$2,etb=$3,num_tanks=$4,num_samples=$5,status=$6,quality=$7,remark=$8,sort_order=$9 WHERE id=$10`,
-          [r.direction||'Import',r.material||'',r.etb||null,r.num_tanks||'',r.num_samples||'',r.status||'Initial',r.quality||'',r.remark||'',i,r.id]);
+          `UPDATE import_export SET direction=$1,material=$2,vessel_name=$3,etb=$4,num_tanks=$5,num_samples=$6,status=$7,quality=$8,remark=$9,sort_order=$10 WHERE id=$11`,
+          [r.direction||'Import',r.material||'',r.vessel_name||'',r.etb||null,r.num_tanks||'',r.num_samples||'',r.status||'Initial',r.quality||'',r.remark||'',i,r.id]);
       } else {
         await pool.query(
-          `INSERT INTO import_export (report_id,direction,material,etb,num_tanks,num_samples,status,quality,remark,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-          [req.params.id,r.direction||'Import',r.material||'',r.etb||null,r.num_tanks||'',r.num_samples||'',r.status||'Initial',r.quality||'',r.remark||'',i]);
+          `INSERT INTO import_export (report_id,direction,material,vessel_name,etb,num_tanks,num_samples,status,quality,remark,sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+          [req.params.id,r.direction||'Import',r.material||'',r.vessel_name||'',r.etb||null,r.num_tanks||'',r.num_samples||'',r.status||'Initial',r.quality||'',r.remark||'',i]);
       }
     }
     const {rows:saved} = await pool.query('SELECT * FROM import_export WHERE report_id=$1 ORDER BY sort_order,id',[req.params.id]);

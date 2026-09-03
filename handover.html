@@ -818,7 +818,8 @@ html, body {
           <th style="width:36px">#</th>
           <th style="width:100px">Type</th>
           <th style="width:200px">Material / Product</th>
-          <th style="width:130px">ETB (Date)</th>
+          <th style="width:150px">Vessel Name</th>
+          <th style="width:120px">ETB (Date)</th>
           <th style="width:90px">No. Tanks</th>
           <th style="width:90px">No. Samples</th>
           <th style="width:110px">Status</th>
@@ -2212,6 +2213,7 @@ function renderImpExp() {
           oninput="impexpRows[${i}].material=this.value;impexpRows[${i}].material_custom=this.value;debounceImpExp()"
           style="font-size:11px;padding:2px 5px"/>
       </td>
+      <td><input value="${esc(row.vessel_name||'')}" oninput="impexpRows[${i}].vessel_name=this.value;debounceImpExp()" placeholder="e.g. MT Petrolimex 09" style="width:100%"/></td>
       <td><input type="date" value="${row.etb?row.etb.slice(0,10):''}" onchange="impexpRows[${i}].etb=this.value;debounceImpExp()"/></td>
       <td><input value="${esc(row.num_tanks||'')}" oninput="impexpRows[${i}].num_tanks=this.value;debounceImpExp()" placeholder="Optional"/></td>
       <td><input value="${esc(row.num_samples||'')}" oninput="impexpRows[${i}].num_samples=this.value;debounceImpExp()" placeholder="e.g. 3"/></td>
@@ -3193,12 +3195,6 @@ function renderDashboard(data) {
     } else { psEl.innerHTML='<div style="font-size:11px;color:var(--gray-lt);padding:12px">No product data available</div>'; }
   }
 
-  // Pending
-  const pD=pending.filter(t=>t.status==='Done').length,pO=pending.filter(t=>t.status!=='Done').length,pT=Math.max(1,pending.length);
-  document.getElementById('dash-pending-chart').innerHTML=pending.length?`<div class="dash-progress"><div style="width:${(pD/pT*100).toFixed(0)}%;background:#107c10"></div><div style="width:${(pO/pT*100).toFixed(0)}%;background:#a4262c"></div></div><div class="dash-legend"><span><span class="dash-legend-dot" style="background:#107c10"></span>Resolved: <b>${pD}</b></span><span><span class="dash-legend-dot" style="background:#a4262c"></span>Open: <b>${pO}</b></span></div>`:'';
-  document.querySelector('#dash-pending-table tbody').innerHTML=!pending.length
-    ?'<tr><td colspan="3" style="text-align:center;color:var(--gray-lt);padding:12px">No pending samples</td></tr>'
-    :pending.slice(0,10).map(t=>`<tr><td style="font-weight:600">${esc(t.sample_point||'—')}</td><td>${esc(t.reason||'—')}</td><td>${stBadge(t.status)}</td></tr>`).join('');
 
   // Import/Export
   document.querySelector('#dash-impexp-table tbody').innerHTML=!impexp.length
@@ -3206,7 +3202,8 @@ function renderDashboard(data) {
     :impexp.map(t => {
       const dir=t.direction==='Import'?'<span class="dash-badge dash-badge-blue">Import</span>':'<span class="dash-badge dash-badge-amber">Export</span>';
       const ql=t.quality==='On-spec'?'<span class="dash-badge dash-badge-green">On-spec</span>':t.quality==='Off-spec'?'<span class="dash-badge dash-badge-red">Off-spec</span>':`<span class="dash-badge dash-badge-gray">${esc(t.quality||'—')}</span>`;
-      return `<tr><td>${dir}</td><td style="font-weight:600">${esc(t.material||'—')}</td><td>${esc(t.sampling_point||'—')}</td><td>${ql}</td><td>${stBadge(t.status)}</td><td style="font-size:10px;color:var(--gray-lt)">${esc(t.remark||'—')}</td></tr>`;
+      const etbStr = t.etb ? t.etb.slice(0,10) : '—';
+      return `<tr><td>${dir}</td><td style="font-weight:600">${esc(t.material||'—')}</td><td style="font-size:11px">${esc(t.vessel_name||'—')}</td><td style="font-size:11px">${etbStr}</td><td>${ql}</td><td style="font-size:11px;color:#605e5c">${esc(t.remark||'—')}</td></tr>`;
     }).join('');
 }
 
