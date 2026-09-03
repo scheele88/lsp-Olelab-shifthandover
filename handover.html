@@ -3160,18 +3160,23 @@ function renderDashboard(data) {
   // KPIs
   const oosCount = trouble.filter(t=>t.out_of_service==='Yes'&&t.status!=='Done').length;
   const activeTr = trouble.filter(t=>t.status!=='Done').length;
-  const pendOpen = pending.filter(t=>t.status!=='Done').length;
   const pmDue    = pm.filter(t=>t.status!=='Done').length;
   const allPs    = ps?[...(ps.main||[]),...(ps.by||[]),...(ps.ctu||[]),...(ps.tf||[]),...(ps.other||[])]:[];
-  const offspec  = allPs.filter(r=>r.col3==='Off-spec').length;
+  const offspecRows = allPs.filter(r=>r.col3==='Off-spec');
+  const offspec  = offspecRows.length;
   document.getElementById('dash-kpis').innerHTML = [
-    {val:shifts,   lbl:'Shifts',         sub:'in period',     color:'#0d47a1'},
-    {val:activeTr, lbl:'Active Trouble', sub:oosCount+' OOS', color:oosCount>0?'#b71c1c':'#1b5e20'},
-    {val:pmDue,    lbl:'PM Pending',     sub:'not completed', color:pmDue>0?'#e65100':'#1b5e20'},
-    {val:pendOpen, lbl:'Pending Samples',sub:'carry-over',    color:pendOpen>0?'#e65100':'#1b5e20'},
-    {val:offspec,  lbl:'Off-spec',       sub:'latest shift',  color:offspec>0?'#b71c1c':'#1b5e20'},
-    {val:impexp.length,lbl:'Import/Export',sub:'active ops',  color:'#4a148c'},
-  ].map(k=>`<div class="dash-kpi" style="border-top-color:${k.color}"><div class="dash-kpi-val" style="color:${k.color}">${k.val}</div><div class="dash-kpi-lbl">${k.lbl}</div><div class="dash-kpi-sub">${k.sub}</div></div>`).join('');
+    {val:shifts,        lbl:'Shifts',        sub:'in period',     color:'#0078d4', anchor:''},
+    {val:activeTr,      lbl:'Active Trouble', sub:oosCount+' OOS', color:oosCount>0?'#a4262c':'#107c10', anchor:'dash-trouble-table'},
+    {val:pmDue,         lbl:'PM Pending',     sub:'not completed', color:pmDue>0?'#8a5700':'#107c10',    anchor:'dash-pm-table'},
+    {val:offspec,       lbl:'Off-spec',       sub:'products',       color:offspec>0?'#a4262c':'#107c10',  anchor:'dash-ps-content'},
+    {val:impexp.length, lbl:'Import/Export',  sub:'operations',    color:'#5c2d91',                      anchor:'dash-impexp-table'},
+  ].map(k=>'<div class="dash-kpi" style="border-top-color:'+k.color+';'+(k.anchor?'cursor:pointer;':'')+'"'
+    +(k.anchor?' onclick="document.getElementById(\''+k.anchor+'\').scrollIntoView({behavior:\'smooth\',block:\'nearest\'})" title="Click to jump"':'')
+    +' onmouseenter="this.style.transform=\'translateY(-2px)\'" onmouseleave="this.style.transform=\'\'">'
+    +'<div class="dash-kpi-val" style="color:'+k.color+'">'+k.val+'</div>'
+    +'<div class="dash-kpi-lbl">'+k.lbl+'</div>'
+    +'<div class="dash-kpi-sub">'+k.sub+(k.anchor?' ↓':'')+'</div></div>'
+  ).join('');
 
   // Trouble bar chart by lab
   const labCount={};
@@ -3202,14 +3207,44 @@ function renderDashboard(data) {
       return `<tr${ov?' style="background:#fff8f8"':''}><td style="font-weight:700;color:#4a148c">${esc(t.equip_name||'—')}</td><td>${esc(t.event_type||'—')}</td><td>${esc(t.scope_type||'—')}</td><td>${stBadge(t.status)}</td><td style="${ov?'color:#b71c1c;font-weight:700':''}">${end}</td></tr>`;
     }).join('');
 
-  // Product Quality
+  // Product Quality — summary view: counts + off-spec list
   const psEl=document.getElementById('dash-ps-content');
   if(psEl){
     if(ps){
-      const qB=s=>s==='On-spec'?'<span class="dash-badge dash-badge-green">On-spec</span>':s==='Off-spec'?'<span class="dash-badge dash-badge-red">Off-spec</span>':s==='Normal'?'<span class="dash-badge dash-badge-blue">Normal</span>':s==='No sampling'?'<span class="dash-badge dash-badge-gray">No sampling</span>':s?`<span class="dash-badge dash-badge-gray">${esc(s)}</span>`:'—';
-      const psR=(rows,col=1)=>rows.filter(r=>r['col'+col]).map(r=>`<div class="dash-ps-row" style="background:${r.col3==='Off-spec'?'#fde7e9':r.col3==='On-spec'?'#dff6dd':r.col3==='Normal'?'#deecf9':'#f3f2f1'}"><span style="font-weight:600;font-size:11px;color:#323130">${esc(r['col'+col]||'')}</span>${qB(r.col3)}</div>`).join('');
-      psEl.innerHTML=`<div class="dash-ps-grid"><div><div class="dash-ps-section-title" style="color:#107c10">🟢 Main Products</div>${psR(ps.main||[])}</div><div><div class="dash-ps-section-title" style="color:#0078d4">🔵 By-Products</div>${psR(ps.by||[])}</div><div><div class="dash-ps-section-title" style="color:#006064">🔷 CTU</div>${psR(ps.ctu||[])}</div><div><div class="dash-ps-section-title" style="color:#4a148c">🔶 Tank Farm / Other</div>${psR(ps.tf||[])}${psR(ps.other||[])}</div></div>${data.shiftLabel?`<div style="font-size:10px;color:#605e5c;margin-top:8px;font-style:italic;border-top:1px solid #edebe9;padding-top:6px">📅 Source: ${esc(data.shiftLabel)}</div>`:''}`;
-    } else { psEl.innerHTML='<div style="font-size:11px;color:var(--gray-lt);padding:12px">No product data available</div>'; }
+      const allPsFlat=[
+        ...(ps.main||[]).map(r=>({...r,cat:'Main Products'})),
+        ...(ps.by||[]).map(r=>({...r,cat:'By-Products'})),
+        ...(ps.ctu||[]).map(r=>({...r,cat:'CTU'})),
+        ...(ps.tf||[]).map(r=>({...r,cat:'Tank Farm'})),
+        ...(ps.other||[]).map(r=>({...r,cat:'Other'})),
+      ].filter(r=>r.col1);
+      const total=allPsFlat.length;
+      const onSpec=allPsFlat.filter(r=>r.col3==='On-spec'||r.col3==='Normal').length;
+      const offList=allPsFlat.filter(r=>r.col3==='Off-spec');
+      const noSamp=allPsFlat.filter(r=>r.col3==='No sampling').length;
+      const pct=total>0?Math.round(onSpec/total*100):0;
+      const barHtml='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
+        +'<div style="flex:1;height:14px;border-radius:7px;overflow:hidden;background:#edebe9;display:flex">'
+        +'<div style="width:'+Math.round(onSpec/Math.max(1,total)*100)+'%;background:#107c10;transition:width .5s"></div>'
+        +'<div style="width:'+Math.round(offList.length/Math.max(1,total)*100)+'%;background:#a4262c"></div>'
+        +'<div style="width:'+Math.round(noSamp/Math.max(1,total)*100)+'%;background:#d2d0ce"></div>'
+        +'</div>'
+        +'<span style="font-size:12px;font-weight:800;color:'+(offList.length>0?'#a4262c':'#107c10')+'">'+pct+'% On-spec</span></div>'
+        +'<div style="display:flex;gap:16px;font-size:11px;margin-bottom:12px;flex-wrap:wrap">'
+        +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#107c10;margin-right:4px"></span>On-spec/Normal: <b>'+onSpec+'</b></span>'
+        +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#a4262c;margin-right:4px"></span>Off-spec: <b style="color:'+(offList.length>0?'#a4262c':'inherit')+'">'+offList.length+'</b></span>'
+        +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d2d0ce;margin-right:4px"></span>No sampling: <b>'+noSamp+'</b></span>'
+        +'<span style="color:#605e5c">Total: <b>'+total+'</b></span></div>';
+      const offTableHtml=offList.length>0
+        ?'<div style="font-size:11px;font-weight:700;color:#a4262c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">⚠ Off-spec Items</div>'
+         +'<table class="dash-table"><thead><tr><th>Product / Stream</th><th>Category</th><th>Remark</th></tr></thead><tbody>'
+         +offList.map(r=>'<tr style="background:#fff5f5"><td style="font-weight:700;color:#a4262c">'+esc(r.col1||'—')+'</td><td><span class="dash-badge dash-badge-gray">'+esc(r.cat)+'</span></td><td style="font-size:11px;color:#605e5c">'+esc(r.col4||'—')+'</td></tr>').join('')
+         +'</tbody></table>'
+        :'<div style="padding:10px 14px;background:#dff6dd;border-radius:5px;font-size:12px;color:#107c10;font-weight:600">✅ All products on-spec</div>';
+      psEl.innerHTML=barHtml+offTableHtml+(data.shiftLabel?'<div style="font-size:10px;color:#605e5c;margin-top:10px;font-style:italic;border-top:1px solid #edebe9;padding-top:6px">📅 Source: '+esc(data.shiftLabel)+'</div>':'');
+    } else {
+      psEl.innerHTML='<div style="font-size:11px;color:#605e5c;padding:12px">No product data available — fill in §6 Product Summary first.</div>';
+    }
   }
 
 
@@ -3323,7 +3358,7 @@ function renderDashboard(data) {
             <span class="dash-card-link" onclick="switchTab('s4b')">View §5 →</span>
           </div>
           <table class="dash-table" id="dash-impexp-table">
-            <thead><tr><th>Direction</th><th>Material</th><th>Sampling Point</th><th>Quality</th><th>Remark</th></tr></thead>
+            <thead><tr><th>Direction</th><th>Material</th><th>Vessel</th><th>ETB Date</th><th>Quality</th><th>Remark</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
