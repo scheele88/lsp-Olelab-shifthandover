@@ -489,6 +489,32 @@ html, body {
 .ps-table tbody tr:hover td { background:#e0f7fa }
 .ps-table select,.ps-table input { font-size:12px;padding:3px 6px;border-radius:3px;width:100% }
 .ps-section-title { font-size:12px;font-weight:700;color:#0097a7;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #b2ebf2;padding-bottom:4px }
+
+/* ── Dashboard ─────────────────────────────────────────────────────────── */
+.dash-card { background:#fff; border:1px solid var(--border); border-radius:8px; padding:12px; }
+.dash-card-hdr { font-size:11px; font-weight:800; color:var(--teal); text-transform:uppercase; letter-spacing:.7px; margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid var(--border); }
+.dash-kpi { background:#fff; border:1px solid var(--border); border-radius:8px; padding:10px 14px; text-align:center; }
+.dash-kpi-val { font-size:26px; font-weight:800; color:var(--navy); line-height:1.1; }
+.dash-kpi-lbl { font-size:10px; font-weight:600; color:var(--gray-lt); text-transform:uppercase; letter-spacing:.6px; margin-top:3px; }
+.dash-kpi-sub { font-size:10px; color:var(--gray-lt); margin-top:2px; }
+.dash-table { width:100%; border-collapse:collapse; font-size:11px; }
+.dash-table th { background:var(--navy); color:#fff; padding:5px 7px; text-align:left; font-size:10px; font-weight:700; letter-spacing:.5px; }
+.dash-table td { padding:5px 7px; border-bottom:1px solid var(--border); vertical-align:top; }
+.dash-table tr:last-child td { border-bottom:none; }
+.dash-table tr:hover td { background:#f8fafc; }
+.dash-bar { display:flex; align-items:center; gap:6px; margin-bottom:4px; font-size:11px; }
+.dash-bar-track { flex:1; height:8px; background:#f0f0f0; border-radius:4px; overflow:hidden; }
+.dash-bar-fill { height:100%; border-radius:4px; transition:width .4s; }
+.dash-badge { display:inline-block; padding:1px 7px; border-radius:10px; font-size:10px; font-weight:700; }
+.dash-badge-green { background:#e8f5e9; color:#1b5e20; }
+.dash-badge-red { background:#ffebee; color:#b71c1c; }
+.dash-badge-amber { background:#fff8e1; color:#e65100; }
+.dash-badge-blue { background:#e3f2fd; color:#0d47a1; }
+.dash-badge-gray { background:#f5f5f5; color:#616161; }
+.dash-ps-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.dash-ps-row { display:flex; justify-content:space-between; align-items:center; padding:4px 6px; border-radius:4px; font-size:11px; }
+#tab-dash .card-hdr { border-left-color: #00838f; }
+
 </style>
 
 </head>
@@ -551,6 +577,7 @@ html, body {
   <button class="tab-btn" data-tab="s4b" onclick="switchTab('s4b')">§5 Import/Export</button>
   <button class="tab-btn" data-tab="s6" onclick="switchTab('s6')">§6 Product Summary</button>
   <button class="tab-btn" data-tab="s5" onclick="switchTab('s5')">§7 Others & Sign-off</button>
+  <button class="tab-btn" data-tab="dash" onclick="switchTab('dash')">📊 Dashboard</button>
   <button class="tab-btn" data-tab="hist" onclick="switchTab('hist')">🗂 History</button>
 </div>
 
@@ -2425,7 +2452,85 @@ async function exportTroubleExcel() {
       tbl += '<tr>' + headers.map(h=>`<td>${String(r[h]||'').replace(/</g,'&lt;')}</td>`).join('') + '</tr>';
     });
     tbl += '</table>';
-    const xls = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"/></head><body>${tbl}</body></html>`;
+    const xls = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"/></head><body>${tbl}
+<!-- Dashboard Tab -->
+<div id="tab-dash" style="display:none">
+  <div class="card">
+    <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h2>📊 Dashboard</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:600;color:var(--gray-lt)">Period:</span>
+        <select id="dash-range" onchange="loadDashboard()" style="font-size:11px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px">
+          <option value="current">Current Shift</option>
+          <option value="7" selected>Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="all">All Time</option>
+        </select>
+        <button onclick="loadDashboard()" style="padding:3px 10px;font-size:11px;background:var(--teal);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:12px">
+
+      <!-- KPI Row -->
+      <div id="dash-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px"></div>
+
+      <!-- Main Grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+        <!-- Equipment Trouble -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">⚠️ Equipment Trouble (§2.1)</div>
+          <div id="dash-trouble-chart" style="margin-bottom:8px"></div>
+          <table class="dash-table" id="dash-trouble-table">
+            <thead><tr><th>Equipment</th><th>Lab</th><th>Status</th><th>OOS?</th><th>Days Open</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- PM/Calib Schedule -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">🔧 PM / Calibration (§2.2)</div>
+          <div id="dash-pm-chart" style="margin-bottom:8px"></div>
+          <table class="dash-table" id="dash-pm-table">
+            <thead><tr><th>Equipment</th><th>Event</th><th>Scope</th><th>Status</th><th>End Date</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Product Quality -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">🟢 Product Quality Summary (§6)</div>
+          <div id="dash-ps-content"></div>
+        </div>
+
+        <!-- Pending Samples -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">⏳ Pending Samples (§3)</div>
+          <div id="dash-pending-chart" style="margin-bottom:8px"></div>
+          <table class="dash-table" id="dash-pending-table">
+            <thead><tr><th>Sample Point</th><th>Reason</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Import/Export -->
+        <div class="dash-card" style="grid-column:1/-1">
+          <div class="dash-card-hdr">⚓ Import / Export (§5)</div>
+          <table class="dash-table" id="dash-impexp-table">
+            <thead><tr><th>Direction</th><th>Material</th><th>Sampling Point</th><th>Quality</th><th>Status</th><th>Remark</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div id="dash-empty" style="display:none;text-align:center;padding:40px;color:var(--gray-lt)">No data found for selected period.</div>
+      <div id="dash-loading" style="text-align:center;padding:40px;color:var(--gray-lt)">Loading dashboard…</div>
+    </div>
+  </div>
+</div>
+
+</body></html>`;
     const blob = new Blob([xls], {type:'application/vnd.ms-excel'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -2900,11 +3005,12 @@ async function jumpToReport(date, shift) {
 
 // ── Tab switching ──────────────────────────────────────────────────────────
 function switchTab(tab) {
-  ['s1','s2','s3','s4','s4b','s6','s5','hist'].forEach(t => {
+  ['s1','s2','s3','s4','s4b','s6','s5','hist','dash'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===tab ? '' : 'none';
     document.querySelector(`.tab-btn[data-tab="${t}"]`).classList.toggle('active', t===tab);
   });
   if (tab==='hist') loadHistory();
+  if (tab==='dash') loadDashboard();
   if (tab==='s5') syncSignoffNames();
   if (tab==='s6') psRenderAll();
 }
@@ -3055,5 +3161,83 @@ setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
   </div>
   <div class="ps-report" id="ps-report-content"></div>
 </div>
+
+<!-- Dashboard Tab -->
+<div id="tab-dash" style="display:none">
+  <div class="card">
+    <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h2>📊 Dashboard</h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:600;color:var(--gray-lt)">Period:</span>
+        <select id="dash-range" onchange="loadDashboard()" style="font-size:11px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px">
+          <option value="current">Current Shift</option>
+          <option value="7" selected>Last 7 Days</option>
+          <option value="30">Last 30 Days</option>
+          <option value="all">All Time</option>
+        </select>
+        <button onclick="loadDashboard()" style="padding:3px 10px;font-size:11px;background:var(--teal);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600">↻ Refresh</button>
+      </div>
+    </div>
+    <div class="card-body" style="padding:12px">
+
+      <!-- KPI Row -->
+      <div id="dash-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px"></div>
+
+      <!-- Main Grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+        <!-- Equipment Trouble -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">⚠️ Equipment Trouble (§2.1)</div>
+          <div id="dash-trouble-chart" style="margin-bottom:8px"></div>
+          <table class="dash-table" id="dash-trouble-table">
+            <thead><tr><th>Equipment</th><th>Lab</th><th>Status</th><th>OOS?</th><th>Days Open</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- PM/Calib Schedule -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">🔧 PM / Calibration (§2.2)</div>
+          <div id="dash-pm-chart" style="margin-bottom:8px"></div>
+          <table class="dash-table" id="dash-pm-table">
+            <thead><tr><th>Equipment</th><th>Event</th><th>Scope</th><th>Status</th><th>End Date</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Product Quality -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">🟢 Product Quality Summary (§6)</div>
+          <div id="dash-ps-content"></div>
+        </div>
+
+        <!-- Pending Samples -->
+        <div class="dash-card">
+          <div class="dash-card-hdr">⏳ Pending Samples (§3)</div>
+          <div id="dash-pending-chart" style="margin-bottom:8px"></div>
+          <table class="dash-table" id="dash-pending-table">
+            <thead><tr><th>Sample Point</th><th>Reason</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Import/Export -->
+        <div class="dash-card" style="grid-column:1/-1">
+          <div class="dash-card-hdr">⚓ Import / Export (§5)</div>
+          <table class="dash-table" id="dash-impexp-table">
+            <thead><tr><th>Direction</th><th>Material</th><th>Sampling Point</th><th>Quality</th><th>Status</th><th>Remark</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div id="dash-empty" style="display:none;text-align:center;padding:40px;color:var(--gray-lt)">No data found for selected period.</div>
+      <div id="dash-loading" style="text-align:center;padding:40px;color:var(--gray-lt)">Loading dashboard…</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
