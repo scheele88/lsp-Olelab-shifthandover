@@ -181,76 +181,61 @@ app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'handover.html')))
 app.get('/api/dashboard', async (req, res) => {
   const range = req.query.range || '7';
   try {
-    // Determine date filter
-    let dateFilter = '';
-    const params = [];
+    // Build date filter — applied directly on handover_reports table
+    let dateWhere = '';
     if (range !== 'all') {
       const days = parseInt(range) || 7;
-      dateFilter = `WHERE hr.shift_date >= NOW() - INTERVAL '${days} days'`;
+      dateWhere = `AND shift_date >= NOW() - INTERVAL '${days} days'`;
     }
 
-    // Get report IDs in range (max 60)
+    // Get report IDs in range
     const { rows: reports } = await pool.query(
-      `SELECT id, shift_date, shift_type FROM handover_reports ${dateFilter} ORDER BY shift_date DESC, shift_type DESC LIMIT 60`
+      `SELECT id, shift_date, shift_type FROM handover_reports WHERE 1=1 ${dateWhere} ORDER BY shift_date DESC, shift_type DESC LIMIT 60`
     );
-
-    if (!reports.length) return res.json({ shifts:0, trouble:[], pmRows:[], pending:[], impexp:[], psRows:null });
+    if (!reports.length) return res.json({ shifts:0, trouble:[], pmRows:[], pending:[], impexp:[], psRows:null, shiftLabel:'' });
 
     const ids = reports.map(r => r.id);
     const idList = ids.join(',');
 
-    // Fetch all section data in parallel — ONE query per section, not per report
+    // Fetch all sections in parallel — one query each, filter by id list
     const [troubleRes, pmRes, pendRes, impexpRes] = await Promise.all([
-      pool.query(`SELECT et.*, hr.shift_date, hr.shift_type FROM equip_trouble et JOIN handover_reports hr ON et.report_id=hr.id WHERE et.report_id IN (${idList}) ORDER BY et.start_date DESC`),
-      pool.query(`SELECT ep.*, hr.shift_date FROM equip_pm ep JOIN handover_reports hr ON ep.report_id=hr.id WHERE ep.report_id IN (${idList}) ORDER BY ep.start_date DESC`),
-      pool.query(`SELECT ps.*, hr.shift_date FROM pending_samples ps JOIN handover_reports hr ON ps.report_id=hr.id WHERE ps.report_id IN (${idList}) ORDER BY hr.shift_date DESC`),
-      pool.query(`SELECT ie.*, hr.shift_date FROM import_export ie JOIN handover_reports hr ON ie.report_id=hr.id WHERE ie.report_id IN (${idList}) ORDER BY hr.shift_date DESC`),
+      pool.query(`SELECT et.*, r.shift_date, r.shift_type FROM equip_trouble et JOIN handover_reports r ON et.report_id=r.id WHERE et.report_id IN (${idList}) ORDER BY et.start_date DESC NULLS LAST`),
+      pool.query(`SELECT ep.*, r.shift_date FROM equip_pm ep JOIN handover_reports r ON ep.report_id=r.id WHERE ep.report_id IN (${idList}) ORDER BY ep.start_date DESC NULLS LAST`),
+      pool.query(`SELECT ps.*, r.shift_date FROM pending_samples ps JOIN handover_reports r ON ps.report_id=r.id WHERE ps.report_id IN (${idList}) ORDER BY r.shift_date DESC`),
+      pool.query(`SELECT ie.*, r.shift_date FROM import_export ie JOIN handover_reports r ON ie.report_id=r.id WHERE ie.report_id IN (${idList}) ORDER BY r.shift_date DESC`),
     ]);
 
-    // Deduplicate trouble by equip_code+start_date (keep latest shift's version)
-    const troubleMap = new Map();
-    troubleRes.rows.forEach(t => {
-      const key = (t.equip_code || t.equip_name || '') + '|' + (t.start_date || '');
-      if (!troubleMap.has(key) || t.shift_date > troubleMap.get(key).shift_date) troubleMap.set(key, t);
-    });
+    // Deduplicate — keep latest shift's version per unique item
+    const dedup = (rows, keyFn) => {
+      const m = new Map();
+      rows.forEach(r => { const k = keyFn(r); if (!m.has(k) || r.shift_date > m.get(k).shift_date) m.set(k, r); });
+      return [...m.values()];
+    };
 
-    // Deduplicate PM
-    const pmMap = new Map();
-    pmRes.rows.forEach(t => {
-      const key = (t.equip_code || t.equip_name || '') + '|' + (t.start_date || '') + '|' + (t.event_type || '');
-      if (!pmMap.has(key)) pmMap.set(key, t);
-    });
+    const trouble = dedup(troubleRes.rows, t => (t.equip_code||t.equip_name||'') + '|' + (t.start_date||''));
+    const pm      = dedup(pmRes.rows,      t => (t.equip_code||t.equip_name||'') + '|' + (t.start_date||'') + '|' + (t.event_type||''));
+    const pending = dedup(pendRes.rows,    t => t.sample_point || t.reason || t.id);
+    const impexp  = dedup(impexpRes.rows,  t => (t.material||'') + '|' + (t.direction||'') + '|' + (t.id||''));
 
-    // Deduplicate pending
-    const pendMap = new Map();
-    pendRes.rows.forEach(t => {
-      const key = t.sample_point || t.reason || '';
-      if (!pendMap.has(key)) pendMap.set(key, t);
-    });
-
-    // Deduplicate impexp
-    const impMap = new Map();
-    impexpRes.rows.forEach(t => {
-      const key = (t.material || '') + '|' + (t.direction || '');
-      if (!impMap.has(key)) impMap.set(key, t);
-    });
-
-    // Get PS from most recent report
+    // Get product summary from most recent report (separate table)
     const latestId = ids[0];
-    const { rows: psRows } = await pool.query('SELECT ps_rows FROM handover_reports WHERE id=$1', [latestId]);
-    const ps = psRows[0]?.ps_rows || null;
-    const latest = reports[0];
-    const shiftLabel = `${latest.shift_type} ${latest.shift_date.toISOString().slice(0,10)}`;
+    const { rows: psRaw } = await pool.query(
+      'SELECT * FROM product_summary WHERE report_id=$1 ORDER BY section, sort_order, id', [latestId]
+    );
 
-    res.json({
-      shifts:   reports.length,
-      trouble:  [...troubleMap.values()],
-      pmRows:   [...pmMap.values()],
-      pending:  [...pendMap.values()],
-      impexp:   [...impMap.values()],
-      psRows:   ps,
-      shiftLabel
+    // Convert product_summary rows → psRows object (same shape as frontend expects)
+    const psRows = { main:[], by:[], ie:[], ctu:[], tf:[], other:[] };
+    const sectionMap = { main:'main', by:'by', 'import/export':'ie', ctu:'ctu', 'tank farm':'tf', other:'other' };
+    psRaw.forEach(r => {
+      const sec = sectionMap[(r.section||'').toLowerCase()] || 'other';
+      psRows[sec].push({ col1:r.col1||'', col2:r.col2||'', col3:r.col3||'', col4:r.col4||'', col5:r.col5||'', col6:r.col6||'' });
     });
+
+    const latest = reports[0];
+    const d = latest.shift_date instanceof Date ? latest.shift_date : new Date(latest.shift_date);
+    const shiftLabel = `${latest.shift_type} ${d.toISOString().slice(0,10)}`;
+
+    res.json({ shifts: reports.length, trouble, pmRows: pm, pending, impexp, psRows, shiftLabel });
   } catch(e) {
     console.error('Dashboard error:', e);
     res.status(500).json({ error: e.message });

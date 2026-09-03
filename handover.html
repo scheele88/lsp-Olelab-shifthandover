@@ -3203,7 +3203,7 @@ function renderDashboard(data) {
   // Import/Export
   document.querySelector('#dash-impexp-table tbody').innerHTML=!impexp.length
     ?'<tr><td colspan="6" style="text-align:center;color:var(--gray-lt);padding:12px">No import/export operations</td></tr>'
-    :impexp.map(t=>{
+    :impexp.map(t => {
       const dir=t.direction==='Import'?'<span class="dash-badge dash-badge-blue">Import</span>':'<span class="dash-badge dash-badge-amber">Export</span>';
       const ql=t.quality==='On-spec'?'<span class="dash-badge dash-badge-green">On-spec</span>':t.quality==='Off-spec'?'<span class="dash-badge dash-badge-red">Off-spec</span>':`<span class="dash-badge dash-badge-gray">${esc(t.quality||'—')}</span>`;
       return `<tr><td>${dir}</td><td style="font-weight:600">${esc(t.material||'—')}</td><td>${esc(t.sampling_point||'—')}</td><td>${ql}</td><td>${stBadge(t.status)}</td><td style="font-size:10px;color:var(--gray-lt)">${esc(t.remark||'—')}</td></tr>`;
@@ -3298,7 +3298,7 @@ function renderDashboard(data) {
         </div>
 
         <!-- Import/Export -->
-        <div class="dash-card" style="grid-column:1/-1">
+        <div class="dash-card" style="grid-column:1/-1;overflow:visible">
           <div class="dash-card-hdr">⚓ Import / Export (§5)</div>
           <table class="dash-table" id="dash-impexp-table">
             <thead><tr><th>Direction</th><th>Material</th><th>Sampling Point</th><th>Quality</th><th>Status</th><th>Remark</th></tr></thead>
