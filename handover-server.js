@@ -182,11 +182,17 @@ app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'handover.html')))
 app.get('/api/dashboard', async (req, res) => {
   const range = req.query.range || '7';
   try {
-    // Build date filter — applied directly on handover_reports table
+    // Build date filter
     let dateWhere = '';
-    if (range !== 'all') {
-      const days = parseInt(range) || 7;
-      dateWhere = `AND shift_date >= NOW() - INTERVAL '${days} days'`;
+    const from = req.query.from;
+    const to   = req.query.to;
+    if (from && to) {
+      dateWhere = `AND shift_date >= '${from}' AND shift_date <= '${to}'`;
+    } else if (range !== 'all') {
+      if (range === 'week')  dateWhere = `AND shift_date >= date_trunc('week', NOW())`;
+      else if (range === 'month') dateWhere = `AND shift_date >= date_trunc('month', NOW())`;
+      else if (range === 'year')  dateWhere = `AND shift_date >= date_trunc('year', NOW())`;
+      else { const days = parseInt(range) || 7; dateWhere = `AND shift_date >= NOW() - INTERVAL '${days} days'`; }
     }
 
     // Get report IDs in range

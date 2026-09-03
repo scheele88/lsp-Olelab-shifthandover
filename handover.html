@@ -3096,33 +3096,50 @@ setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
 // ════════════════════════════════════════════════════════════════════════
 // DASHBOARD
 // ════════════════════════════════════════════════════════════════════════
+function dashRangeChange() {
+  const v = document.getElementById('dash-range')?.value;
+  const cd = document.getElementById('dash-custom-dates');
+  if (cd) cd.style.display = v === 'custom' ? 'flex' : 'none';
+  if (v !== 'custom') loadDashboard();
+}
+
 async function loadDashboard() {
   const loading = document.getElementById('dash-loading');
   const empty   = document.getElementById('dash-empty');
+  const main    = document.getElementById('dash-main');
   if (loading) loading.style.display = '';
   if (empty)   empty.style.display   = 'none';
+  if (main)    main.style.display    = 'none';
   try {
-    const range = document.getElementById('dash-range')?.value || '7';
+    const range    = document.getElementById('dash-range')?.value || '7';
+    const dateFrom = document.getElementById('dash-date-from')?.value || '';
+    const dateTo   = document.getElementById('dash-date-to')?.value   || '';
     let data;
     if (range === 'current' && currentReport) {
-      // Use already-loaded in-memory state instantly — zero API calls
       data = {
         shifts: 1,
-        trouble:  troubleRows,
-        pmRows:   pmRows,
-        pending:  pendingRows,
-        impexp:   impexpRows,
-        psRows:   (window._psRows || null),
-        shiftLabel: `${shiftType} ${fmtDateOnly(shiftDate)}`
+        trouble: troubleRows, pmRows: pmRows,
+        pending: pendingRows, impexp: impexpRows,
+        psRows: psRows,
+        shiftLabel: shiftType + ' ' + fmtDateOnly(shiftDate)
       };
     } else {
-      data = await api('/api/dashboard?range=' + range);
+      const qs = (range === 'custom' && dateFrom && dateTo)
+        ? 'from=' + dateFrom + '&to=' + dateTo
+        : 'range=' + range;
+      data = await api('/api/dashboard?' + qs);
     }
-    if (!data) { if (empty) empty.style.display=''; return; }
+    if (!data || data.error) {
+      if (empty) empty.style.display = '';
+      if (data?.error) toast('Dashboard: ' + data.error, 4000);
+      return;
+    }
     renderDashboard(data);
+    if (main) main.style.display = '';
   } catch(e) {
     console.error('Dashboard error:', e);
-    toast('Dashboard error: ' + e.message, 3000);
+    toast('Dashboard error: ' + e.message, 4000);
+    if (empty) empty.style.display = '';
   } finally {
     if (loading) loading.style.display = 'none';
   }
@@ -3240,13 +3257,21 @@ function renderDashboard(data) {
     <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <h2>📊 Lab Operations Dashboard</h2>
       <div class="dash-toolbar">
-        <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7)">Period:</span>
-        <select id="dash-range" onchange="loadDashboard()">
+        <select id="dash-range" onchange="dashRangeChange()">
           <option value="current">Current Shift</option>
           <option value="7" selected>Last 7 Days</option>
           <option value="30">Last 30 Days</option>
+          <option value="week">This Week (Mon–)</option>
+          <option value="month">This Month</option>
+          <option value="year">This Year</option>
           <option value="all">All Time</option>
+          <option value="custom">Custom Range…</option>
         </select>
+        <span id="dash-custom-dates" style="display:none;align-items:center;gap:4px">
+          <input type="date" id="dash-date-from" style="font-size:11px;padding:3px 6px;border:1px solid rgba(255,255,255,.3);border-radius:4px;background:rgba(255,255,255,.15);color:#fff" onchange="loadDashboard()"/>
+          <span style="color:rgba(255,255,255,.6)">→</span>
+          <input type="date" id="dash-date-to" style="font-size:11px;padding:3px 6px;border:1px solid rgba(255,255,255,.3);border-radius:4px;background:rgba(255,255,255,.15);color:#fff" onchange="loadDashboard()"/>
+        </span>
         <button onclick="loadDashboard()">↻ Refresh</button>
       </div>
     </div>
