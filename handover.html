@@ -3176,7 +3176,7 @@ function renderDashboard(data) {
 
   // PM table
   document.querySelector('#dash-pm-table tbody').innerHTML=!pm.length
-    ?'<tr><td colspan="5" style="text-align:center;color:var(--gray-lt);padding:12px">No PM/Calib events</td></tr>'
+    ?'<tr><td colspan="4" style="text-align:center;color:#605e5c;padding:16px">No PM/Calib events</td></tr>'
     :pm.slice(0,10).map(t=>{
       const end=t.end_date?t.end_date.slice(0,10):'—';
       const ov=t.end_date&&new Date(t.end_date)<now&&t.status!=='Done';
@@ -3253,63 +3253,60 @@ function renderDashboard(data) {
         <button onclick="loadDashboard()">↻ Refresh</button>
       </div>
     </div>
-    <div class="card-body" style="padding:12px">
+    <div class="card-body" style="padding:0;background:#f0f2f5">
 
-      <!-- KPI Row -->
-      <div id="dash-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px"></div>
+      <div id="dash-loading" style="text-align:center;padding:60px;color:#605e5c;font-size:14px">⏳ Loading…</div>
+      <div id="dash-empty" style="display:none;text-align:center;padding:60px;color:#605e5c;font-size:13px">No data found for selected period.</div>
 
-      <!-- Main Grid -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div id="dash-main" style="display:none;padding:16px">
 
-        <!-- Equipment Trouble -->
-        <div class="dash-card">
-          <div class="dash-card-hdr">⚠️ Equipment Trouble (§2.1)</div>
-          <div id="dash-trouble-chart" style="margin-bottom:8px"></div>
-          <table class="dash-table" id="dash-trouble-table">
-            <thead><tr><th>Equipment</th><th>Lab</th><th>Status</th><th>OOS?</th><th>Days Open</th></tr></thead>
-            <tbody></tbody>
-          </table>
+        <!-- KPI Strip -->
+        <div id="dash-kpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
+
+        <!-- Row 1: Trouble + PM -->
+        <div style="display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px">
+          <div class="dash-card">
+            <div class="dash-card-hdr" style="color:#a4262c">⚠ Equipment Trouble
+              <span class="dash-card-link" onclick="switchTab('s2')">View §2 →</span>
+            </div>
+            <div id="dash-trouble-chart" style="margin-bottom:10px"></div>
+            <table class="dash-table" id="dash-trouble-table">
+              <thead><tr><th>Equipment</th><th>Lab</th><th>Status</th><th>OOS?</th><th>Days</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="dash-card">
+            <div class="dash-card-hdr" style="color:#0078d4">🔧 PM / Calibration
+              <span class="dash-card-link" onclick="switchTab('s2')">View §2 →</span>
+            </div>
+            <div id="dash-pm-chart" style="margin-bottom:10px"></div>
+            <table class="dash-table" id="dash-pm-table">
+              <thead><tr><th>Equipment</th><th>Event</th><th>Status</th><th>End</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
 
-        <!-- PM/Calib Schedule -->
-        <div class="dash-card">
-          <div class="dash-card-hdr">🔧 PM / Calibration (§2.2)</div>
-          <div id="dash-pm-chart" style="margin-bottom:8px"></div>
-          <table class="dash-table" id="dash-pm-table">
-            <thead><tr><th>Equipment</th><th>Event</th><th>Scope</th><th>Status</th><th>End Date</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <!-- Product Quality -->
-        <div class="dash-card">
-          <div class="dash-card-hdr">🟢 Product Quality Summary (§6)</div>
+        <!-- Row 2: Product Quality -->
+        <div class="dash-card" style="margin-bottom:12px">
+          <div class="dash-card-hdr" style="color:#107c10">🟢 Product Quality Summary
+            <span class="dash-card-link" onclick="switchTab('s6')">View §6 →</span>
+          </div>
           <div id="dash-ps-content"></div>
         </div>
 
-        <!-- Pending Samples -->
+        <!-- Row 3: Import/Export -->
         <div class="dash-card">
-          <div class="dash-card-hdr">⏳ Pending Samples (§3)</div>
-          <div id="dash-pending-chart" style="margin-bottom:8px"></div>
-          <table class="dash-table" id="dash-pending-table">
-            <thead><tr><th>Sample Point</th><th>Reason</th><th>Status</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <!-- Import/Export -->
-        <div class="dash-card" style="grid-column:1/-1;overflow:visible">
-          <div class="dash-card-hdr">⚓ Import / Export (§5)</div>
+          <div class="dash-card-hdr" style="color:#5c2d91">⚓ Import / Export
+            <span class="dash-card-link" onclick="switchTab('s4b')">View §5 →</span>
+          </div>
           <table class="dash-table" id="dash-impexp-table">
-            <thead><tr><th>Direction</th><th>Material</th><th>Sampling Point</th><th>Quality</th><th>Status</th><th>Remark</th></tr></thead>
+            <thead><tr><th>Direction</th><th>Material</th><th>Sampling Point</th><th>Quality</th><th>Remark</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
 
       </div>
-
-      <div id="dash-empty" style="display:none;text-align:center;padding:40px;color:var(--gray-lt)">No data found for selected period.</div>
-      <div id="dash-loading" style="text-align:center;padding:40px;color:var(--gray-lt)">Loading dashboard…</div>
     </div>
   </div>
 </div>
