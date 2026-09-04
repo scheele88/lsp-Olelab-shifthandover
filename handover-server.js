@@ -242,7 +242,22 @@ app.get('/api/dashboard', async (req, res) => {
     const d = latest.shift_date instanceof Date ? latest.shift_date : new Date(latest.shift_date);
     const shiftLabel = `${latest.shift_type} ${d.toISOString().slice(0,10)}`;
 
-    res.json({ shifts: reports.length, trouble, pmRows: pm, pending, impexp, psRows, shiftLabel });
+    // Trend: trouble count per shift (for bar chart)
+    const { rows: trendRaw } = await pool.query(
+      `SELECT r.shift_date, r.shift_type, COUNT(et.id) as count
+       FROM handover_reports r
+       LEFT JOIN equip_trouble et ON et.report_id=r.id
+       WHERE r.id IN (${idList})
+       GROUP BY r.shift_date, r.shift_type
+       ORDER BY r.shift_date ASC, r.shift_type ASC`
+    );
+    const trendData = trendRaw.map(t => ({
+      shift_date: (t.shift_date instanceof Date ? t.shift_date : new Date(t.shift_date)).toISOString().slice(0,10),
+      shift_type: t.shift_type,
+      count: parseInt(t.count)||0
+    }));
+
+    res.json({ shifts: reports.length, trouble, pmRows: pm, pending, impexp, psRows, shiftLabel, trendData });
   } catch(e) {
     console.error('Dashboard error:', e);
     res.status(500).json({ error: e.message });

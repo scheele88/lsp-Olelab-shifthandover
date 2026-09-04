@@ -490,6 +490,552 @@ html, body {
 .ps-table select,.ps-table input { font-size:12px;padding:3px 6px;border-radius:3px;width:100% }
 .ps-section-title { font-size:12px;font-weight:700;color:#0097a7;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #b2ebf2;padding-bottom:4px }
 
+/* ── Dashboard ─────────────────────────────────────────────────────────────── */
+#tab-dash{background:#f0f2f5}
+#tab-dash .card{background:transparent;box-shadow:none;border:none;border-radius:0}
+#tab-dash .card-hdr{background:linear-gradient(135deg,#1a2b4a 0%,#243860 100%);border-left:none;border-radius:0;padding:14px 20px}
+#tab-dash .card-hdr h2{color:#fff;font-size:15px;letter-spacing:.3px}
+#tab-dash .card-body{padding:0;background:#f0f2f5}
+.dash-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dash-toolbar select,.dash-toolbar input[type=date]{font-size:11px;padding:4px 10px;border:1px solid rgba(255,255,255,.3);border-radius:4px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
+.dash-toolbar select option{color:#000;background:#fff}
+.dash-toolbar button{padding:4px 12px;font-size:11px;background:#0078d4;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600}
+.dash-toolbar button:hover{background:#106ebe}
+.dash-refresh-badge{font-size:10px;color:rgba(255,255,255,.6);margin-left:4px}
+.dash-kpi{background:#fff;border-radius:6px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.1);border-top:4px solid #0078d4;text-align:left;transition:all .2s;position:relative;overflow:hidden}
+.dash-kpi:hover{box-shadow:0 4px 14px rgba(0,0,0,.18);transform:translateY(-2px)}
+.dash-kpi::after{content:'';position:absolute;right:-12px;bottom:-12px;width:60px;height:60px;border-radius:50%;background:currentColor;opacity:.06}
+.dash-kpi-val{font-size:32px;font-weight:800;line-height:1;margin-bottom:4px}
+.dash-kpi-lbl{font-size:11px;font-weight:700;color:#323130;text-transform:uppercase;letter-spacing:.5px}
+.dash-kpi-sub{font-size:10px;color:#605e5c;margin-top:3px}
+.dash-card{background:#fff;border-radius:6px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:box-shadow .2s}
+.dash-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.dash-card-hdr{font-size:12px;font-weight:700;color:#323130;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #edebe9;display:flex;align-items:center;justify-content:space-between}
+.dash-card-title{display:flex;align-items:center;gap:6px}
+.dash-card-title::before{content:'';display:inline-block;width:4px;height:14px;border-radius:2px;background:currentColor;opacity:.7}
+.dash-card-link{font-size:10px;font-weight:600;color:#0078d4;cursor:pointer;text-transform:none;letter-spacing:0;white-space:nowrap}
+.dash-card-link:hover{text-decoration:underline}
+.dash-table{width:100%;border-collapse:collapse;font-size:11px}
+.dash-table thead tr{background:#f3f2f1}
+.dash-table th{padding:7px 8px;text-align:left;font-size:10px;font-weight:700;color:#323130;letter-spacing:.4px;text-transform:uppercase;border-bottom:2px solid #edebe9}
+.dash-table td{padding:6px 8px;border-bottom:1px solid #f3f2f1;vertical-align:middle;color:#323130}
+.dash-table tr:hover td{background:#f9f8f7}
+.dash-table tr:last-child td{border-bottom:none}
+.dash-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;letter-spacing:.2px}
+.dash-badge-green{background:#dff6dd;color:#107c10}
+.dash-badge-red{background:#fde7e9;color:#a4262c}
+.dash-badge-amber{background:#fff4ce;color:#8a5700}
+.dash-badge-blue{background:#deecf9;color:#0078d4}
+.dash-badge-gray{background:#f3f2f1;color:#605e5c}
+.dash-progress{height:12px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:6px;background:#edebe9}
+.dash-legend{display:flex;gap:14px;font-size:10px;color:#605e5c;flex-wrap:wrap}
+.dash-legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.dash-chart-wrap{position:relative;display:flex;align-items:center;justify-content:center;gap:16px}
+.dash-donut-wrap{position:relative;flex-shrink:0}
+.dash-donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.dash-donut-val{font-size:22px;font-weight:800;line-height:1}
+.dash-donut-lbl{font-size:9px;font-weight:600;color:#605e5c;text-transform:uppercase;letter-spacing:.5px}
+.dash-chart-legend{display:flex;flex-direction:column;gap:7px}
+.dash-legend-row{display:flex;align-items:center;gap:8px;font-size:11px}
+.dash-legend-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.dash-legend-key{font-weight:600;color:#323130;min-width:80px}
+.dash-legend-count{font-size:11px;font-weight:800;color:#323130}
+.dash-bar-chart{width:100%}
+.dash-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.dash-bar-label{font-size:10px;color:#605e5c;min-width:70px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-bar-track{flex:1;height:18px;background:#f3f2f1;border-radius:3px;overflow:hidden;position:relative}
+.dash-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;padding-left:6px}
+.dash-bar-val{font-size:10px;font-weight:700;color:#fff;white-space:nowrap}
+.dash-ps-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:4px;font-size:11px;margin-bottom:3px}
+arset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Central Lab - Olefins & UT - Shift Handover</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* ── K2-inspired: clean light + strong green accent ── */
+  --green:    #4caf50;   /* K2 primary green */
+  --green2:   #388e3c;
+  --green3:   #66bb6a;
+  --green-bg: #f1f8f1;
+  --green-lt: #c8e6c9;
+  --orange:   #f57c00;   /* K2 orange accent */
+  --orange-bg:#fff3e0;
+  --blue:     #1565c0;
+  --blue-lt:  #e3f2fd;
+  --purple:   #7b1fa2;
+  --purple-lt:#f3e5f5;
+  --red:      #c62828;
+  --red-bg:   #ffebee;
+  --amber:    #f57f17;
+  --amber-bg: #fffde7;
+  --navy:     #212121;   /* near-black text */
+  --gray:     #424242;
+  --gray-lt:  #757575;
+  --gray-xl:  #9e9e9e;
+  --bg:       #f5f5f5;   /* K2 light gray background */
+  --card:     #ffffff;
+  --border:   #e0e0e0;
+  --border2:  #bdbdbd;
+  --radius:   4px;
+  --radius-lg:8px;
+  --shadow:   0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.08);
+  --shadow-md:0 3px 10px rgba(0,0,0,.12);
+  --font:     'Inter','Segoe UI',Arial,sans-serif;
+}
+
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--gray);
+  font-size:13px;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  margin:0;
+  overflow-x:hidden;
+}
+button{cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600;border:none;border-radius:var(--radius);padding:6px 14px;transition:all .15s}
+button:hover{filter:brightness(1.07);transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button:disabled{opacity:.38;cursor:not-allowed;filter:none;transform:none}
+input,select,textarea{font-family:var(--font);font-size:13px;border:1px solid var(--border2);border-radius:var(--radius);padding:6px 9px;outline:none;width:100%;background:#fff;transition:border .15s,box-shadow .15s;color:var(--gray)}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(76,175,80,.2)}
+.etable input,.etable select,.etable textarea{border-color:var(--border)!important;box-shadow:none!important;outline:none!important}
+.etable input:focus,.etable select:focus,.etable textarea:focus{border-color:var(--border2)!important;box-shadow:none!important}
+.etable input:focus-visible,.etable select:focus-visible{outline:none!important}
+input[readonly]{background:#fafafa;color:var(--gray-lt);border-color:var(--border)}
+textarea{resize:none!important;min-height:58px;line-height:1.5}
+label{font-size:11px;color:var(--gray-lt);font-weight:600;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Gate ── */
+#gate{position:fixed;inset:0;background:linear-gradient(135deg,#f5f5f5 0%,#eeeeee 100%);z-index:1000;display:flex;align-items:center;justify-content:center}
+#gate-box{background:#fff;border-radius:var(--radius-lg);padding:40px 44px;text-align:center;min-width:340px;box-shadow:0 8px 40px rgba(0,0,0,.15);border-top:5px solid var(--green)}
+#gate-logo{font-size:38px;margin-bottom:10px}
+#gate-box h2{color:var(--navy);margin-bottom:4px;font-size:22px;font-weight:800}
+#gate-box .gate-sub{color:var(--gray-lt);font-size:11px;margin-bottom:24px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+#gate-box select{margin-bottom:16px;font-size:14px;padding:9px}
+#gate-btn{width:100%;padding:12px;font-size:14px;font-weight:700;background:var(--green);color:#fff;border-radius:var(--radius);border:none;cursor:pointer;letter-spacing:.3px;box-shadow:0 3px 12px rgba(76,175,80,.4)}
+#gate-btn:hover{background:var(--green2);transform:translateY(-1px);box-shadow:0 5px 16px rgba(76,175,80,.45)}
+
+/* ── Header: white bar with green left accent (like K2) ── */
+header{
+  background:#fff;color:var(--navy);
+  padding:0 24px;display:flex;align-items:center;
+  justify-content:space-between;height:56px;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
+  border-left:5px solid var(--green);
+}
+header .hdr-left{display:flex;align-items:center;gap:14px}
+header .hdr-icon{font-size:24px}
+header h1{font-size:17px;font-weight:800;color:var(--navy);letter-spacing:-.3px}
+header .sub{font-size:10px;color:var(--gray-xl);text-transform:uppercase;letter-spacing:1.2px;margin-top:2px;font-weight:600}
+.btn-print{background:#f5f5f5;color:var(--gray);border:1px solid var(--border2);padding:5px 12px;font-size:12px;border-radius:var(--radius);font-weight:600}
+.btn-print:hover{background:#eeeeee;transform:none;filter:none}
+
+/* ── Shift bar: light gray with colored chip (K2 style) ── */
+#shift-bar{
+  background:#fafafa;border-bottom:2px solid var(--border);
+  padding:10px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.shift-chip{
+  background:var(--green);color:#fff;
+  padding:5px 18px;border-radius:3px;font-weight:700;font-size:13px;
+  white-space:nowrap;letter-spacing:.3px;
+  box-shadow:0 2px 6px rgba(76,175,80,.35);
+}
+.shift-chip.night{background:#1565c0;box-shadow:0 2px 6px rgba(21,101,192,.35)}
+#shift-date-disp{color:var(--navy);font-weight:700;font-size:14px}
+#shift-time-disp{color:var(--gray-lt);font-size:12px;font-family:monospace}
+#logged-as{margin-left:auto;color:var(--gray);font-size:12px;display:flex;align-items:center;gap:8px;font-weight:600}
+#logged-as-name::before{content:'●';color:var(--green);margin-right:4px;font-size:10px}
+
+/* ── Tabs: clean underline style ── */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);padding:0 20px;overflow-x:hidden}
+.tab-btn{padding:12px 16px;font-size:12px;font-weight:600;color:var(--gray-lt);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;white-space:nowrap;border-radius:0;letter-spacing:.3px;transition:all .15s}
+.tab-btn.active{color:var(--green2);border-bottom-color:var(--green);font-weight:700}
+.tab-btn:hover{color:var(--gray);background:#f9f9f9;transform:none;box-shadow:none;filter:none}
+
+/* ── Main / Cards ── */
+.main{max-width:100%;margin:0 auto;padding:18px 18px 90px;overflow-x:hidden}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden}
+.card:hover{box-shadow:var(--shadow-md)}
+
+/* Card headers: bold colored left border, white background */
+.card-hdr{
+  padding:11px 18px;border-bottom:2px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;flex-wrap:wrap;gap:8px;
+  border-left:5px solid var(--green);
+}
+.card-hdr h2{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:0}
+.card-hdr h2::before{display:none}  /* remove the old bar — border-left does it now */
+.card-body{padding:18px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.col{flex:1;min-width:130px}
+.col2{flex:2;min-width:200px}
+
+/* Section-specific card header accent colours */
+#tab-s1  .card-hdr{border-left-color:var(--green)}
+#tab-s2  .card-hdr{border-left-color:var(--purple)}
+#tab-s3  .card-hdr{border-left-color:var(--blue)}
+#tab-s4  .card-hdr{border-left-color:var(--orange)}
+#tab-s4b .card-hdr{border-left-color:#00897b}
+#tab-s5  .card-hdr{border-left-color:var(--red)}
+#tab-s6  .card-hdr{border-left-color:#0097a7}
+
+/* ── Buttons ── */
+.btn-navy,.btn-blue{background:var(--blue);color:#fff;box-shadow:0 2px 6px rgba(21,101,192,.3)}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 2px 6px rgba(76,175,80,.35)}
+.btn-amber{background:var(--orange);color:#fff;box-shadow:0 2px 6px rgba(245,124,0,.3)}
+.btn-red{background:var(--red);color:#fff;box-shadow:0 2px 6px rgba(198,40,40,.3)}
+.btn-ghost{background:#fff;color:var(--gray);border:1px solid var(--border2);box-shadow:none;font-weight:600}
+.btn-ghost:hover{background:#f5f5f5;transform:none;box-shadow:none;filter:none}
+.btn-sm{padding:4px 12px;font-size:12px;font-weight:600}
+.btn-xs{padding:2px 7px;font-size:11px;border-radius:3px;font-weight:600}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.b-green{background:var(--green-bg);color:var(--green2);border:1px solid var(--green-lt)}
+.b-amber{background:var(--amber-bg);color:var(--amber);border:1px solid #fff176}
+.b-red{background:var(--red-bg);color:var(--red);border:1px solid #ffcdd2}
+.b-blue{background:var(--blue-lt);color:var(--blue);border:1px solid #90caf9}
+.b-gray{background:#f5f5f5;color:var(--gray-lt);border:1px solid var(--border)}
+
+/* ── Locked banner ── */
+.locked-banner{background:var(--green-bg);border:1.5px solid var(--green-lt);border-left:5px solid var(--green);border-radius:var(--radius-lg);padding:12px 18px;margin-bottom:14px;color:var(--green2);font-weight:700;font-size:13px;display:flex;align-items:center;gap:10px}
+
+/* ── Equipment table ── */
+.etable{width:100%;border-collapse:collapse;font-size:12px;word-break:break-word}
+.etable th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.etable td{padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;overflow:hidden}
+.ta-grow{width:100%;box-sizing:border-box;min-height:32px;height:32px;overflow-y:hidden}
+.etable td:has(textarea){vertical-align:top;white-space:normal;overflow:visible}
+.etable tbody tr:nth-child(even) td{background:#fafafa}
+.etable tbody tr:hover td{background:var(--green-bg)}
+.etable select,.etable input[type=text],.etable input:not([type]){font-size:11px;padding:3px 5px;border-radius:3px;width:100%;box-sizing:border-box;min-width:0}
+.etable textarea{font-size:12px;padding:4px 6px;min-height:34px;border-radius:3px;resize:none!important}
+.done-row td{opacity:.4;background:#fafafa!important;text-decoration:line-through;color:var(--gray-lt)}
+  .eq-name-cell input {
+  white-space: normal;
+  line-height: 1.25;
+  height: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.eq-name-cell textarea {
+  min-height: 40px !important;
+  height: 40px !important;
+  line-height: 1.2;
+  resize: none !important;
+  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+  padding: 4px 6px;
+}
+  
+/* Status pills */
+.sp-pill{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.sp-investigating{background:#fff9c4;color:#f57f17;border:1px solid #fff176}
+.sp-inprogress{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9}
+.sp-done,.sp-complete{background:var(--green-bg);color:var(--green2);border:1px solid var(--green-lt)}
+.sp-initial{background:#f5f5f5;color:var(--gray-lt);border:1px solid var(--border)}
+.sp-onspec{background:var(--green-bg);color:var(--green2);border:1px solid var(--green-lt)}
+.sp-offspec{background:var(--red-bg);color:var(--red);border:1px solid #ffcdd2}
+
+/* Combobox */
+.combo-wrap{position:relative}
+.combo-wrap input{width:100%}
+.combo-drop{position:fixed;min-width:200px;background:#fff;border:1px solid var(--border2);border-radius:var(--radius);z-index:9000;max-height:220px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.15);display:none}
+.combo-drop div{padding:8px 12px;cursor:pointer;font-size:13px;font-weight:500;transition:background .1s;border-bottom:1px solid var(--border)}
+.combo-drop div:hover{background:var(--green-bg);color:var(--green2)}
+
+/* Equipment dropdown */
+.eq-drop-wrap input,.eq-drop-wrap input:focus,.eq-drop-wrap input:focus-visible,.eq-drop-wrap input:not(:placeholder-shown){box-shadow:none!important;border-color:var(--border)!important;outline:none!important;-webkit-box-shadow:0 0 0 30px #fff inset!important}
+.eq-drop-wrap{position:relative}
+.eq-drop-wrap input,.eq-drop-wrap select{width:100%}
+.eq-drop{
+  position: fixed;
+  min-width: 320px;
+  max-width: min(420px, calc(100vw - 24px));
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 9000;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  display: none;
+}
+.eq-drop-item{padding:7px 12px;cursor:pointer;font-size:12px;line-height:1.5;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);transition:background .1s}
+.eq-drop-item:hover{background:var(--green-bg)}
+.eq-drop-code{font-family:monospace;color:var(--gray-xl);font-size:11px;white-space:nowrap;flex-shrink:0;align-self:center}
+
+/* History table */
+.htable{width:100%;border-collapse:collapse;font-size:13px}
+.htable th{background:var(--navy);color:#fff;padding:9px 12px;text-align:left;white-space:nowrap;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}
+.htable td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.htable tbody tr:nth-child(even) td{background:#fafafa}
+.htable tbody tr:hover td{background:var(--green-bg);cursor:pointer}
+
+/* Sign-off */
+.signoff-box{border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;background:#fafafa;transition:border-color .2s}
+.signoff-box:hover{border-color:var(--green)}
+.signoff-box h3{font-size:11px;font-weight:700;color:var(--gray-lt);text-transform:uppercase;margin-bottom:12px;letter-spacing:.6px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.sig-done{background:var(--green-bg);border:1.5px solid var(--green-lt);border-left:4px solid var(--green);border-radius:var(--radius);padding:12px 16px;color:var(--green2);font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+.signoff-box.signed{border-color:var(--green)}
+
+/* Hist viewer */
+#hist-viewer{background:var(--amber-bg);border:1px solid #ffe082;border-left:5px solid var(--amber);border-radius:var(--radius-lg);padding:10px 16px;margin-bottom:14px;display:none;align-items:center;gap:12px;flex-wrap:wrap}
+#hist-viewer span{font-weight:700;color:var(--amber);font-size:13px}
+
+/* Save bar */
+#save-bar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  max-width:100vw;
+  box-sizing:border-box;
+  background:#fff;
+  border-top:3px solid var(--green);
+  padding:10px 16px;
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  z-index:150;
+  box-shadow:0 -2px 12px rgba(0,0,0,.1);
+  align-items:center;
+  overflow-x:hidden;
+}
+#save-status{color:var(--gray-lt);font-size:12px;margin-right:auto;font-weight:500}
+
+/* Toast */
+#toast{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 22px;border-radius:4px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .22s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+#toast.show{opacity:1}
+
+/* Print */
+/* Hide ugly horizontal scrollbar tracks */
+.card-body::-webkit-scrollbar { height: 4px; }
+.card-body::-webkit-scrollbar-track { background: transparent; }
+.card-body::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
+
+/* Product Summary Report Print Styles */
+@media print {
+  body > *:not(#ps-report-overlay) { display:none !important; }
+  #ps-report-overlay { display:block !important; position:static !important; }
+}
+
+/* Product Summary Report Overlay */
+#ps-report-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#fff;
+  z-index:9999;
+  overflow:auto;
+  padding:72px 20px 20px;  /* top padding clears the fixed button bar */
+  font-family:'Inter','Segoe UI',Arial,sans-serif;
+}
+.ps-report { max-width:1100px; margin:0 auto; }
+.ps-report-header {
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:3px solid #0097a7; padding-bottom:10px; margin-bottom:16px;
+}
+.ps-report-header h1 { font-size:18px; font-weight:800; color:#212121; }
+.ps-report-header .ps-report-meta { font-size:12px; color:#757575; text-align:right; }
+.ps-report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ps-report-section { margin-bottom:22px; }
+.ps-report-title {
+  font-size:11px; font-weight:800; color:#c62828;
+  text-transform:uppercase; letter-spacing:.8px;
+  border-bottom:2px solid #ef9a9a; padding-bottom:3px; margin-bottom:5px;
+}
+.ps-report table { width:100%; border-collapse:collapse; font-size:11px; }
+.ps-report th {
+  background:#0097a7; color:#fff; padding:5px 7px;
+  text-align:left; font-size:10px; font-weight:700; letter-spacing:.5px;
+}
+.ps-report td { padding:4px 7px; border-bottom:1px solid #e0e0e0; }
+.ps-report tr:nth-child(even) td { background:#f0fdfd; }
+.ps-report .s-onspec  { color:#1b5e20; font-weight:700; background:#e8f5e9; padding:1px 6px; border-radius:3px; }
+.ps-report .s-offspec { color:#b71c1c; font-weight:700; background:#ffebee; padding:1px 6px; border-radius:3px; }
+.ps-report .s-normal  { color:#0d47a1; font-weight:700; background:#e3f2fd; padding:1px 6px; border-radius:3px; }
+.ps-report .s-nosampling { color:#757575; font-weight:700; background:#f5f5f5; padding:1px 6px; border-radius:3px; }
+.ps-report .s-other   { color:#e65100; font-weight:700; background:#fff9c4; padding:1px 6px; border-radius:3px; }
+.ps-report .name-cell { font-weight:700; color:#006064; }
+.ps-report-close-btn {
+  position:fixed; top:16px; right:16px;
+  background:#424242; color:#fff; border:none; border-radius:4px;
+  padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; z-index:10000;
+}
+.ps-report-actions {
+  position:fixed; top:16px; left:50%; transform:translateX(-50%);
+  display:flex; gap:8px; z-index:10000;
+  background:rgba(255,255,255,.95); padding:6px 12px; border-radius:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+@media print {
+  .ps-report-close-btn, .ps-report-actions { display:none !important; }
+}
+
+@media print{
+  #tab-s6 .card-body > div { grid-template-columns:1fr 1fr !important; }
+  .ps-table { font-size:10px !important; }
+  .ps-section-title { font-size:10px !important; margin:8px 0 4px !important; }
+
+  header,#gate,#shift-bar,.tabs,.btn-navy,.btn-green,.btn-ghost,.btn-red,.btn-amber,.btn-blue,.del-btn,#save-bar,#hist-viewer{display:none!important}
+  .card{box-shadow:none;border:1px solid #ccc;page-break-inside:avoid;border-radius:0}
+  .card-hdr{background:#fff!important;border-bottom:2px solid #ccc!important}
+  .card-hdr h2{color:#212121!important}
+  .etable th{background:#424242!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;font-size:12px}
+}
+@media(max-width:680px){.row{flex-direction:column}.main{padding:10px 8px 90px}}
+
+/* Unlock modal */
+#unlock-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:2000;display:none;align-items:center;justify-content:center}
+#unlock-box{background:#fff;border-radius:var(--radius-lg);padding:32px 36px;min-width:340px;box-shadow:0 8px 40px rgba(0,0,0,.25);text-align:center;border-top:5px solid var(--red)}
+#unlock-box h3{color:var(--navy);margin-bottom:6px;font-size:18px;font-weight:800}
+#unlock-box p{color:var(--gray-lt);font-size:13px;margin-bottom:20px;line-height:1.5}
+#unlock-pw{text-align:center;font-size:15px;letter-spacing:3px;margin-bottom:8px;padding:10px}
+.unlock-btns{display:flex;gap:10px;justify-content:center;margin-top:4px}
+
+/* Attachments */
+.att-cell{display:flex;flex-direction:column;gap:3px;width:100%;overflow:hidden}
+.att-chip{
+  display:flex;
+  align-items:center;
+  gap:2px;
+  background:var(--green-bg);
+  border:1px solid var(--green-lt);
+  border-radius:3px;
+  padding:1px 3px;
+  font-size:9px;
+  max-width:100%;
+}
+.att-chip span.att-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;cursor:pointer;color:var(--green2);font-weight:600;min-width:0}
+.att-chip span.att-name:hover{text-decoration:underline}
+.att-chip button{background:none;border:none;color:var(--red);font-size:12px;padding:0 2px;cursor:pointer;flex-shrink:0}
+.att-upload-btn{
+  font-size:9px;
+  padding:1px 5px;
+  background:var(--green);
+  color:#fff;
+  border-radius:3px;
+  cursor:pointer;
+  display:inline-block;
+  text-align:center;
+  white-space:nowrap;
+  font-weight:600;
+  line-height:1.2;
+}
+.att-upload-btn input{display:none}
+.att-locked-note{font-size:10px;color:var(--gray-xl);font-style:italic}
+
+/* Info grid for §1 */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.info-field{background:#fafafa;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px}
+.info-field label{font-size:10px;color:var(--gray-xl);margin-bottom:4px}
+.info-field .info-val{font-size:15px;font-weight:700;color:var(--navy)}
+
+/* Status colours in table selects */
+.status-investigating{color:var(--orange);font-weight:700}
+.status-inprogress{color:var(--blue);font-weight:700}
+.status-done{color:var(--green2);font-weight:700}
+
+/* ── Row highlights: colored left border on first cell only ── */
+.etable tbody tr td:first-child { border-left: 3px solid transparent; }
+.row-investigating td { background:#fffde7 !important; }
+.row-investigating td:first-child { border-left-color: #f9a825 !important; }
+.row-inprogress td { background:#e3f2fd !important; }
+.row-inprogress td:first-child { border-left-color: #1565c0 !important; }
+.row-oos td { background:#fff8f8 !important; }
+.row-oos td:first-child { border-left-color: #c62828 !important; }
+.done-row td { background:#f5f5f5 !important; opacity:.45; text-decoration:line-through; color:#9e9e9e; }
+.pend-inprogress td { background:#e3f2fd !important; }
+.pend-inprogress td:first-child { border-left-color: #1565c0 !important; }
+.pend-sent td { background:#e8f5e9 !important; }
+.pend-sent td:first-child { border-left-color: #388e3c !important; }
+.pend-received td { background:#f3e5f5 !important; }
+.pend-received td:first-child { border-left-color: #7b1fa2 !important; }
+.pend-done td { opacity:.45; text-decoration:line-through; }
+.ie-import td { background:#e8f5e9 !important; }
+.ie-import td:first-child { border-left-color: #388e3c !important; }
+.ie-export td { background:#e3f2fd !important; }
+.ie-export td:first-child { border-left-color: #1565c0 !important; }
+.ie-complete td { opacity:.5; text-decoration:line-through; }
+/* --- Better scroll behavior: vertical only for card body --- */
+.card-body {
+  max-height: none !important;
+  overflow-y: visible !important;
+  overflow-x: visible !important;
+}
+
+/* --- Only table area can scroll horizontally --- */
+.table-scroll-x {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll-x::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scroll-x::-webkit-scrollbar-thumb {
+  background: #d0d0d0;
+  border-radius: 999px;
+}
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.main {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.card {
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.card-body {
+  max-width: 100%;
+}
+
+/* Compact date inputs in trouble table */
+.etable input[type=date]{-webkit-appearance:none;appearance:none}
+.etable input[type=date]::-webkit-calendar-picker-indicator{opacity:.5;padding:0;margin:0;width:12px;height:12px;cursor:pointer}
+
+/* Product summary status colours */
+.ps-onspec  { background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+.ps-offspec { background:#ffebee;color:#b71c1c;border:1px solid #ef9a9a;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+.ps-normal  { background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+.ps-other   { background:#fff9c4;color:#f57f17;border:1px solid #ffe082;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block }
+
+.ps-table { width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px }
+.ps-table th { background:#0097a7;color:#fff;padding:7px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase }
+.ps-table td { padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle }
+.ps-table tbody tr:nth-child(even) td { background:#f9fffe }
+.ps-table tbody tr:hover td { background:#e0f7fa }
+.ps-table select,.ps-table input { font-size:12px;padding:3px 6px;border-radius:3px;width:100% }
+.ps-section-title { font-size:12px;font-weight:700;color:#0097a7;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #b2ebf2;padding-bottom:4px }
+
 /* ── Dashboard — Power BI style ────────────────────────────────────────── */
 #tab-dash { background:#f0f2f5; padding:0; }
 #tab-dash .card { background:transparent; box-shadow:none; border:none; border-radius:0; }
@@ -3097,11 +3643,13 @@ setInterval(()=>{ if(currentReport&&!isLocked) saveAll(); }, 120000);
 // DASHBOARD
 // ════════════════════════════════════════════════════════════════════════
 function dashRangeChange() {
-  const v = document.getElementById('dash-range')?.value;
+  const v  = document.getElementById('dash-range')?.value;
   const cd = document.getElementById('dash-custom-dates');
   if (cd) cd.style.display = v === 'custom' ? 'flex' : 'none';
   if (v !== 'custom') loadDashboard();
 }
+
+let _dashRefreshTimer = null;
 
 async function loadDashboard() {
   const loading = document.getElementById('dash-loading');
@@ -3110,17 +3658,29 @@ async function loadDashboard() {
   if (loading) loading.style.display = '';
   if (empty)   empty.style.display   = 'none';
   if (main)    main.style.display    = 'none';
+
+  // Schedule auto-refresh every 5 minutes
+  clearInterval(_dashRefreshTimer);
+  _dashRefreshTimer = setInterval(() => {
+    if (document.getElementById('tab-dash').style.display !== 'none') loadDashboard();
+  }, 5 * 60 * 1000);
+
   try {
-    const range    = document.getElementById('dash-range')?.value || '7';
+    const range    = document.getElementById('dash-range')?.value || 'current';
     const dateFrom = document.getElementById('dash-date-from')?.value || '';
     const dateTo   = document.getElementById('dash-date-to')?.value   || '';
     let data;
+
     if (range === 'current' && currentReport) {
+      // Instant — use in-memory data, no API call
       data = {
         shifts: 1,
-        trouble: troubleRows, pmRows: pmRows,
-        pending: pendingRows, impexp: impexpRows,
-        psRows: psRows,
+        trouble:  troubleRows,
+        pmRows:   pmRows,
+        pending:  pendingRows,
+        impexp:   impexpRows,
+        psRows:   psRows,
+        trendData: null,   // no trend for single shift
         shiftLabel: shiftType + ' ' + fmtDateOnly(shiftDate)
       };
     } else {
@@ -3129,13 +3689,19 @@ async function loadDashboard() {
         : 'range=' + range;
       data = await api('/api/dashboard?' + qs);
     }
+
     if (!data || data.error) {
       if (empty) empty.style.display = '';
       if (data?.error) toast('Dashboard: ' + data.error, 4000);
       return;
     }
+
     renderDashboard(data);
     if (main) main.style.display = '';
+    // Update last refresh time
+    const badge = document.getElementById('dash-last-refresh');
+    if (badge) badge.textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
   } catch(e) {
     console.error('Dashboard error:', e);
     toast('Dashboard error: ' + e.message, 4000);
@@ -3145,118 +3711,231 @@ async function loadDashboard() {
   }
 }
 
+// ── Draw donut chart using <canvas> (no library needed) ──────────────────
+function drawDonut(canvasId, segments, totalId, totalVal) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, r = W*0.42, inner = W*0.26;
+  ctx.clearRect(0, 0, W, H);
+  if (!segments.length || totalVal === 0) {
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle='#edebe9'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,inner,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    if (totalId) document.getElementById(totalId).textContent = '0';
+    return;
+  }
+  let startAngle = -Math.PI/2;
+  segments.forEach(seg => {
+    const slice = (seg.val / totalVal) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, startAngle + slice);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+    startAngle += slice;
+  });
+  // Inner circle (donut hole)
+  ctx.beginPath(); ctx.arc(cx,cy,inner,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  // Gap lines
+  startAngle = -Math.PI/2;
+  segments.forEach(seg => {
+    const slice = (seg.val/totalVal)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,startAngle,startAngle+0.02);
+    ctx.closePath(); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+    startAngle += slice;
+  });
+  if (totalId) document.getElementById(totalId).textContent = totalVal;
+}
+
+function makeLegend(containerId, segments) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = segments.map(s =>
+    '<div class="dash-legend-row">'
+    +'<span class="dash-legend-swatch" style="background:'+s.color+'"></span>'
+    +'<span class="dash-legend-key">'+s.label+'</span>'
+    +'<span class="dash-legend-count">'+s.val+'</span>'
+    +'</div>'
+  ).join('');
+}
+
+// ── renderDashboard ───────────────────────────────────────────────────────
 function renderDashboard(data) {
   const now     = new Date();
-  const trouble = data.trouble || [];
-  const pm      = data.pmRows  || [];
-  const pending = data.pending || [];
-  const impexp  = data.impexp  || [];
-  const ps      = data.psRows  || null;
-  const shifts  = data.shifts  || 1;
+  const trouble = data.trouble  || [];
+  const pm      = data.pmRows   || [];
+  const pending = data.pending  || [];
+  const impexp  = data.impexp   || [];
+  const ps      = data.psRows   || null;
+  const shifts  = data.shifts   || 1;
+  const trend   = data.trendData || [];
 
-  const stBadge = s => s==='Done'?'<span class="dash-badge dash-badge-green">Done</span>':s==='In-progress'?'<span class="dash-badge dash-badge-blue">In-progress</span>':'<span class="dash-badge dash-badge-amber">Investigating</span>';
-  const labColors = { Gas:'#107c10', Oil:'#0078d4', Uti:'#5c2d91', Other:'#605e5c' };
+  const stBadge = s =>
+    s==='Done'        ? '<span class="dash-badge dash-badge-green">Done</span>' :
+    s==='In-progress' ? '<span class="dash-badge dash-badge-blue">In-progress</span>' :
+                        '<span class="dash-badge dash-badge-amber">Investigating</span>';
 
-  // KPIs
-  const oosCount = trouble.filter(t=>t.out_of_service==='Yes'&&t.status!=='Done').length;
-  const activeTr = trouble.filter(t=>t.status!=='Done').length;
-  const pmDue    = pm.filter(t=>t.status!=='Done').length;
-  const allPs    = ps?[...(ps.main||[]),...(ps.by||[]),...(ps.ctu||[]),...(ps.tf||[]),...(ps.other||[])]:[];
-  const offspecRows = allPs.filter(r=>r.col3==='Off-spec');
-  const offspec  = offspecRows.length;
+  const LAB_COLORS = { Gas:'#107c10', Oil:'#0078d4', Uti:'#5c2d91', Other:'#605e5c' };
+
+  // ── KPIs ────────────────────────────────────────────────────────────────
+  const activeTr = trouble.filter(t => t.status !== 'Done').length;
+  const oosCount = trouble.filter(t => t.out_of_service === 'Yes' && t.status !== 'Done').length;
+  const pmDue    = pm.filter(t => t.status !== 'Done').length;
+  const allPs    = ps ? [...(ps.main||[]),...(ps.by||[]),...(ps.ctu||[]),...(ps.tf||[]),...(ps.other||[])] : [];
+  const offspec  = allPs.filter(r => r.col3 === 'Off-spec').length;
+
   document.getElementById('dash-kpis').innerHTML = [
-    {val:shifts,        lbl:'Shifts',        sub:'in period',     color:'#0078d4', anchor:''},
-    {val:activeTr,      lbl:'Active Trouble', sub:oosCount+' OOS', color:oosCount>0?'#a4262c':'#107c10', anchor:'dash-trouble-table'},
-    {val:pmDue,         lbl:'PM Pending',     sub:'not completed', color:pmDue>0?'#8a5700':'#107c10',    anchor:'dash-pm-table'},
-    {val:offspec,       lbl:'Off-spec',       sub:'products',       color:offspec>0?'#a4262c':'#107c10',  anchor:'dash-ps-content'},
-    {val:impexp.length, lbl:'Import/Export',  sub:'operations',    color:'#5c2d91',                      anchor:'dash-impexp-table'},
-  ].map(k=>'<div class="dash-kpi" style="border-top-color:'+k.color+';'+(k.anchor?'cursor:pointer;':'')+'"'
-    +(k.anchor?' onclick="document.getElementById(\''+k.anchor+'\').scrollIntoView({behavior:\'smooth\',block:\'nearest\'})" title="Click to jump"':'')
-    +' onmouseenter="this.style.transform=\'translateY(-2px)\'" onmouseleave="this.style.transform=\'\'">'
+    {val:shifts,   lbl:'Shifts',        sub:'in period',     color:'#0078d4', anchor:''},
+    {val:activeTr, lbl:'Active Trouble', sub:oosCount+' OOS', color:oosCount>0?'#a4262c':'#107c10', anchor:'dash-trouble-table'},
+    {val:pmDue,    lbl:'PM Pending',     sub:'not completed', color:pmDue>0?'#8a5700':'#107c10',    anchor:'dash-pm-table'},
+    {val:offspec,  lbl:'Off-spec',       sub:'products',       color:offspec>0?'#a4262c':'#107c10',  anchor:'dash-ps-content'},
+  ].map(k =>
+    '<div class="dash-kpi" style="border-top-color:'+k.color+';color:'+k.color+';'+(k.anchor?'cursor:pointer':'')+'"'
+    +(k.anchor?' onclick="document.getElementById(\''+k.anchor+'\').scrollIntoView({behavior:\'smooth\',block:\'nearest\'})" title="Click to jump"':'')+'>'
     +'<div class="dash-kpi-val" style="color:'+k.color+'">'+k.val+'</div>'
     +'<div class="dash-kpi-lbl">'+k.lbl+'</div>'
     +'<div class="dash-kpi-sub">'+k.sub+(k.anchor?' ↓':'')+'</div></div>'
   ).join('');
 
-  // Trouble bar chart by lab
-  const labCount={};
-  trouble.filter(t=>t.status!=='Done').forEach(t=>{const l=t.owner||'Other';labCount[l]=(labCount[l]||0)+1;});
-  const maxL=Math.max(1,...Object.values(labCount));
-  document.getElementById('dash-trouble-chart').innerHTML=Object.entries(labCount).map(([l,n])=>
-    `<div class="dash-bar"><span style="width:36px;font-size:10px;font-weight:700;color:${labColors[l]||'#323130'}">${l}</span><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${(n/maxL*100).toFixed(0)}%;background:${labColors[l]||'#0078d4'}"></div></div><span style="font-size:11px;font-weight:800;min-width:20px;color:${labColors[l]||'#323130'}">${n}</span></div>`
-  ).join('')||'<div style="font-size:11px;color:#605e5c;padding:8px;text-align:center;background:#dff6dd;border-radius:4px">✅ No active trouble</div>';
+  // ── Donut: Trouble by Lab ────────────────────────────────────────────────
+  const activeTrouble = trouble.filter(t => t.status !== 'Done');
+  const labCount = {};
+  activeTrouble.forEach(t => { const l = t.owner||'Other'; labCount[l]=(labCount[l]||0)+1; });
+  const labSegs = Object.entries(labCount)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([lab,val]) => ({ label:lab, val, color:LAB_COLORS[lab]||'#605e5c' }));
+  drawDonut('chart-trouble-donut', labSegs, 'chart-trouble-total', activeTrouble.length);
+  makeLegend('chart-trouble-legend', labSegs.length ? labSegs : [{label:'No active trouble',val:0,color:'#edebe9'}]);
 
-  // Trouble table
-  document.querySelector('#dash-trouble-table tbody').innerHTML=!trouble.length
-    ?'<tr><td colspan="5" style="text-align:center;color:var(--gray-lt);padding:12px">No trouble logged</td></tr>'
-    :trouble.slice(0,15).map(t=>{
-      const days=t.start_date?Math.floor((now-new Date(t.start_date))/86400000):'—';
-      return `<tr><td style="font-weight:700;color:#4a148c">${esc(t.equip_name||'—')}</td><td>${esc(t.owner||'—')}</td><td>${stBadge(t.status)}</td><td>${t.out_of_service==='Yes'?'<span class="dash-badge dash-badge-red">Yes</span>':'<span class="dash-badge dash-badge-green">No</span>'}</td><td style="text-align:center">${days}</td></tr>`;
-    }).join('');
-
-  // PM chart
-  const pmD=pm.filter(t=>t.status==='Done').length,pmP=pm.filter(t=>t.status==='In-progress').length,pmI=pm.filter(t=>t.status==='Investigating').length,pmT=Math.max(1,pm.length);
-  document.getElementById('dash-pm-chart').innerHTML=pm.length?`<div class="dash-progress"><div style="width:${(pmD/pmT*100).toFixed(0)}%;background:#107c10"></div><div style="width:${(pmP/pmT*100).toFixed(0)}%;background:#0078d4"></div><div style="width:${(pmI/pmT*100).toFixed(0)}%;background:#8a5700"></div></div><div class="dash-legend"><span><span class="dash-legend-dot" style="background:#107c10"></span>Done: <b>${pmD}</b></span><span><span class="dash-legend-dot" style="background:#0078d4"></span>In-progress: <b>${pmP}</b></span><span><span class="dash-legend-dot" style="background:#8a5700"></span>Investigating: <b>${pmI}</b></span></div>`:'';
-
-  // PM table
-  document.querySelector('#dash-pm-table tbody').innerHTML=!pm.length
-    ?'<tr><td colspan="4" style="text-align:center;color:#605e5c;padding:16px">No PM/Calib events</td></tr>'
-    :pm.slice(0,10).map(t=>{
-      const end=t.end_date?t.end_date.slice(0,10):'—';
-      const ov=t.end_date&&new Date(t.end_date)<now&&t.status!=='Done';
-      return `<tr${ov?' style="background:#fff8f8"':''}><td style="font-weight:700;color:#4a148c">${esc(t.equip_name||'—')}</td><td>${esc(t.event_type||'—')}</td><td>${esc(t.scope_type||'—')}</td><td>${stBadge(t.status)}</td><td style="${ov?'color:#b71c1c;font-weight:700':''}">${end}</td></tr>`;
-    }).join('');
-
-  // Product Quality — summary view: counts + off-spec list
-  const psEl=document.getElementById('dash-ps-content');
-  if(psEl){
-    if(ps){
-      const allPsFlat=[
-        ...(ps.main||[]).map(r=>({...r,cat:'Main Products'})),
-        ...(ps.by||[]).map(r=>({...r,cat:'By-Products'})),
-        ...(ps.ctu||[]).map(r=>({...r,cat:'CTU'})),
-        ...(ps.tf||[]).map(r=>({...r,cat:'Tank Farm'})),
-        ...(ps.other||[]).map(r=>({...r,cat:'Other'})),
-      ].filter(r=>r.col1);
-      const total=allPsFlat.length;
-      const onSpec=allPsFlat.filter(r=>r.col3==='On-spec'||r.col3==='Normal').length;
-      const offList=allPsFlat.filter(r=>r.col3==='Off-spec');
-      const noSamp=allPsFlat.filter(r=>r.col3==='No sampling').length;
-      const pct=total>0?Math.round(onSpec/total*100):0;
-      const barHtml='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
-        +'<div style="flex:1;height:14px;border-radius:7px;overflow:hidden;background:#edebe9;display:flex">'
-        +'<div style="width:'+Math.round(onSpec/Math.max(1,total)*100)+'%;background:#107c10;transition:width .5s"></div>'
-        +'<div style="width:'+Math.round(offList.length/Math.max(1,total)*100)+'%;background:#a4262c"></div>'
-        +'<div style="width:'+Math.round(noSamp/Math.max(1,total)*100)+'%;background:#d2d0ce"></div>'
-        +'</div>'
-        +'<span style="font-size:12px;font-weight:800;color:'+(offList.length>0?'#a4262c':'#107c10')+'">'+pct+'% On-spec</span></div>'
-        +'<div style="display:flex;gap:16px;font-size:11px;margin-bottom:12px;flex-wrap:wrap">'
-        +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#107c10;margin-right:4px"></span>On-spec/Normal: <b>'+onSpec+'</b></span>'
-        +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#a4262c;margin-right:4px"></span>Off-spec: <b style="color:'+(offList.length>0?'#a4262c':'inherit')+'">'+offList.length+'</b></span>'
-        +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d2d0ce;margin-right:4px"></span>No sampling: <b>'+noSamp+'</b></span>'
-        +'<span style="color:#605e5c">Total: <b>'+total+'</b></span></div>';
-      const offTableHtml=offList.length>0
-        ?'<div style="font-size:11px;font-weight:700;color:#a4262c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">⚠ Off-spec Items</div>'
-         +'<table class="dash-table"><thead><tr><th>Product / Stream</th><th>Category</th><th>Remark</th></tr></thead><tbody>'
-         +offList.map(r=>'<tr style="background:#fff5f5"><td style="font-weight:700;color:#a4262c">'+esc(r.col1||'—')+'</td><td><span class="dash-badge dash-badge-gray">'+esc(r.cat)+'</span></td><td style="font-size:11px;color:#605e5c">'+esc(r.col4||'—')+'</td></tr>').join('')
-         +'</tbody></table>'
-        :'<div style="padding:10px 14px;background:#dff6dd;border-radius:5px;font-size:12px;color:#107c10;font-weight:600">✅ All products on-spec</div>';
-      psEl.innerHTML=barHtml+offTableHtml+(data.shiftLabel?'<div style="font-size:10px;color:#605e5c;margin-top:10px;font-style:italic;border-top:1px solid #edebe9;padding-top:6px">📅 Source: '+esc(data.shiftLabel)+'</div>':'');
+  // ── Bar: Trouble trend per shift ─────────────────────────────────────────
+  const barEl = document.getElementById('chart-trouble-bar');
+  if (barEl) {
+    if (trend.length) {
+      const maxVal = Math.max(1, ...trend.map(t=>t.count));
+      barEl.innerHTML = trend.slice(-10).map(t => {
+        const pct = Math.round(t.count/maxVal*100);
+        const label = (t.shift_date||'').slice(5,10) + ' ' + (t.shift_type||'').slice(0,1);
+        return '<div class="dash-bar-row">'
+          +'<span class="dash-bar-label">'+label+'</span>'
+          +'<div class="dash-bar-track">'
+          +'<div class="dash-bar-fill" style="width:'+pct+'%;background:'+(t.count>3?'#a4262c':'#0078d4')+'">'
+          +(t.count>0?'<span class="dash-bar-val">'+t.count+'</span>':'')
+          +'</div></div></div>';
+      }).join('');
+    } else if (trouble.length) {
+      // Single shift — show bar per lab
+      const maxV = Math.max(1,...Object.values(labCount));
+      barEl.innerHTML = Object.entries(labCount).map(([lab,cnt]) =>
+        '<div class="dash-bar-row">'
+        +'<span class="dash-bar-label">'+lab+'</span>'
+        +'<div class="dash-bar-track">'
+        +'<div class="dash-bar-fill" style="width:'+Math.round(cnt/maxV*100)+'%;background:'+(LAB_COLORS[lab]||'#0078d4')+'">'
+        +(cnt>0?'<span class="dash-bar-val">'+cnt+'</span>':'')
+        +'</div></div></div>'
+      ).join('') || '<div style="font-size:11px;color:#605e5c;padding:12px;text-align:center">No active trouble ✅</div>';
     } else {
-      psEl.innerHTML='<div style="font-size:11px;color:#605e5c;padding:12px">No product data available — fill in §6 Product Summary first.</div>';
+      barEl.innerHTML = '<div style="font-size:11px;color:#605e5c;padding:20px;text-align:center">No trouble data</div>';
     }
   }
 
+  // ── Donut: PM Status ─────────────────────────────────────────────────────
+  const pmDone = pm.filter(t=>t.status==='Done').length;
+  const pmProg = pm.filter(t=>t.status==='In-progress').length;
+  const pmInv  = pm.filter(t=>t.status==='Investigating'||(!t.status||t.status==='Investigating')).length;
+  const pmSegs = [
+    {label:'Done',         val:pmDone, color:'#107c10'},
+    {label:'In-progress',  val:pmProg, color:'#0078d4'},
+    {label:'Investigating',val:pmInv,  color:'#8a5700'},
+  ].filter(s=>s.val>0);
+  drawDonut('chart-pm-donut', pmSegs, 'chart-pm-total', pm.length);
+  makeLegend('chart-pm-legend', pmSegs.length ? pmSegs : [{label:'No PM events',val:0,color:'#edebe9'}]);
 
-  // Import/Export
-  document.querySelector('#dash-impexp-table tbody').innerHTML=!impexp.length
-    ?'<tr><td colspan="6" style="text-align:center;color:var(--gray-lt);padding:12px">No import/export operations</td></tr>'
-    :impexp.map(t => {
-      const dir=t.direction==='Import'?'<span class="dash-badge dash-badge-blue">Import</span>':'<span class="dash-badge dash-badge-amber">Export</span>';
-      const ql=t.quality==='On-spec'?'<span class="dash-badge dash-badge-green">On-spec</span>':t.quality==='Off-spec'?'<span class="dash-badge dash-badge-red">Off-spec</span>':`<span class="dash-badge dash-badge-gray">${esc(t.quality||'—')}</span>`;
-      const etbStr = t.etb ? t.etb.slice(0,10) : '—';
-      return `<tr><td>${dir}</td><td style="font-weight:600">${esc(t.material||'—')}</td><td style="font-size:11px">${esc(t.vessel_name||'—')}</td><td style="font-size:11px">${etbStr}</td><td>${ql}</td><td style="font-size:11px;color:#605e5c">${esc(t.remark||'—')}</td></tr>`;
-    }).join('');
+  // ── Trouble table ────────────────────────────────────────────────────────
+  document.querySelector('#dash-trouble-table tbody').innerHTML = !trouble.length
+    ? '<tr><td colspan="5" style="text-align:center;color:#605e5c;padding:16px">No trouble logged</td></tr>'
+    : trouble.filter(t=>t.status!=='Done').slice(0,12).map(t => {
+        const days = t.start_date ? Math.floor((now-new Date(t.start_date))/86400000) : '—';
+        return '<tr>'
+          +'<td style="font-weight:700;color:#4a148c">'+esc(t.equip_name||'—')+'</td>'
+          +'<td><span class="dash-badge" style="background:'+(LAB_COLORS[t.owner]||'#f3f2f1')+'22;color:'+(LAB_COLORS[t.owner]||'#323130')+'">'+esc(t.owner||'—')+'</span></td>'
+          +'<td>'+stBadge(t.status)+'</td>'
+          +'<td>'+(t.out_of_service==='Yes'?'<span class="dash-badge dash-badge-red">Yes</span>':'<span class="dash-badge dash-badge-green">No</span>')+'</td>'
+          +'<td style="text-align:center;font-weight:600">'+days+'</td></tr>';
+      }).join('');
+
+  // ── PM table ─────────────────────────────────────────────────────────────
+  document.querySelector('#dash-pm-table tbody').innerHTML = !pm.length
+    ? '<tr><td colspan="4" style="text-align:center;color:#605e5c;padding:16px">No PM/Calib events</td></tr>'
+    : pm.slice(0,8).map(t => {
+        const end = t.end_date ? t.end_date.slice(0,10) : '—';
+        const ov  = t.end_date && new Date(t.end_date) < now && t.status !== 'Done';
+        return '<tr'+(ov?' style="background:#fff5f5"':'')+'>'
+          +'<td style="font-weight:700;color:#4a148c">'+esc(t.equip_name||'—')+'</td>'
+          +'<td>'+esc(t.event_type||'—')+'</td>'
+          +'<td>'+stBadge(t.status)+'</td>'
+          +'<td style="'+(ov?'color:#a4262c;font-weight:700':'')+'">'+end+'</td></tr>';
+      }).join('');
+
+  // ── Product Quality ────────────────────────────────────────────────────
+  const psEl = document.getElementById('dash-ps-content');
+  if (psEl) {
+    if (ps) {
+      const allPsFlat = [
+        ...(ps.main||[]).map(r=>({...r,cat:'Main Products'})),
+        ...(ps.by  ||[]).map(r=>({...r,cat:'By-Products'})),
+        ...(ps.ctu ||[]).map(r=>({...r,cat:'CTU'})),
+        ...(ps.tf  ||[]).map(r=>({...r,cat:'Tank Farm'})),
+        ...(ps.other||[]).map(r=>({...r,cat:'Other'})),
+      ].filter(r=>r.col1);
+      const total   = allPsFlat.length;
+      const onSpec  = allPsFlat.filter(r=>r.col3==='On-spec'||r.col3==='Normal').length;
+      const offList = allPsFlat.filter(r=>r.col3==='Off-spec');
+      const noSamp  = allPsFlat.filter(r=>r.col3==='No sampling').length;
+      const pct     = total>0?Math.round(onSpec/total*100):0;
+      const bar = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+        +'<div style="flex:1;height:16px;border-radius:8px;overflow:hidden;background:#edebe9;display:flex">'
+        +'<div style="width:'+Math.round(onSpec/Math.max(1,total)*100)+'%;background:#107c10;transition:width .6s"></div>'
+        +'<div style="width:'+Math.round(offList.length/Math.max(1,total)*100)+'%;background:#a4262c"></div>'
+        +'<div style="width:'+Math.round(noSamp/Math.max(1,total)*100)+'%;background:#d2d0ce"></div>'
+        +'</div><span style="font-size:13px;font-weight:800;color:'+(offList.length>0?'#a4262c':'#107c10')+'">'+pct+'%</span></div>'
+        +'<div style="display:flex;gap:16px;font-size:11px;margin-bottom:12px;flex-wrap:wrap">'
+        +'<span><span class="dash-legend-dot" style="background:#107c10"></span>On-spec/Normal: <b>'+onSpec+'</b></span>'
+        +'<span><span class="dash-legend-dot" style="background:#a4262c"></span>Off-spec: <b style="color:'+(offList.length>0?'#a4262c':'inherit')+'">'+offList.length+'</b></span>'
+        +'<span><span class="dash-legend-dot" style="background:#d2d0ce"></span>No sampling: <b>'+noSamp+'</b></span>'
+        +'<span style="color:#605e5c">Total: <b>'+total+'</b></span></div>';
+      const offTable = offList.length>0
+        ? '<div style="font-size:11px;font-weight:700;color:#a4262c;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">⚠ Off-spec Items</div>'
+          +'<table class="dash-table"><thead><tr><th>Product / Stream</th><th>Category</th><th>Remark</th></tr></thead><tbody>'
+          +offList.map(r=>'<tr style="background:#fff5f5"><td style="font-weight:700;color:#a4262c">'+esc(r.col1||'—')+'</td>'
+            +'<td><span class="dash-badge dash-badge-gray">'+esc(r.cat)+'</span></td>'
+            +'<td style="font-size:11px;color:#605e5c">'+esc(r.col4||'—')+'</td></tr>').join('')
+          +'</tbody></table>'
+        : '<div style="padding:10px 14px;background:#dff6dd;border-radius:5px;font-size:12px;color:#107c10;font-weight:600">✅ All products on-spec</div>';
+      psEl.innerHTML = bar + offTable
+        + (data.shiftLabel?'<div style="font-size:10px;color:#605e5c;margin-top:10px;font-style:italic;border-top:1px solid #edebe9;padding-top:6px">📅 '+esc(data.shiftLabel)+'</div>':'');
+    } else {
+      psEl.innerHTML = '<div style="font-size:11px;color:#605e5c;padding:12px">No product data — fill in §6 Product Summary first.</div>';
+    }
+  }
+
+  // ── Import/Export table ──────────────────────────────────────────────────
+  document.querySelector('#dash-impexp-table tbody').innerHTML = !impexp.length
+    ? '<tr><td colspan="6" style="text-align:center;color:#605e5c;padding:16px">No import/export operations</td></tr>'
+    : impexp.map(t => {
+        const dir = t.direction==='Import'
+          ? '<span class="dash-badge dash-badge-blue">Import</span>'
+          : '<span class="dash-badge dash-badge-amber">Export</span>';
+        const ql = t.quality==='On-spec'  ? '<span class="dash-badge dash-badge-green">On-spec</span>'
+                 : t.quality==='Off-spec' ? '<span class="dash-badge dash-badge-red">Off-spec</span>'
+                 : '<span class="dash-badge dash-badge-gray">'+esc(t.quality||'—')+'</span>';
+        return '<tr><td>'+dir+'</td>'
+          +'<td style="font-weight:700">'+esc(t.material||'—')+'</td>'
+          +'<td style="font-size:11px">'+esc(t.vessel_name||'—')+'</td>'
+          +'<td style="font-size:11px">'+(t.etb?t.etb.slice(0,10):'—')+'</td>'
+          +'<td>'+ql+'</td>'
+          +'<td style="font-size:11px;color:#605e5c">'+esc(t.remark||'—')+'</td></tr>';
+      }).join('');
 }
 
 </script>
@@ -3293,8 +3972,8 @@ function renderDashboard(data) {
       <h2>📊 Lab Operations Dashboard</h2>
       <div class="dash-toolbar">
         <select id="dash-range" onchange="dashRangeChange()">
-          <option value="current">Current Shift</option>
-          <option value="7" selected>Last 7 Days</option>
+          <option value="current" selected>Current Shift</option>
+          <option value="7">Last 7 Days</option>
           <option value="30">Last 30 Days</option>
           <option value="week">This Week (Mon–)</option>
           <option value="month">This Month</option>
@@ -3303,58 +3982,114 @@ function renderDashboard(data) {
           <option value="custom">Custom Range…</option>
         </select>
         <span id="dash-custom-dates" style="display:none;align-items:center;gap:4px">
-          <input type="date" id="dash-date-from" style="font-size:11px;padding:3px 6px;border:1px solid rgba(255,255,255,.3);border-radius:4px;background:rgba(255,255,255,.15);color:#fff" onchange="loadDashboard()"/>
+          <input type="date" id="dash-date-from" onchange="loadDashboard()"/>
           <span style="color:rgba(255,255,255,.6)">→</span>
-          <input type="date" id="dash-date-to" style="font-size:11px;padding:3px 6px;border:1px solid rgba(255,255,255,.3);border-radius:4px;background:rgba(255,255,255,.15);color:#fff" onchange="loadDashboard()"/>
+          <input type="date" id="dash-date-to" onchange="loadDashboard()"/>
         </span>
         <button onclick="loadDashboard()">↻ Refresh</button>
+        <span class="dash-refresh-badge" id="dash-last-refresh"></span>
       </div>
     </div>
-    <div class="card-body" style="padding:0;background:#f0f2f5">
-
+    <div class="card-body">
       <div id="dash-loading" style="text-align:center;padding:60px;color:#605e5c;font-size:14px">⏳ Loading…</div>
-      <div id="dash-empty" style="display:none;text-align:center;padding:60px;color:#605e5c;font-size:13px">No data found for selected period.</div>
-
-      <div id="dash-main" style="display:none;padding:16px">
+      <div id="dash-empty"   style="display:none;text-align:center;padding:60px;color:#605e5c;font-size:13px">No data for selected period.</div>
+      <div id="dash-main"    style="display:none;padding:16px">
 
         <!-- KPI Strip -->
-        <div id="dash-kpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
+        <div id="dash-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
 
-        <!-- Row 1: Trouble + PM -->
-        <div style="display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px">
+        <!-- Row 1: Charts -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+
+          <!-- Donut: Trouble by Lab -->
           <div class="dash-card">
-            <div class="dash-card-hdr" style="color:#a4262c">⚠ Equipment Trouble
+            <div class="dash-card-hdr">
+              <span class="dash-card-title" style="color:#a4262c">⚠ Trouble by Lab</span>
               <span class="dash-card-link" onclick="switchTab('s2')">View §2 →</span>
             </div>
-            <div id="dash-trouble-chart" style="margin-bottom:10px"></div>
+            <div class="dash-chart-wrap">
+              <div class="dash-donut-wrap">
+                <canvas id="chart-trouble-donut" width="120" height="120"></canvas>
+                <div class="dash-donut-center">
+                  <div class="dash-donut-val" id="chart-trouble-total" style="color:#a4262c">0</div>
+                  <div class="dash-donut-lbl">Active</div>
+                </div>
+              </div>
+              <div class="dash-chart-legend" id="chart-trouble-legend"></div>
+            </div>
+          </div>
+
+          <!-- Bar: Trouble trend per shift -->
+          <div class="dash-card">
+            <div class="dash-card-hdr">
+              <span class="dash-card-title" style="color:#8a5700">📈 Trouble Trend</span>
+              <span style="font-size:10px;color:#605e5c">per shift</span>
+            </div>
+            <div id="chart-trouble-bar" class="dash-bar-chart"></div>
+          </div>
+
+          <!-- Donut: PM Status -->
+          <div class="dash-card">
+            <div class="dash-card-hdr">
+              <span class="dash-card-title" style="color:#0078d4">🔧 PM Status</span>
+              <span class="dash-card-link" onclick="switchTab('s2')">View §2 →</span>
+            </div>
+            <div class="dash-chart-wrap">
+              <div class="dash-donut-wrap">
+                <canvas id="chart-pm-donut" width="120" height="120"></canvas>
+                <div class="dash-donut-center">
+                  <div class="dash-donut-val" id="chart-pm-total" style="color:#0078d4">0</div>
+                  <div class="dash-donut-lbl">Total</div>
+                </div>
+              </div>
+              <div class="dash-chart-legend" id="chart-pm-legend"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Row 2: Tables -->
+        <div style="display:grid;grid-template-columns:3fr 2fr;gap:12px;margin-bottom:12px">
+
+          <!-- Trouble table -->
+          <div class="dash-card">
+            <div class="dash-card-hdr">
+              <span class="dash-card-title" style="color:#a4262c">Active Issues</span>
+              <span class="dash-card-link" onclick="switchTab('s2')">View all →</span>
+            </div>
             <table class="dash-table" id="dash-trouble-table">
               <thead><tr><th>Equipment</th><th>Lab</th><th>Status</th><th>OOS?</th><th>Days</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
+
+          <!-- PM table -->
           <div class="dash-card">
-            <div class="dash-card-hdr" style="color:#0078d4">🔧 PM / Calibration
-              <span class="dash-card-link" onclick="switchTab('s2')">View §2 →</span>
+            <div class="dash-card-hdr">
+              <span class="dash-card-title" style="color:#0078d4">PM / Calib Schedule</span>
+              <span class="dash-card-link" onclick="switchTab('s2')">View all →</span>
             </div>
-            <div id="dash-pm-chart" style="margin-bottom:10px"></div>
             <table class="dash-table" id="dash-pm-table">
               <thead><tr><th>Equipment</th><th>Event</th><th>Status</th><th>End</th></tr></thead>
               <tbody></tbody>
             </table>
           </div>
+
         </div>
 
-        <!-- Row 2: Product Quality -->
+        <!-- Row 3: Product Quality -->
         <div class="dash-card" style="margin-bottom:12px">
-          <div class="dash-card-hdr" style="color:#107c10">🟢 Product Quality Summary
+          <div class="dash-card-hdr">
+            <span class="dash-card-title" style="color:#107c10">🟢 Product Quality Summary</span>
             <span class="dash-card-link" onclick="switchTab('s6')">View §6 →</span>
           </div>
           <div id="dash-ps-content"></div>
         </div>
 
-        <!-- Row 3: Import/Export -->
+        <!-- Row 4: Import/Export -->
         <div class="dash-card">
-          <div class="dash-card-hdr" style="color:#5c2d91">⚓ Import / Export
+          <div class="dash-card-hdr">
+            <span class="dash-card-title" style="color:#5c2d91">⚓ Import / Export</span>
             <span class="dash-card-link" onclick="switchTab('s4b')">View §5 →</span>
           </div>
           <table class="dash-table" id="dash-impexp-table">
